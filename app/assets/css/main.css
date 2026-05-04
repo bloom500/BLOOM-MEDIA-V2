@@ -1,0 +1,51 @@
+@property --progress {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+
+:root {
+  --color-bg: #080808;
+  --color-text: #F5F0E8;
+  --color-accent: #F97316;
+  --color-muted: #666666;
+  --font-display: 'Cormorant Garamond', serif;
+  --font-body: system-ui, sans-serif;
+  --ease-1: cubic-bezier(0.86, 0, 0.31, 1);
+  --ease-2: cubic-bezier(0.35, 0.35, 0, 1);
+  --g-gap: 0.4rem;
+  --g-margin: calc(var(--g-gap) * 2);
+  --vh: 1vh;
+  --vw: 1vw;
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --g-margin: calc(var(--g-gap) * 4);
+  }
+}
+
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.25;
+  overflow-x: hidden;
+}
+
+body {
+  min-height: 100lvh;
+  position: relative;
+}
+
+img, video {
+  display: block;
+  max-width: 100%;
+}
