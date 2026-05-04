@@ -1,0 +1,92 @@
+/*
+  Bloom Media — animații StringTune
+  ----------------------------------
+  Clasele `.-splitted`, `.-s-line`, `.-s-word`, `.-s-char`, `.-inview`
+  sunt adăugate dinamic de StringTune pe elemente cu atributul `string`.
+  Ele NU pot fi prinse cu Vue scoped CSS (copii injectați nu primesc
+  `data-v-…`), deci tot ce ține de split / reveal trăiește aici, global.
+
+  Vezi reference/tutorial-01-text-w-progress-1.html, tutorial-10-split.html,
+  tutorial-03-progress.html, tutorial-01-reveal-on-scroll.html.
+*/
+
+/* ─── Layout pentru text împărțit ─── */
+.-splitted {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.-splitted .-s-line {
+  display: flex;
+  will-change: contents;
+}
+
+.-splitted .-s-word {
+  display: inline-flex;
+  will-change: contents;
+}
+
+.-splitted .-s-char {
+  display: inline-flex;
+  will-change: contents;
+}
+
+/* ─── Reveal pe caractere (titluri, numere) ─── */
+[data-anim="char-reveal"].-splitted {
+  overflow: hidden;
+}
+
+[data-anim="char-reveal"] .-s-char {
+  transform: translate3d(0, 120%, 0);
+}
+
+[data-anim="char-reveal"].-inview .-s-char {
+  transform: translate3d(0, 0, 0);
+  transition: transform var(--ease-timing, 1.2s) var(--ease-1, cubic-bezier(0.86, 0, 0.31, 1));
+  transition-delay: calc((var(--char-start, 0) / 5) * 0.3s);
+}
+
+/* ─── Reveal pe cuvinte (scroll progress): main.css — .-splitted.-inview .-s-word ─── */
+
+/* ─── Reveal generic (figure / row / item) ─── */
+[data-anim="reveal-up"] {
+  opacity: 0;
+  transform: translate3d(0, 40px, 0);
+  transition:
+    opacity var(--ease-timing, 1.2s) var(--ease-2, cubic-bezier(0.35, 0.35, 0, 1)),
+    transform var(--ease-timing, 1.2s) var(--ease-2, cubic-bezier(0.35, 0.35, 0, 1));
+}
+
+[data-anim="reveal-up"].-inview {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+/* Reveal cu line-clip pentru titluri pe rând (process step name) */
+[data-anim="reveal-line"] {
+  overflow: hidden;
+}
+
+[data-anim="reveal-line"] > * {
+  display: block;
+  transform: translate3d(0, 100%, 0);
+  transition: transform var(--ease-timing, 1.2s) var(--ease-1, cubic-bezier(0.86, 0, 0.31, 1));
+}
+
+[data-anim="reveal-line"].-inview > *,
+.-inview [data-anim="reveal-line"] > * {
+  transform: translate3d(0, 0, 0);
+}
+
+/* ─── Reduced motion: dezactivăm tot ─── */
+@media (prefers-reduced-motion: reduce) {
+  [data-anim="char-reveal"] .-s-char,
+  .-splitted.-inview .-s-word,
+  [data-anim="reveal-up"],
+  [data-anim="reveal-line"] > * {
+    transform: none !important;
+    opacity: 1 !important;
+    transition: none !important;
+    clip-path: none !important;
+  }
+}

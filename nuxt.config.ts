@@ -8,16 +8,22 @@ const appManifestShim = fileURLToPath(
 export default defineNuxtConfig({
   compatibilityDate: '2024-11-01',
   devtools: { enabled: true },
-  css: ['~/assets/css/main.css'],
-  modules: ['@nuxt/image', '@nuxt/fonts'],
-  fonts: {
-    families: [
-      {
-        name: 'Cormorant Garamond',
-        weights: [300, 400, 500, 600]
-      }
-    ]
+  app: {
+    head: {
+      link: [
+        {
+          rel: 'stylesheet',
+          href: 'https://fonts.bunny.net/css2?family=Instrument+Serif:ital@0;1&family=Outfit:wght@300;400;500;600;700&display=swap'
+        }
+      ]
+    }
   },
+  css: [
+    '~/assets/css/fonts.css',
+    '~/assets/css/main.css',
+    '~/assets/css/animations.css'
+  ],
+  modules: ['@nuxt/image'],
   vite: {
     optimizeDeps: {
       exclude: ['#app-manifest']

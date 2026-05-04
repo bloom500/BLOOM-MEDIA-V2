@@ -18,6 +18,15 @@ logs
 .fleet
 .idea
 
+# Local QA / temp captures
+_tmp-home.html
+/bloom-*.png
+qa-screenshots/
+
+# Local font trials / vendor drops (production uses Bunny; see app/assets/css/fonts.css)
+public/fonts/gwen/
+public/fonts/mont/
+
 # Local env files
 .env
 .env.*

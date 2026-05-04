@@ -9,10 +9,16 @@
   --color-text: #F5F0E8;
   --color-accent: #F97316;
   --color-muted: #666666;
-  --font-display: 'Cormorant Garamond', serif;
-  --font-body: system-ui, sans-serif;
+  /* Outfit: UI (Mont DEMO avea watermark). Încărcat din Fonts Bunny, OFL. */
+  --font-ui: Outfit, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  /* Instrument Serif: titluri / editorial (Gwen trial avea watermark). Bunny, OFL. */
+  --font-display: 'Instrument Serif', Georgia, 'Times New Roman', serif;
+  --font-editorial: 'Instrument Serif', Georgia, serif;
+  /* Alias: corp site = Mont (inclusiv formulare, mic text) */
+  --font-body: var(--font-ui);
   --ease-1: cubic-bezier(0.86, 0, 0.31, 1);
   --ease-2: cubic-bezier(0.35, 0.35, 0, 1);
+  --ease-timing: 1.2s;
   --g-gap: 0.4rem;
   --g-margin: calc(var(--g-gap) * 2);
   --vh: 1vh;
@@ -38,14 +44,80 @@ html {
   font-size: 16px;
   line-height: 1.25;
   overflow-x: hidden;
+  overflow-y: auto;
+  height: auto;
+  font-feature-settings: 'kern' 1, 'liga' 1;
 }
 
 body {
   min-height: 100lvh;
+  height: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
   position: relative;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Nuxt root: lasă conținutul să depășească viewport (scroll vertical real) */
+#__nuxt {
+  min-height: 100%;
+  height: auto;
+}
+
+/* Ca tutorial footer-shifting: conținutul deasupra footerului rămâne deasupra în stack când footerul urcă. */
+.site-main {
+  position: relative;
+  z-index: 20;
+  display: block;
+  min-height: 0;
+}
+
+h1, h2, h3, .font-display {
+  font-family: var(--font-display);
+  font-weight: 600;
+  text-wrap: balance;
+}
+
+.font-editorial {
+  font-family: var(--font-editorial);
 }
 
 img, video {
   display: block;
   max-width: 100%;
+}
+
+/* StringTune — reveal pe cuvinte legat de scroll progress (declaration etc.) */
+.-splitted.-inview .-s-word {
+  --word-turn: calc(
+    (var(--word-index) - 3) /
+    var(--word-global-total)
+  );
+  --word-step: calc(1 / var(--word-global-total));
+  --word-progress: clamp(
+    0,
+    calc(
+      (var(--progress) - var(--word-turn)) /
+      var(--word-step)
+    ),
+    1
+  );
+
+  transform: translate3d(
+    0,
+    calc(100% - var(--word-progress) * 100%),
+    0
+  );
+  clip-path: inset(
+    -15% 0
+    calc(115% - var(--word-progress) * 130%)
+    0
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .-splitted.-inview .-s-word {
+    transform: none !important;
+    clip-path: none !important;
+  }
 }
