@@ -3,7 +3,12 @@
     <div class="services__grain" aria-hidden="true" />
 
     <div class="services__header">
-      <span class="services__label">02 — Servicii</span>
+      <span
+        class="services__label"
+        string="split"
+        string-split="line[center]"
+        string-repeat
+      >02 — Servicii</span>
       <h2 class="services__title">
         <span
           string="split"
@@ -22,7 +27,7 @@
     </div>
 
     <div class="services__list">
-      <article class="service" string string-repeat>
+      <article class="service" string string-repeat data-anim="stagger-item">
         <div class="service__num">
           01
         </div>
@@ -39,7 +44,7 @@
         </div>
       </article>
 
-      <article class="service" string string-repeat>
+      <article class="service" string string-repeat data-anim="stagger-item">
         <div class="service__num">
           02
         </div>
@@ -56,7 +61,7 @@
         </div>
       </article>
 
-      <article class="service" string string-repeat>
+      <article class="service" string string-repeat data-anim="stagger-item">
         <div class="service__num">
           03
         </div>
@@ -73,7 +78,7 @@
         </div>
       </article>
 
-      <article class="service" string string-repeat>
+      <article class="service" string string-repeat data-anim="stagger-item">
         <div class="service__num">
           04
         </div>
@@ -99,16 +104,18 @@
   </section>
 </template>
 
+<script setup lang="ts">
+</script>
+
 <style scoped>
 .services {
   position: relative;
+  overflow: hidden;
   width: 100%;
   min-height: 100svh;
   min-height: 100dvh;
-  background-color: var(--color-bg);
+  background: transparent;
   padding: 8rem 2.5rem 6rem;
-  overflow-x: hidden;
-  overflow-y: visible;
 }
 
 .services__grain {
@@ -135,7 +142,7 @@
   font-size: 0.65rem;
   text-transform: uppercase;
   letter-spacing: 0.18em;
-  color: rgba(245, 240, 232, 0.4);
+  color: var(--color-text-soft);
 }
 
 .services__title {
@@ -143,7 +150,7 @@
   font-weight: 400;
   font-size: clamp(3rem, 8vw, 9rem);
   line-height: 0.95;
-  color: rgba(245, 240, 232, 0.92);
+  color: var(--color-text);
   margin: 0;
   display: flex;
   flex-direction: column;
@@ -152,7 +159,7 @@
 
 .services__title--accent {
   font-style: italic;
-  color: var(--color-accent);
+  color: var(--color-text);
   padding-left: 8vw;
 }
 
@@ -169,7 +176,7 @@
   gap: 2rem;
   align-items: start;
   padding: 2.5rem 0;
-  border-top: 0.5px solid rgba(245, 240, 232, 0.08);
+  border-top: 0.5px solid var(--color-border);
   opacity: 0;
   transform: translate3d(0, 30px, 0);
   transition:
@@ -204,7 +211,7 @@
 }
 
 .service:last-child {
-  border-bottom: 0.5px solid rgba(245, 240, 232, 0.08);
+  border-bottom: 0.5px solid var(--color-border);
 }
 
 .service:hover {
@@ -214,7 +221,7 @@
 .service__num {
   font-family: var(--font-display);
   font-size: 1.4rem;
-  color: rgba(245, 240, 232, 0.4);
+  color: var(--color-text-soft);
   padding-top: 0.4rem;
 }
 
@@ -230,7 +237,7 @@
   font-size: clamp(1.8rem, 3.5vw, 3.5rem);
   line-height: 1.05;
   letter-spacing: -0.02em;
-  color: rgba(245, 240, 232, 0.92);
+  color: var(--color-text);
   margin: 0;
 }
 
@@ -238,7 +245,7 @@
   font-family: var(--font-body);
   font-size: 0.85rem;
   line-height: 1.6;
-  color: rgba(245, 240, 232, 0.5);
+  color: var(--color-text-muted);
   max-width: 540px;
   margin: 0;
 }
@@ -250,9 +257,9 @@
   font-size: 0.6rem;
   text-transform: uppercase;
   letter-spacing: 0.16em;
-  color: rgba(245, 240, 232, 0.35);
+  color: var(--color-text-faint);
   padding: 0.4rem 0.9rem;
-  border: 0.5px solid rgba(245, 240, 232, 0.15);
+  border: 0.5px solid var(--color-border-medium);
   border-radius: 999px;
   margin-top: 0.6rem;
 }
@@ -270,18 +277,18 @@
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.16em;
-  color: rgba(245, 240, 232, 0.7);
+  color: var(--color-text-muted);
   text-decoration: none;
   padding: 0.8rem 0;
-  border-bottom: 0.5px solid rgba(245, 240, 232, 0.4);
+  border-bottom: 0.5px solid var(--color-border-strong);
   transition:
     color 0.4s var(--ease-2),
     border-bottom-color 0.4s var(--ease-2);
 }
 
 .services__cta:hover {
-  color: var(--color-accent);
-  border-bottom-color: var(--color-accent);
+  color: var(--color-text);
+  border-bottom-color: var(--color-text);
 }
 
 @media (max-width: 768px) {

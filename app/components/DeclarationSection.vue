@@ -8,7 +8,11 @@
     <div class="declaration__grain" aria-hidden="true" />
 
     <div class="declaration__label">
-      <span>01 — Manifest</span>
+      <span
+        string="split"
+        string-split="line[center]"
+        string-repeat
+      >01 — Manifest</span>
     </div>
 
     <div
@@ -53,19 +57,23 @@
   </section>
 </template>
 
+<script setup lang="ts">
+</script>
+
 <style scoped>
 .declaration {
   position: relative;
+  overflow: hidden;
   width: 100%;
   min-height: 100svh;
   min-height: 100dvh;
-  background-color: var(--color-bg);
+  background: transparent;
+  /* Stack above global relief + charcoal base */
+  margin-top: -1px;
   padding: 8rem 2.5rem 4rem;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  overflow-x: hidden;
-  overflow-y: visible;
 }
 
 .declaration__grain {
@@ -85,7 +93,7 @@
   font-size: 0.65rem;
   text-transform: uppercase;
   letter-spacing: 0.18em;
-  color: rgba(245, 240, 232, 0.4);
+  color: var(--color-text-soft);
 }
 
 .declaration__content {
@@ -102,7 +110,7 @@
   font-weight: 400;
   font-size: clamp(3.5rem, 9vw, 11rem);
   line-height: 0.95;
-  color: rgba(245, 240, 232, 0.92);
+  color: var(--color-text);
   margin: 0;
   display: flex;
   flex-direction: column;
@@ -125,7 +133,7 @@
 .declaration__line--accent {
   padding-left: 12vw;
   font-style: italic;
-  color: var(--color-accent);
+  color: var(--color-text);
 }
 
 .declaration__line:nth-child(4) {
@@ -150,7 +158,7 @@
   font-size: 0.62rem;
   text-transform: uppercase;
   letter-spacing: 0.14em;
-  color: rgba(245, 240, 232, 0.35);
+  color: var(--color-text-faint);
   line-height: 1.7;
 }
 

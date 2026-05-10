@@ -1,0 +1,9 @@
+---
+description: ReliefSlab.client.vue is frozen — no edits unless the user explicitly requests changes to that file.
+alwaysApply: true
+---
+
+# Locked — `ReliefSlab.client.vue`
+
+- **Do not** change `app/components/ReliefSlab.client.vue` (or any `ReliefSlab.client.vue`) unless the user **explicitly** asks to modify that file in the current message.
+- If work would normally require touching it, use another file (wrapper, composable, global CSS, config) or tell the user the component is locked and ask them to allow an edit.

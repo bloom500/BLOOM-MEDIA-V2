@@ -4,7 +4,12 @@
 
     <div class="contact__content">
       <div class="contact__left">
-        <span class="contact__label">07 — Contact</span>
+        <span
+          class="contact__label"
+          string="split"
+          string-split="line[center]"
+          string-repeat
+        >07 — Contact</span>
         <h2 id="contact-heading" class="contact__title">
           <span>Să</span>
           <span class="contact__title--accent">vorbim.</span>
@@ -69,14 +74,16 @@
   </section>
 </template>
 
+<script setup lang="ts">
+</script>
+
 <style scoped>
 .contact {
   position: relative;
+  overflow: hidden;
   width: 100%;
-  background-color: var(--color-bg);
+  background: transparent;
   padding: 8rem 2.5rem 6rem;
-  overflow-x: hidden;
-  overflow-y: visible;
 }
 
 .contact__grain {
@@ -106,7 +113,7 @@
   font-size: 0.65rem;
   text-transform: uppercase;
   letter-spacing: 0.18em;
-  color: rgba(245, 240, 232, 0.4);
+  color: var(--color-text-soft);
   margin-bottom: 2rem;
 }
 
@@ -115,7 +122,7 @@
   font-weight: 400;
   font-size: clamp(3rem, 8vw, 7rem);
   line-height: 0.95;
-  color: rgba(245, 240, 232, 0.92);
+  color: var(--color-text);
   margin: 0 0 2rem;
   display: flex;
   flex-direction: column;
@@ -123,7 +130,7 @@
 
 .contact__title--accent {
   font-style: italic;
-  color: var(--color-accent);
+  color: var(--color-text);
   padding-left: 8vw;
 }
 
@@ -131,7 +138,7 @@
   font-family: var(--font-body);
   font-size: 0.95rem;
   line-height: 1.75;
-  color: rgba(245, 240, 232, 0.45);
+  color: var(--color-text-soft);
   max-width: 400px;
   margin: 0;
 }
@@ -152,18 +159,18 @@
   flex-direction: column;
   gap: 0.35rem;
   padding: 1.5rem 0;
-  border-top: 0.5px solid rgba(245, 240, 232, 0.08);
+  border-top: 0.5px solid var(--color-border);
   text-decoration: none;
   color: inherit;
   transition: background 0.35s var(--ease-2);
 }
 
 .contact__channel:last-of-type {
-  border-bottom: 0.5px solid rgba(245, 240, 232, 0.08);
+  border-bottom: 0.5px solid var(--color-border);
 }
 
 .contact__channel:hover {
-  background: rgba(245, 240, 232, 0.02);
+  background: rgba(0, 0, 0, 0.03);
 }
 
 .contact__channel-label {
@@ -171,14 +178,14 @@
   font-size: 0.6rem;
   text-transform: uppercase;
   letter-spacing: 0.16em;
-  color: rgba(245, 240, 232, 0.35);
+  color: var(--color-text-faint);
 }
 
 .contact__channel-value {
   font-family: var(--font-display);
   font-size: clamp(1.15rem, 2vw, 1.5rem);
   font-weight: 400;
-  color: rgba(245, 240, 232, 0.85);
+  color: var(--color-text);
 }
 
 .contact__channel:hover .contact__channel-value {
@@ -202,9 +209,9 @@
   text-transform: uppercase;
   letter-spacing: 0.14em;
   text-decoration: none;
-  color: var(--color-bg);
-  background-color: var(--color-accent);
-  border: 0.5px solid var(--color-accent);
+  color: #ffffff;
+  background-color: var(--color-text);
+  border: 0.5px solid var(--color-text);
   transition:
     background 0.3s ease,
     color 0.3s ease,
@@ -212,8 +219,8 @@
 }
 
 .contact__btn-primary:hover {
-  background-color: rgba(249, 115, 22, 0.9);
-  color: var(--color-bg);
+  background-color: rgba(0, 0, 0, 0.85);
+  color: #ffffff;
 }
 
 .contact__btn-secondary {
@@ -227,9 +234,9 @@
   text-transform: uppercase;
   letter-spacing: 0.14em;
   text-decoration: none;
-  color: rgba(245, 240, 232, 0.85);
+  color: var(--color-text);
   background: transparent;
-  border: 0.5px solid rgba(245, 240, 232, 0.25);
+  border: 0.5px solid var(--color-border-medium);
   transition:
     border-color 0.3s ease,
     color 0.3s ease,
@@ -237,9 +244,9 @@
 }
 
 .contact__btn-secondary:hover {
-  border-color: rgba(245, 240, 232, 0.55);
+  border-color: var(--color-border-strong);
   color: var(--color-text);
-  background: rgba(245, 240, 232, 0.04);
+  background: rgba(0, 0, 0, 0.04);
 }
 
 @media (max-width: 768px) {

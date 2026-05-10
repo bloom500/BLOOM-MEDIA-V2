@@ -8,5 +8,10 @@
     <FaqSection />
     <ContactSection />
   </main>
-  <TheFooter />
 </template>
+
+<style scoped>
+.site-main {
+  background: transparent !important;
+}
+</style>

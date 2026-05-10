@@ -1,10 +1,4 @@
 <template>
-  <!--
-    Logica ca tutorial-01-footer-shifting.html (StringTune):
-    - string="progress" + string-exit-vp="bottom" pe .footer
-    - transform pe interior (.footer__inner), nu pe .footer
-    - overlay = .footer::after (fundal pagină), opacity 1 - progress
-  -->
   <footer
     class="footer"
     string="progress"
@@ -78,13 +72,13 @@
 </template>
 
 <style scoped>
+/* tutorial-01-footer-shifting: overlay + translate pe --progress (StringTune) */
 .footer {
   position: relative;
-  background-color: #0f0f0f;
+  background-color: #e4e4e0;
   color: var(--color-text);
 }
 
-/* Ca tutorial: mască peste culoarea footerului până la progress → 1 */
 .footer::after {
   content: '';
   display: block;
@@ -98,18 +92,24 @@
   pointer-events: none;
 }
 
-/* Ca tutorial .footer .-w: transform aici, min-height 100vh */
 .footer__inner {
   position: relative;
+  z-index: 1;
   min-height: calc(var(--vh, 1vh) * 100);
   display: grid;
   grid-template-rows: 1fr auto;
   padding: 6rem 2.5rem 3rem;
-  transform: translate3d(
-    0,
-    calc(-50% + 50% * var(--progress)),
-    0
-  );
+  transform: translate3d(0, calc(-50% + 50% * var(--progress)), 0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .footer__inner {
+    transform: none;
+  }
+
+  .footer::after {
+    opacity: 0;
+  }
 }
 
 .footer__top {
@@ -134,7 +134,7 @@
 }
 
 .footer__dot {
-  color: var(--color-accent);
+  color: var(--color-text);
 }
 
 .footer__tagline {
@@ -142,7 +142,7 @@
   font-size: 0.6rem;
   text-transform: uppercase;
   letter-spacing: 0.16em;
-  color: rgba(245, 240, 232, 0.3);
+  color: var(--color-text-ghost);
 }
 
 .footer__nav {
@@ -162,14 +162,14 @@
   font-size: 0.6rem;
   text-transform: uppercase;
   letter-spacing: 0.16em;
-  color: rgba(245, 240, 232, 0.3);
+  color: var(--color-text-ghost);
   margin-bottom: 0.5rem;
 }
 
 .footer__nav-col a {
   font-family: var(--font-body);
   font-size: 0.85rem;
-  color: rgba(245, 240, 232, 0.6);
+  color: var(--color-text-muted);
   text-decoration: none;
   transition: color 0.3s ease;
 }
@@ -183,7 +183,7 @@
   align-items: center;
   justify-content: space-between;
   padding-top: 3rem;
-  border-top: 0.5px solid rgba(245, 240, 232, 0.08);
+  border-top: 0.5px solid var(--color-border);
   flex-wrap: wrap;
   gap: 1rem;
 }
@@ -195,7 +195,7 @@
   font-size: 0.62rem;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: rgba(245, 240, 232, 0.25);
+  color: var(--color-text-ghost);
 }
 
 @media (max-width: 768px) {

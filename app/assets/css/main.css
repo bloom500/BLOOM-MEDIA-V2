@@ -5,10 +5,17 @@
 }
 
 :root {
-  --color-bg: #080808;
-  --color-text: #F5F0E8;
-  --color-accent: #F97316;
-  --color-muted: #666666;
+  --color-bg: #fafafa;
+  --color-text: #000000;
+  --color-accent: #000000;
+  --color-muted: rgba(0, 0, 0, 0.55);
+  --color-text-muted: rgba(0, 0, 0, 0.55);
+  --color-text-soft: rgba(0, 0, 0, 0.5);
+  --color-text-faint: rgba(0, 0, 0, 0.42);
+  --color-text-ghost: rgba(0, 0, 0, 0.35);
+  --color-border: rgba(0, 0, 0, 0.08);
+  --color-border-medium: rgba(0, 0, 0, 0.15);
+  --color-border-strong: rgba(0, 0, 0, 0.42);
   /* Outfit: UI (Mont DEMO avea watermark). Încărcat din Fonts Bunny, OFL. */
   --font-ui: Outfit, system-ui, -apple-system, 'Segoe UI', sans-serif;
   /* Instrument Serif: titluri / editorial (Gwen trial avea watermark). Bunny, OFL. */
@@ -58,18 +65,31 @@ body {
   -webkit-overflow-scrolling: touch;
 }
 
+@media (hover: hover) and (pointer: fine) {
+  body,
+  body a,
+  body button,
+  body summary {
+    cursor: none;
+  }
+}
+
 /* Nuxt root: lasă conținutul să depășească viewport (scroll vertical real) */
 #__nuxt {
   min-height: 100%;
   height: auto;
+  /* Deasupra fundalului 3D teleportat pe body (z-index: 0), ca să nu acopere UI-ul */
+  position: relative;
+  z-index: 1;
 }
 
-/* Ca tutorial footer-shifting: conținutul deasupra footerului rămâne deasupra în stack când footerul urcă. */
+/* Conținut deasupra footerului în flow (tutorial footer-shifting + StringTune pe footer). */
 .site-main {
   position: relative;
   z-index: 20;
   display: block;
   min-height: 0;
+  background: var(--color-bg);
 }
 
 h1, h2, h3, .font-display {
@@ -119,5 +139,71 @@ img, video {
   .-splitted.-inview .-s-word {
     transform: none !important;
     clip-path: none !important;
+  }
+}
+
+section,
+section p,
+section li,
+section span,
+section h1,
+section h2,
+section h3,
+footer,
+footer p,
+footer li,
+footer span {
+  color: var(--color-text);
+}
+
+/* Fundal deschis + text negru; relief tintat în ReliefBackground.vue */
+html, body {
+  background: var(--color-bg) !important;
+  color: var(--color-text) !important;
+}
+
+section,
+.hero,
+.declaration,
+.services,
+.process,
+.why,
+.faq,
+.contact,
+.page,
+.relief-content {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+/* site-main trebuie să aibă fundal opac pentru a acoperi footerul translat */
+.site-main {
+  background: var(--color-bg) !important;
+  position: relative;
+  z-index: 20;
+}
+
+/* Hero — StringTune word reveal (word[start]) */
+.hero__statement.-splitted .-s-word {
+  display: inline-flex;
+  overflow: hidden;
+  vertical-align: bottom;
+}
+
+.hero__statement.-splitted .-s-word > * {
+  transform: translateY(110%);
+  will-change: transform;
+}
+
+.hero__statement.-splitted.-inview .-s-word > * {
+  transform: translateY(0);
+  transition: transform 1.1s cubic-bezier(0.86, 0, 0.31, 1);
+  transition-delay: calc(var(--word-index, 0) * 0.08s);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero__statement.-splitted .-s-word > * {
+    transform: none !important;
+    transition: none !important;
   }
 }

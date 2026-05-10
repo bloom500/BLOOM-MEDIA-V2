@@ -3,7 +3,12 @@
     <div class="process__grain" aria-hidden="true" />
 
     <div class="process__header">
-      <span class="process__label">03 — Procesul</span>
+      <span
+        class="process__label"
+        string="split"
+        string-split="line[center]"
+        string-repeat
+      >03 — Procesul</span>
       <h2 class="process__title">
         <span
           string="split"
@@ -124,14 +129,16 @@
   </section>
 </template>
 
+<script setup lang="ts">
+</script>
+
 <style scoped>
 .process {
   position: relative;
+  overflow: hidden;
   width: 100%;
-  background-color: var(--color-bg);
+  background: transparent;
   padding: 8rem 2.5rem 6rem;
-  overflow-x: hidden;
-  overflow-y: visible;
 }
 
 .process__grain {
@@ -159,7 +166,7 @@
   font-size: 0.65rem;
   text-transform: uppercase;
   letter-spacing: 0.18em;
-  color: rgba(245, 240, 232, 0.4);
+  color: var(--color-text-soft);
 }
 
 .process__title {
@@ -167,7 +174,7 @@
   font-weight: 400;
   font-size: clamp(3rem, 8vw, 9rem);
   line-height: 0.95;
-  color: rgba(245, 240, 232, 0.92);
+  color: var(--color-text);
   margin: 0;
   display: flex;
   flex-direction: column;
@@ -176,7 +183,7 @@
 
 .process__title--accent {
   font-style: italic;
-  color: var(--color-accent);
+  color: var(--color-text);
   padding-right: 6vw;
 }
 
@@ -194,11 +201,11 @@
   grid-template-columns: 100px 1fr;
   gap: 3rem;
   padding: 4rem 0;
-  border-top: 0.5px solid rgba(245, 240, 232, 0.08);
+  border-top: 0.5px solid var(--color-border);
 }
 
 .step:last-child {
-  border-bottom: 0.5px solid rgba(245, 240, 232, 0.08);
+  border-bottom: 0.5px solid var(--color-border);
 }
 
 .step__num {
@@ -215,7 +222,7 @@
 .step__num span {
   font-family: var(--font-display);
   font-size: clamp(2rem, 4vw, 3.5rem);
-  color: rgba(245, 240, 232, 0.5);
+  color: var(--color-text-muted);
   font-style: italic;
 }
 
@@ -224,7 +231,7 @@
   height: 80px;
   background: linear-gradient(
     to bottom,
-    rgba(245, 240, 232, 0.2),
+    rgba(255, 255, 255, 0.12),
     transparent
   );
 }
@@ -241,7 +248,7 @@
   font-size: clamp(2rem, 4vw, 4rem);
   line-height: 1.05;
   letter-spacing: -0.02em;
-  color: rgba(245, 240, 232, 0.92);
+  color: var(--color-text);
   margin: 0;
   display: block;
   overflow: hidden;
@@ -292,7 +299,7 @@
   font-family: var(--font-body);
   font-size: 0.95rem;
   line-height: 1.7;
-  color: rgba(245, 240, 232, 0.55);
+  color: var(--color-text-muted);
   max-width: 600px;
   margin: 0;
 }
@@ -311,7 +318,7 @@
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  color: rgba(245, 240, 232, 0.45);
+  color: var(--color-text-soft);
   padding-left: 1.2rem;
   position: relative;
 }
@@ -323,7 +330,7 @@
   top: 0.5em;
   width: 6px;
   height: 1px;
-  background: var(--color-accent);
+  background: transparent;
 }
 
 @media (max-width: 768px) {

@@ -1,43 +1,43 @@
 <template>
-  <div class="app-root">
+  <!--
+    Fundal 3D: pe / → fishpond (ReliefSlab); pe restul rutelor → plan procedural (Morphing).
+    Stacking: morph z-0, relief slab z-1, conținut site z-2 (vezi .site-content).
+  -->
+  <ClientOnly>
+    <SiteBackground3d />
+  </ClientOnly>
+
+  <!-- Page content -->
+  <div class="site-content">
     <TheNavbar />
     <NuxtPage />
+    <TheFooter />
   </div>
+
+  <CustomCursor />
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { onMounted, nextTick } from 'vue'
+import CustomCursor from '~/components/CustomCursor.vue'
+import SiteBackground3d from '~/components/SiteBackground3d.vue'
+import { initStringTune, getStringTune } from '~/lib/stringtune/client'
 
 onMounted(async () => {
   await nextTick()
+  if (!import.meta.client) return
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
 
-  if (!import.meta.client) {
-    return
-  }
-
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    return
-  }
-
-  const {
-    StringTune,
-    StringProgress,
-    StringSplit,
-    StringParallax
-  } = await import('@fiddle-digital/string-tune')
-
-  const st = StringTune.getInstance()
-  st.use(StringProgress)
-  st.use(StringSplit)
-  st.use(StringParallax)
-  st.start(60)
-
-  ;(window as unknown as { __stringTune?: unknown }).__stringTune = st
+  initStringTune({ loadingTimeout: 450 })
+  const st = getStringTune()
+  if (st) window.__st = st
 })
 </script>
 
 <style>
-.app-root {
-  min-height: 100%;
+.site-content {
+  position: relative;
+  z-index: 2;
+  min-height: 100vh;
 }
 </style>

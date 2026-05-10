@@ -3,7 +3,12 @@
     <div class="faq__grain" aria-hidden="true" />
 
     <div class="faq__header">
-      <span class="faq__label">06 — Întrebări frecvente</span>
+      <span
+        class="faq__label"
+        string="split"
+        string-split="line[center]"
+        string-repeat
+      >06 — Întrebări frecvente</span>
       <h2 id="faq-heading" class="faq__title">
         <span
           string="split"
@@ -108,14 +113,16 @@
   </section>
 </template>
 
+<script setup lang="ts">
+</script>
+
 <style scoped>
 .faq {
   position: relative;
+  overflow: hidden;
   width: 100%;
-  background-color: var(--color-bg);
+  background: transparent;
   padding: 8rem 2.5rem 6rem;
-  overflow-x: hidden;
-  overflow-y: visible;
 }
 
 .faq__grain {
@@ -140,7 +147,7 @@
   font-size: 0.65rem;
   text-transform: uppercase;
   letter-spacing: 0.18em;
-  color: rgba(245, 240, 232, 0.4);
+  color: var(--color-text-soft);
   margin-bottom: 2rem;
 }
 
@@ -149,7 +156,7 @@
   font-weight: 400;
   font-size: clamp(3rem, 8vw, 9rem);
   line-height: 0.95;
-  color: rgba(245, 240, 232, 0.92);
+  color: var(--color-text);
   margin: 0;
   display: flex;
   flex-direction: column;
@@ -157,7 +164,7 @@
 
 .faq__title--accent {
   font-style: italic;
-  color: var(--color-accent);
+  color: var(--color-text);
   padding-left: 12vw;
 }
 
@@ -169,18 +176,18 @@
 }
 
 .faq__item {
-  border-top: 0.5px solid rgba(245, 240, 232, 0.08);
+  border-top: 0.5px solid var(--color-border);
 }
 
 .faq__item:last-child {
-  border-bottom: 0.5px solid rgba(245, 240, 232, 0.08);
+  border-bottom: 0.5px solid var(--color-border);
 }
 
 .faq__question {
   font-family: var(--font-display);
   font-weight: 400;
   font-size: clamp(1.2rem, 2.5vw, 1.8rem);
-  color: rgba(245, 240, 232, 0.75);
+  color: var(--color-text-muted);
   padding: 2rem 3rem 2rem 0;
   cursor: pointer;
   list-style: none;
@@ -201,7 +208,7 @@
   font-family: var(--font-body);
   font-size: 1.4rem;
   font-weight: 300;
-  color: rgba(245, 240, 232, 0.25);
+  color: var(--color-text-ghost);
   transition:
     transform 0.4s var(--ease-2),
     color 0.3s ease;
@@ -209,18 +216,18 @@
 
 .faq__item[open] .faq__question::after {
   transform: translateY(-50%) rotate(45deg);
-  color: var(--color-accent);
+  color: var(--color-text);
 }
 
 .faq__item[open] .faq__question {
-  color: rgba(245, 240, 232, 0.95);
+  color: var(--color-text);
 }
 
 .faq__answer {
   font-family: var(--font-body);
   font-size: 0.9rem;
   line-height: 1.8;
-  color: rgba(245, 240, 232, 0.45);
+  color: var(--color-text-soft);
   padding: 0 3rem 2.5rem 0;
   max-width: 680px;
   margin: 0;

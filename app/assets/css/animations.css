@@ -78,12 +78,87 @@
   transform: translate3d(0, 0, 0);
 }
 
+/* ─── Premium media reveals / cards ─── */
+[data-anim="image-reveal"] {
+  overflow: hidden;
+  will-change: clip-path;
+}
+
+[data-anim="image-reveal"] img {
+  will-change: transform;
+}
+
+[data-anim="stagger-item"] {
+  opacity: 0;
+  transform: translate3d(0, 30px, 0);
+}
+
+.service,
+.why-item {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.service > *,
+.why-item > * {
+  position: relative;
+  z-index: 1;
+}
+
+.service::after,
+.why-item::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: rgba(255, 255, 255, 0.06);
+  opacity: 0;
+  transition: opacity 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.service,
+.why-item,
+.service__name,
+.why-item__title {
+  transition:
+    transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    opacity 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.service:hover,
+.why-item:hover {
+  transform: scale(1.015);
+}
+
+.service:hover::after,
+.why-item:hover::after {
+  opacity: 0.4;
+}
+
+.service__name,
+.why-item__title {
+  transform: translate3d(0, 10px, 0);
+}
+
+.service:hover .service__name,
+.why-item:hover .why-item__title {
+  transform: translate3d(0, 0, 0);
+}
+
 /* ─── Reduced motion: dezactivăm tot ─── */
 @media (prefers-reduced-motion: reduce) {
   [data-anim="char-reveal"] .-s-char,
   .-splitted.-inview .-s-word,
   [data-anim="reveal-up"],
-  [data-anim="reveal-line"] > * {
+  [data-anim="reveal-line"] > *,
+  [data-anim="stagger-item"],
+  [data-anim="image-reveal"],
+  [data-anim="image-reveal"] img,
+  .service,
+  .why-item,
+  .service__name,
+  .why-item__title {
     transform: none !important;
     opacity: 1 !important;
     transition: none !important;

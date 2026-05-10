@@ -31,3 +31,15 @@ public/fonts/mont/
 .env
 .env.*
 !.env.example
+
+# macOS junk
+**/__MACOSX/
+
+# Local Playwright / audit runs
+.playwright-audit/
+
+# Exceed GitHub 100MB file limit (add via Git LFS or host elsewhere if needed)
+/public/hero__demon_king_-_past_demon_king_bas_relief.glb
+/public/models/Mythical Panel.zip
+/public/models/optimized/fishpond_baked.glb
+/public/models/stlfilesfree/flowers-and-birds/birdsAndFlowers.stl

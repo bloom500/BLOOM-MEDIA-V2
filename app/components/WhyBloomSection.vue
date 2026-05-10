@@ -3,7 +3,12 @@
     <div class="why__grain" aria-hidden="true" />
 
     <div class="why__header">
-      <span class="why__label">04 — De ce noi</span>
+      <span
+        class="why__label"
+        string="split"
+        string-split="line[center]"
+        string-repeat
+      >04 — De ce noi</span>
       <h2 id="why-heading" class="why__title">
         <span>Altfel</span>
         <span class="why__title--accent">decât</span>
@@ -12,7 +17,7 @@
     </div>
 
     <div class="why__grid">
-      <article class="why-item" string string-repeat>
+      <article class="why-item" string string-repeat data-anim="stagger-item">
         <div class="why-item__icon" aria-hidden="true">
           01
         </div>
@@ -29,7 +34,7 @@
         </div>
       </article>
 
-      <article class="why-item" string string-repeat>
+      <article class="why-item" string string-repeat data-anim="stagger-item">
         <div class="why-item__icon" aria-hidden="true">
           02
         </div>
@@ -45,7 +50,7 @@
         </div>
       </article>
 
-      <article class="why-item" string string-repeat>
+      <article class="why-item" string string-repeat data-anim="stagger-item">
         <div class="why-item__icon" aria-hidden="true">
           03
         </div>
@@ -62,7 +67,7 @@
         </div>
       </article>
 
-      <article class="why-item" string string-repeat>
+      <article class="why-item" string string-repeat data-anim="stagger-item">
         <div class="why-item__icon" aria-hidden="true">
           04
         </div>
@@ -79,7 +84,7 @@
         </div>
       </article>
 
-      <article class="why-item" string string-repeat>
+      <article class="why-item" string string-repeat data-anim="stagger-item">
         <div class="why-item__icon" aria-hidden="true">
           05
         </div>
@@ -96,7 +101,7 @@
         </div>
       </article>
 
-      <article class="why-item" string string-repeat>
+      <article class="why-item" string string-repeat data-anim="stagger-item">
         <div class="why-item__icon" aria-hidden="true">
           06
         </div>
@@ -125,15 +130,17 @@
   </section>
 </template>
 
+<script setup lang="ts">
+</script>
+
 <style scoped>
 .why {
   position: relative;
+  overflow: hidden;
   width: 100%;
   min-height: 100vh;
-  background-color: var(--color-bg);
+  background: transparent;
   padding: 8rem 2.5rem 6rem;
-  overflow-x: hidden;
-  overflow-y: visible;
 }
 
 .why__grain {
@@ -158,7 +165,7 @@
   font-size: 0.65rem;
   text-transform: uppercase;
   letter-spacing: 0.18em;
-  color: rgba(245, 240, 232, 0.4);
+  color: var(--color-text-soft);
   margin-bottom: 2rem;
 }
 
@@ -167,7 +174,7 @@
   font-weight: 400;
   font-size: clamp(3rem, 8vw, 9rem);
   line-height: 0.95;
-  color: rgba(245, 240, 232, 0.92);
+  color: var(--color-text);
   margin: 0;
   display: flex;
   flex-direction: column;
@@ -175,7 +182,7 @@
 
 .why__title--accent {
   font-style: italic;
-  color: var(--color-accent);
+  color: var(--color-text);
   padding-left: 10vw;
 }
 
@@ -197,7 +204,7 @@
   grid-template-columns: 60px 1fr;
   gap: 1.5rem;
   padding: 3rem 3rem 3rem 0;
-  border-top: 0.5px solid rgba(245, 240, 232, 0.08);
+  border-top: 0.5px solid var(--color-border);
   opacity: 0;
   transform: translate3d(0, 40px, 0);
   transition:
@@ -241,18 +248,18 @@
 
 .why-item:nth-child(even) {
   padding-left: 3rem;
-  border-left: 0.5px solid rgba(245, 240, 232, 0.08);
+  border-left: 0.5px solid var(--color-border);
 }
 
 .why-item:hover {
-  background: rgba(245, 240, 232, 0.02);
+  background: rgba(0, 0, 0, 0.03);
 }
 
 .why-item__icon {
   font-family: var(--font-display);
   font-size: 1.2rem;
   font-style: italic;
-  color: rgba(245, 240, 232, 0.25);
+  color: var(--color-text-ghost);
   padding-top: 0.3rem;
 }
 
@@ -267,7 +274,7 @@
   font-weight: 400;
   font-size: clamp(1.4rem, 2.5vw, 2rem);
   line-height: 1.1;
-  color: rgba(245, 240, 232, 0.92);
+  color: var(--color-text);
   margin: 0;
 }
 
@@ -275,7 +282,7 @@
   font-family: var(--font-body);
   font-size: 0.85rem;
   line-height: 1.7;
-  color: rgba(245, 240, 232, 0.45);
+  color: var(--color-text-soft);
   margin: 0;
 }
 
@@ -285,7 +292,7 @@
   z-index: 2;
   margin-top: 6rem;
   padding-top: 3rem;
-  border-top: 0.5px solid rgba(245, 240, 232, 0.08);
+  border-top: 0.5px solid var(--color-border);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -296,7 +303,7 @@
   font-size: clamp(2rem, 4vw, 4rem);
   font-weight: 400;
   font-style: italic;
-  color: rgba(245, 240, 232, 0.6);
+  color: var(--color-text-muted);
   margin: 0;
 }
 
@@ -305,16 +312,16 @@
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.16em;
-  color: rgba(245, 240, 232, 0.7);
+  color: var(--color-text-muted);
   text-decoration: none;
   padding: 0.8rem 0;
-  border-bottom: 0.5px solid rgba(245, 240, 232, 0.4);
+  border-bottom: 0.5px solid var(--color-border-strong);
   transition: all 0.4s ease;
 }
 
 .why__cta-link:hover {
-  color: var(--color-accent);
-  border-bottom-color: var(--color-accent);
+  color: var(--color-text);
+  border-bottom-color: var(--color-text);
 }
 
 @media (max-width: 768px) {
