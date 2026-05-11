@@ -47,11 +47,11 @@
     <div class="declaration__bottom">
       <div class="declaration__bottom-left">
         <span>Nu vindem promisiuni.</span>
-        <span>Construim sisteme.</span>
+        <span>Construim sisteme care lucrează pentru tine 24/7.</span>
       </div>
       <div class="declaration__bottom-right">
         <span>Bloom Media —</span>
-        <span>O agenție pentru creștere</span>
+        <span>Cluj-Napoca, România</span>
       </div>
     </div>
   </section>

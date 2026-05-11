@@ -11,14 +11,14 @@
       </div>
 
       <div class="hero__center">
-        <p
+        <h1
           class="hero__statement -splitted"
           string="split"
           string-split="word[start]"
           string-repeat
         >
           Creștem afaceri digitale.
-        </p>
+        </h1>
       </div>
 
       <div class="hero__bottom">

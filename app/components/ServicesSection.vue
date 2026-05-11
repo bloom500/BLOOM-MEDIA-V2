@@ -36,7 +36,7 @@
             Meta și Google Ads
           </h3>
           <p class="service__desc">
-            Campanii de performanță cu obiective clare. Fiecare leu cheltuit are KPI măsurabil și raport săptămânal.
+            Campanii plătite cu ROAS transparent. Targetăm exact audiența care cumpără — nu aruncăm bugetul la întâmplare. KPI-uri clare de la prima ședință.
           </p>
         </div>
         <div class="service__tag">
@@ -53,7 +53,7 @@
             Web Design și Landing Pages
           </h3>
           <p class="service__desc">
-            Site-uri cinematice care convertesc. De la concept la deploy în SvelteKit, Nuxt sau WordPress headless.
+            Site-uri și landing pages care transformă vizitatorii în clienți. De la concept la deploy în Nuxt, SvelteKit sau WordPress — rapid, curat, optimizat pentru conversii.
           </p>
         </div>
         <div class="service__tag">
@@ -70,7 +70,7 @@
             Automatizare și AI
           </h3>
           <p class="service__desc">
-            Agenți AI care preiau task-uri repetitive — lead scoring, follow-up, rapoarte. Mai mult timp pentru ce contează.
+            Fluxuri automate care elimină munca repetitivă din business-ul tău — lead scoring, follow-up, rapoarte. Tu te concentrezi pe strategie, automatizările fac restul.
           </p>
         </div>
         <div class="service__tag">
@@ -87,7 +87,7 @@
             Consultanță Strategică
           </h3>
           <p class="service__desc">
-            Audit, strategie, plan de execuție. Pentru business-uri care vor să iasă din capcana „campaniilor punctuale”.
+            Analizăm unde se pierd banii acum și construim planul de creștere pentru următoarele 90 de zile. Fără șabloane, fără promisiuni vagi.
           </p>
         </div>
         <div class="service__tag">

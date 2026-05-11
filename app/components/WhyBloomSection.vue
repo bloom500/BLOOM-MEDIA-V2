@@ -10,9 +10,9 @@
         string-repeat
       >04 — De ce noi</span>
       <h2 id="why-heading" class="why__title">
-        <span>Altfel</span>
-        <span class="why__title--accent">decât</span>
-        <span>restul.</span>
+        <span>De ce</span>
+        <span class="why__title--accent">Bloom Media</span>
+        <span>și nu altcineva.</span>
       </h2>
     </div>
 

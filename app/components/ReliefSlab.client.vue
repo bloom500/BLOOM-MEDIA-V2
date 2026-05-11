@@ -19,7 +19,7 @@
  *  - Toate detaliile lumină + relief sunt PRE-RENDERATE (baked) în 6 canale (2 texturi RGB):
  *      tt2 = emissiveMap   → b = level0 (cel mai „plat”), g = level1, r = level2
  *      tt1 = baseColorMap  → b = level3,                  g = level4, r = level5 (cel mai „extrudat”)
- *  - Trail: Official trail.js + canvas 2048² (settings.dimensions); fade 0.025, rază width×0.12.
+ *  - Trail: Official trail.js + canvas 2048²; fade 0.025; rază pensulă TRAIL_CIRCLE_RADIUS_MULT_* (mouse vs ghost).
  *  - VERTEX / FRAGMENT: extrude din trail, Z mix(0.03,1.,extrude); nivele _l0…_l5 ca în index.ts.
  *  - .relief-fog = canvas 2D: același trail ca uTrail (Yuri) taie uniform fog-ul (destination-out), nu spotlight separat.
  *  - Input: WebGLRenderer + ShaderMaterial (același comportament, alt pipeline decât WebGPU).
@@ -72,11 +72,18 @@ const FOG_MASK_SCRATCH_MAX_W = 640
 /** Dimensiune trail canvas — SketchSettings.dimensions [2048, 2048] din index.ts. */
 const TRAIL_CANVAS_SIZE = 2048
 
+/**
+ * Rază pensulă trail (fracție din lățimea buffer 2048) — tutorial Yuri folosește 0.12;
+ * aici mai mică la hover + și mai mică la ghost (fog + shader folosesc același trail).
+ */
+const TRAIL_CIRCLE_RADIUS_MULT_MOUSE = 0.088
+const TRAIL_CIRCLE_RADIUS_MULT_GHOST = 0.056
+
 /** Ca positionNode: pos.z *= mix(0.03, 1., extrude) */
 const Z_EXTRUDE_MIN = 0.03
 
-/** Durată ciclu ghost — ca duration: 6_000 ms în index.ts (playhead). */
-const GHOST_PERIOD_MS = 6000
+/** Durată ciclu ghost — mai mare = mișcare mai lentă pe orbită. */
+const GHOST_PERIOD_MS = 12000
 /** Margine față de marginile viewport-ului (0–1), ca pensula să nu „șteargă” la colțuri. */
 const GHOST_VIEW_INSET = 0.08
 /** Raport „auriu” pentru axa Y — traiectorie Lissajous, nu cerc. */
@@ -173,7 +180,7 @@ function ensureTrailLayer() {
 
   if (trailLayer && trailLayer.canvas.width === bw && trailLayer.canvas.height === bh) {
     trailLayer.setFadeSpeed(0.025)
-    trailLayer.setCircleRadius(bw * 0.12)
+    trailLayer.setCircleRadius(bw * TRAIL_CIRCLE_RADIUS_MULT_MOUSE)
     return true
   }
 
@@ -185,7 +192,7 @@ function ensureTrailLayer() {
 
   trailLayer = new TrailCanvas(bw, bh)
   trailLayer.setFadeSpeed(0.025)
-  trailLayer.setCircleRadius(bw * 0.12)
+  trailLayer.setCircleRadius(bw * TRAIL_CIRCLE_RADIUS_MULT_MOUSE)
   trailTexture = new THREE.CanvasTexture(trailLayer.getTexture())
   configureTrailThreeTexture(trailTexture)
   pool.textures.add(trailTexture)
@@ -208,6 +215,12 @@ function ghostPointerFraction(phase) {
   const t = GHOST_VIEW_INSET
   const s = 1 - 2 * t
   return { x: t + s * nx, y: t + s * ny }
+}
+
+/** Același prag ca la paint trail: pointer real recent → rază pensulă mai mare. */
+function isTrailUserActiveNow() {
+  const now = performance.now()
+  return lastRealMouseTime >= 0 && (now - lastRealMouseTime) < USER_ACTIVE_MS
 }
 
 /**
@@ -314,6 +327,10 @@ function paintReliefFog() {
 function paintTrail() {
   if (ensureTrailLayer()) {
     updateTrailPaintTargetCss()
+    const bw = TRAIL_CANVAS_SIZE
+    trailLayer.setCircleRadius(
+      bw * (isTrailUserActiveNow() ? TRAIL_CIRCLE_RADIUS_MULT_MOUSE : TRAIL_CIRCLE_RADIUS_MULT_GHOST),
+    )
     const { x, y } = cssToTrailBuffer(trailPaintCss.x, trailPaintCss.y)
     trailLayer.update({ x, y })
     trailTexture.needsUpdate = true
