@@ -22,11 +22,18 @@ useHead({
     <WhyBloomSection />
     <FaqSection />
     <ContactSection />
+    <ResultsSection />
+    <TestimonialsSection />
+    <TeamPreviewSection />
+    <ConfiguratorCtaSection />
+    <SalutSection />
   </main>
 </template>
 
 <style scoped>
 .site-main {
+  position: relative;
+  z-index: 20;
   background: transparent !important;
 }
 </style>
