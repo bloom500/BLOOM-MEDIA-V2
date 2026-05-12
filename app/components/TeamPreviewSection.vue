@@ -58,6 +58,7 @@
 
 .team-preview__title--accent {
   font-style: italic;
+  color: var(--color-accent);
 }
 
 .team-preview__placeholder {

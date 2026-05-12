@@ -58,6 +58,7 @@
 
 .testimonials__title--accent {
   font-style: italic;
+  color: var(--color-accent);
 }
 
 .testimonials__placeholder {

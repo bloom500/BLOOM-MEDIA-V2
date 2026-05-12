@@ -58,6 +58,7 @@
 
 .results__title--accent {
   font-style: italic;
+  color: var(--color-accent);
 }
 
 .results__placeholder {

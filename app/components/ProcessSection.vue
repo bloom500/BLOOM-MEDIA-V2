@@ -183,7 +183,7 @@
 
 .process__title--accent {
   font-style: italic;
-  color: var(--color-text);
+  color: var(--color-accent);
   padding-right: 6vw;
 }
 

@@ -58,6 +58,7 @@
 
 .configurator-cta__title--accent {
   font-style: italic;
+  color: var(--color-accent);
 }
 
 .configurator-cta__placeholder {
