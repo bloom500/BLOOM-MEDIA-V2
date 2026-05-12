@@ -130,7 +130,7 @@
 
 .contact__title--accent {
   font-style: italic;
-  color: var(--color-text);
+  color: var(--color-accent);
   padding-left: 8vw;
 }
 
@@ -170,7 +170,7 @@
 }
 
 .contact__channel:hover {
-  background: rgba(0, 0, 0, 0.03);
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .contact__channel-label {
@@ -209,7 +209,7 @@
   text-transform: uppercase;
   letter-spacing: 0.14em;
   text-decoration: none;
-  color: #ffffff;
+  color: #000000;
   background-color: var(--color-text);
   border: 0.5px solid var(--color-text);
   transition:
@@ -219,8 +219,8 @@
 }
 
 .contact__btn-primary:hover {
-  background-color: rgba(0, 0, 0, 0.85);
-  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.85);
+  color: #000000;
 }
 
 .contact__btn-secondary {
@@ -246,7 +246,7 @@
 .contact__btn-secondary:hover {
   border-color: var(--color-border-strong);
   color: var(--color-text);
-  background: rgba(0, 0, 0, 0.04);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 @media (max-width: 768px) {

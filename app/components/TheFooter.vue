@@ -75,7 +75,7 @@
 /* tutorial-01-footer-shifting: overlay + translate pe --progress (StringTune) */
 .footer {
   position: relative;
-  background-color: #e4e4e0;
+  background-color: #0c0c0c;
   color: var(--color-text);
 }
 

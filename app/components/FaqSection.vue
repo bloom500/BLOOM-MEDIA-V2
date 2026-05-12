@@ -164,7 +164,7 @@
 
 .faq__title--accent {
   font-style: italic;
-  color: var(--color-text);
+  color: var(--color-accent);
   padding-left: 12vw;
 }
 

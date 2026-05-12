@@ -182,7 +182,7 @@
 
 .why__title--accent {
   font-style: italic;
-  color: var(--color-text);
+  color: var(--color-accent);
   padding-left: 10vw;
 }
 
@@ -252,7 +252,7 @@
 }
 
 .why-item:hover {
-  background: rgba(0, 0, 0, 0.03);
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .why-item__icon {

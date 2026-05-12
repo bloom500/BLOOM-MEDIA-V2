@@ -159,7 +159,7 @@
 
 .services__title--accent {
   font-style: italic;
-  color: var(--color-text);
+  color: var(--color-accent);
   padding-left: 8vw;
 }
 

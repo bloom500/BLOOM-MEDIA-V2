@@ -5,17 +5,17 @@
 }
 
 :root {
-  --color-bg: #fafafa;
-  --color-text: #000000;
-  --color-accent: #000000;
-  --color-muted: rgba(0, 0, 0, 0.55);
-  --color-text-muted: rgba(0, 0, 0, 0.55);
-  --color-text-soft: rgba(0, 0, 0, 0.5);
-  --color-text-faint: rgba(0, 0, 0, 0.42);
-  --color-text-ghost: rgba(0, 0, 0, 0.35);
-  --color-border: rgba(0, 0, 0, 0.08);
-  --color-border-medium: rgba(0, 0, 0, 0.15);
-  --color-border-strong: rgba(0, 0, 0, 0.42);
+  --color-bg: #080808;
+  --color-text: #ffffff;
+  --color-accent: #F97316;
+  --color-muted: rgba(255, 255, 255, 0.6);
+  --color-text-muted: rgba(255, 255, 255, 0.6);
+  --color-text-soft: rgba(255, 255, 255, 0.5);
+  --color-text-faint: rgba(255, 255, 255, 0.4);
+  --color-text-ghost: rgba(255, 255, 255, 0.3);
+  --color-border: rgba(255, 255, 255, 0.1);
+  --color-border-medium: rgba(255, 255, 255, 0.2);
+  --color-border-strong: rgba(255, 255, 255, 0.4);
   /* Outfit: UI (Mont DEMO avea watermark). Încărcat din Fonts Bunny, OFL. */
   --font-ui: Outfit, system-ui, -apple-system, 'Segoe UI', sans-serif;
   /* Instrument Serif: titluri / editorial (Gwen trial avea watermark). Bunny, OFL. */

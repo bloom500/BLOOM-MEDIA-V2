@@ -133,7 +133,7 @@
 .declaration__line--accent {
   padding-left: 12vw;
   font-style: italic;
-  color: var(--color-text);
+  color: var(--color-accent);
 }
 
 .declaration__line:nth-child(4) {
