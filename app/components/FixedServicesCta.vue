@@ -7,12 +7,30 @@
     <NuxtLink
       to="/servicii"
       class="fixed-services-cta"
+      :class="{ '-in-footer': inFooter }"
     >
       <span>Vezi serviciile</span>
       <span class="fixed-services-cta__dot">:</span>
     </NuxtLink>
   </Teleport>
 </template>
+
+<script setup lang="ts">
+const inFooter = ref(false)
+
+onMounted(() => {
+  const footer = document.querySelector('footer.footer')
+  if (!footer) return
+
+  const observer = new IntersectionObserver(
+    ([entry]) => { inFooter.value = entry.isIntersecting },
+    { threshold: 0.05 }
+  )
+  observer.observe(footer)
+
+  onUnmounted(() => observer.disconnect())
+})
+</script>
 
 <style scoped>
 .fixed-services-cta {
@@ -25,21 +43,26 @@
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.14em;
-  color: var(--color-text-muted);
+  color: #000000;
   text-decoration: none;
   display: flex;
   align-items: center;
   gap: 0.5rem;
   padding: 0;
   margin: 0;
+  transition: color 0.4s ease;
+}
+
+.fixed-services-cta.-in-footer {
+  color: #ffffff;
 }
 
 .fixed-services-cta:hover {
-  color: var(--color-text);
+  opacity: 0.65;
 }
 
 .fixed-services-cta__dot {
-  color: var(--color-text);
+  color: inherit;
 }
 
 @media (max-width: 768px) {
