@@ -3,12 +3,6 @@
     <div class="faq__grain" aria-hidden="true" />
 
     <div class="faq__header">
-      <span
-        class="faq__label"
-        string="split"
-        string-split="line[center]"
-        string-repeat
-      >06 — Întrebări frecvente</span>
       <h2 id="faq-heading" class="faq__title">
         <span
           string="split"
@@ -139,16 +133,6 @@
   position: relative;
   z-index: 2;
   margin-bottom: 5rem;
-}
-
-.faq__label {
-  display: block;
-  font-family: var(--font-body);
-  font-size: 0.65rem;
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
-  color: var(--color-text-soft);
-  margin-bottom: 2rem;
 }
 
 .faq__title {

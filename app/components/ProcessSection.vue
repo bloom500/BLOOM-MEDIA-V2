@@ -3,12 +3,6 @@
     <div class="process__grain" aria-hidden="true" />
 
     <div class="process__header">
-      <span
-        class="process__label"
-        string="split"
-        string-split="line[center]"
-        string-repeat
-      >03 — Procesul</span>
       <h2 class="process__title">
         <span
           string="split"
@@ -159,14 +153,6 @@
   gap: 2rem;
   margin-bottom: 6rem;
   text-align: right;
-}
-
-.process__label {
-  font-family: var(--font-body);
-  font-size: 0.65rem;
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
-  color: var(--color-text-soft);
 }
 
 .process__title {

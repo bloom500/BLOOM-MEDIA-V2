@@ -22,12 +22,6 @@
       </div>
 
       <div class="hero__bottom">
-        <div class="hero__bottom-left">
-          <NuxtLink to="/servicii" class="hero__link">
-            <span>Vezi serviciile</span>
-            <span class="hero__link-dot">:</span>
-          </NuxtLink>
-        </div>
         <div class="hero__bottom-right">
           <div class="hero__scroll-circle" aria-hidden="true">
             <svg viewBox="0 0 40 40">
@@ -104,29 +98,9 @@
 
 .hero__bottom {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: flex-end;
   padding-bottom: 0.5rem;
-}
-
-.hero__link {
-  font-family: var(--font-body);
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  color: var(--color-text-muted);
-  text-decoration: none;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.hero__link:hover {
-  color: var(--color-text);
-}
-
-.hero__link-dot {
-  color: var(--color-text);
 }
 
 .hero__scroll-circle {

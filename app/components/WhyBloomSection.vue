@@ -3,12 +3,6 @@
     <div class="why__grain" aria-hidden="true" />
 
     <div class="why__header">
-      <span
-        class="why__label"
-        string="split"
-        string-split="line[center]"
-        string-repeat
-      >04 — De ce noi</span>
       <h2 id="why-heading" class="why__title">
         <span>De ce</span>
         <span class="why__title--accent">Bloom Media</span>
@@ -157,16 +151,6 @@
   position: relative;
   z-index: 2;
   margin-bottom: 6rem;
-}
-
-.why__label {
-  display: block;
-  font-family: var(--font-body);
-  font-size: 0.65rem;
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
-  color: var(--color-text-soft);
-  margin-bottom: 2rem;
 }
 
 .why__title {

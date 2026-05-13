@@ -4,12 +4,6 @@
 
     <div class="contact__content">
       <div class="contact__left">
-        <span
-          class="contact__label"
-          string="split"
-          string-split="line[center]"
-          string-repeat
-        >07 — Contact</span>
         <h2 id="contact-heading" class="contact__title">
           <span>Să</span>
           <span class="contact__title--accent">vorbim.</span>
@@ -141,16 +135,6 @@
   align-items: start;
   max-width: 1200px;
   margin: 0 auto;
-}
-
-.contact__label {
-  display: block;
-  font-family: var(--font-body);
-  font-size: 0.65rem;
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
-  color: var(--color-text-soft);
-  margin-bottom: 2rem;
 }
 
 .contact__title {

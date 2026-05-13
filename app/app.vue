@@ -14,12 +14,15 @@
     <TheFooter />
   </div>
 
+  <FixedServicesCta />
+
   <CustomCursor />
 </template>
 
 <script setup>
 import { onMounted, nextTick } from 'vue'
 import CustomCursor from '~/components/CustomCursor.vue'
+import FixedServicesCta from '~/components/FixedServicesCta.vue'
 import SiteBackground3d from '~/components/SiteBackground3d.vue'
 import { initStringTune, getStringTune } from '~/lib/stringtune/client'
 

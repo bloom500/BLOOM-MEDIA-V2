@@ -5,11 +5,15 @@
 }
 
 :root {
+  --color-bg-light: #EDEBE6;
+  --color-bg-dark: #080806;
+  --color-text-primary: #1A1814;
+  --color-text-muted: #9A9590;
+  --color-divider: #D0CBC3;
   --color-bg: #fafafa;
   --color-text: #000000;
   --color-accent: #000000;
   --color-muted: rgba(0, 0, 0, 0.55);
-  --color-text-muted: rgba(0, 0, 0, 0.55);
   --color-text-soft: rgba(0, 0, 0, 0.5);
   --color-text-faint: rgba(0, 0, 0, 0.42);
   --color-text-ghost: rgba(0, 0, 0, 0.35);
@@ -18,11 +22,10 @@
   --color-border-strong: rgba(0, 0, 0, 0.42);
   /* Outfit: UI (Mont DEMO avea watermark). Încărcat din Fonts Bunny, OFL. */
   --font-ui: Outfit, system-ui, -apple-system, 'Segoe UI', sans-serif;
-  /* Instrument Serif: titluri / editorial (Gwen trial avea watermark). Bunny, OFL. */
-  --font-display: 'Instrument Serif', Georgia, 'Times New Roman', serif;
-  --font-editorial: 'Instrument Serif', Georgia, serif;
-  /* Alias: corp site = Mont (inclusiv formulare, mic text) */
-  --font-body: var(--font-ui);
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-editorial: 'Gwen', 'Newsreader', Georgia, serif;
+  /* Noto Sans: fallback cu diacritice complete dacă Geist nu acoperă tot (evită serif în paragrafe) */
+  --font-body: 'Geist', 'Noto Sans', system-ui, sans-serif;
   --ease-1: cubic-bezier(0.86, 0, 0.31, 1);
   --ease-2: cubic-bezier(0.35, 0.35, 0, 1);
   --ease-timing: 1.2s;
@@ -92,14 +95,26 @@ body {
   background: var(--color-bg);
 }
 
-h1, h2, h3, .font-display {
+h1, h2, h3, .font-display, .display, .serif {
   font-family: var(--font-display);
   font-weight: 600;
   text-wrap: balance;
+  /* Ligaturi fi/fl din trial Gwen = watermark; păstrăm glyph-uri separate */
+  font-variant-ligatures: no-common-ligatures;
+  font-feature-settings: 'liga' 0, 'clig' 0;
+}
+
+/* Copii (ex. span-uri StringTune) moștenesc același font trial dacă ligaturile rămân active */
+:is(h1, h2, h3) *,
+:is(.font-display, .display, .serif, .font-editorial) * {
+  font-variant-ligatures: no-common-ligatures;
+  font-feature-settings: 'liga' 0, 'clig' 0;
 }
 
 .font-editorial {
   font-family: var(--font-editorial);
+  font-variant-ligatures: no-common-ligatures;
+  font-feature-settings: 'liga' 0, 'clig' 0;
 }
 
 img, video {
@@ -108,7 +123,7 @@ img, video {
 }
 
 /* StringTune — reveal pe cuvinte legat de scroll progress (declaration etc.) */
-.-splitted.-inview .-s-word {
+.-splitted:not([data-anim="surface-dissolve"]).-inview .-s-word {
   --word-turn: calc(
     (var(--word-index) - 3) /
     var(--word-global-total)
@@ -136,7 +151,7 @@ img, video {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .-splitted.-inview .-s-word {
+  .-splitted:not([data-anim="surface-dissolve"]).-inview .-s-word {
     transform: none !important;
     clip-path: none !important;
   }

@@ -3,12 +3,6 @@
     <div class="services__grain" aria-hidden="true" />
 
     <div class="services__header">
-      <span
-        class="services__label"
-        string="split"
-        string-split="line[center]"
-        string-repeat
-      >02 — Servicii</span>
       <h2 class="services__title">
         <span
           string="split"
@@ -135,14 +129,6 @@
   flex-direction: column;
   gap: 2rem;
   margin-bottom: 6rem;
-}
-
-.services__label {
-  font-family: var(--font-body);
-  font-size: 0.65rem;
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
-  color: var(--color-text-soft);
 }
 
 .services__title {
