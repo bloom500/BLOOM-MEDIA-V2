@@ -50,7 +50,7 @@ const navLinks = [
 
 .navbar__brand {
   font-family: var(--font-display);
-  font-size: 1.1rem;
+  font-size: 1.35rem;
   font-weight: 400;
   color: var(--color-text);
   line-height: 1.1;
@@ -71,7 +71,7 @@ const navLinks = [
 
 .navbar__nav a {
   font-family: var(--font-body);
-  font-size: 0.65rem;
+  font-size: 0.8rem;
   text-transform: uppercase;
   letter-spacing: 0.14em;
   color: var(--color-text-soft);
@@ -86,13 +86,13 @@ const navLinks = [
 
 .navbar__btn {
   font-family: var(--font-body);
-  font-size: 0.62rem;
+  font-size: 0.78rem;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: var(--color-text);
   background: transparent;
   border: 0.5px solid var(--color-border-strong);
-  padding: 0.6rem 1.4rem;
+  padding: 0.7rem 1.6rem;
   border-radius: 999px;
   text-decoration: none;
   transition: all 0.3s ease;

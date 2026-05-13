@@ -1,8 +1,10 @@
 <template>
   <footer
     class="footer"
+    aria-label="Site footer"
     string="progress"
     string-exit-vp="bottom"
+    data-cursor-dark
   >
     <div class="footer__inner">
       <div class="footer__top">
@@ -72,13 +74,44 @@
 </template>
 
 <style scoped>
-/* tutorial-01-footer-shifting: overlay + translate pe --progress (StringTune) */
+/*
+ * tutorial-01-footer-shifting.html (SpringTune):
+ * — <footer string="progress" string-exit-vp="bottom">
+ * — .footer::after: overlay pagină, opacity: calc(1 - var(--progress))
+ * — .footer__inner: translate3d(0, calc(-50% + 50% * var(--progress)), 0)
+ * Pe homepage, .site-main are z-index: 20 + fundal opac (main.css) ca .content
+ * din tutorial — footer (z-index: 0) se desenează SUB main la translate, nu peste Contact.
+ */
 .footer {
   position: relative;
-  background-color: #e4e4e0;
-  color: var(--color-text);
+  z-index: 0;
+  background-color: #0a0a0a;
+  color: #fafafa;
 }
 
+/* Voal discret — fără „alb” la margine; doar relief pe negru */
+.footer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: clamp(96px, 14vh, 200px);
+  pointer-events: none;
+  z-index: 1;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.04) 0%,
+    rgba(40, 40, 40, 0.35) 45%,
+    rgba(10, 10, 10, 0) 100%
+  );
+}
+
+/*
+ * SpringTune: în tutorial overlay-ul are culoarea secțiunii de deasupra (negru → albastru).
+ * La noi Contact-ul se termină în #0a0a0a — NU --color-bg (#fafafa), altfel la progress mic
+ * footerul pare alb și textul alb dispare.
+ */
 .footer::after {
   content: '';
   display: block;
@@ -87,9 +120,10 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: var(--color-bg);
+  background-color: #0a0a0a;
   opacity: calc(1 - var(--progress));
   pointer-events: none;
+  z-index: 0;
 }
 
 .footer__inner {
@@ -129,12 +163,12 @@
   font-family: var(--font-display);
   font-size: 3rem;
   font-weight: 400;
-  color: var(--color-text);
+  color: #fafafa;
   line-height: 1;
 }
 
 .footer__dot {
-  color: var(--color-text);
+  color: #fafafa;
 }
 
 .footer__tagline {
@@ -142,7 +176,7 @@
   font-size: 0.6rem;
   text-transform: uppercase;
   letter-spacing: 0.16em;
-  color: var(--color-text-ghost);
+  color: rgba(250, 250, 250, 0.55);
 }
 
 .footer__nav {
@@ -162,20 +196,20 @@
   font-size: 0.6rem;
   text-transform: uppercase;
   letter-spacing: 0.16em;
-  color: var(--color-text-ghost);
+  color: rgba(250, 250, 250, 0.45);
   margin-bottom: 0.5rem;
 }
 
 .footer__nav-col a {
   font-family: var(--font-body);
   font-size: 0.85rem;
-  color: var(--color-text-muted);
+  color: rgba(250, 250, 250, 0.78);
   text-decoration: none;
-  transition: color 0.3s ease;
+  transition: color 0.25s ease;
 }
 
 .footer__nav-col a:hover {
-  color: var(--color-text);
+  color: #ffffff;
 }
 
 .footer__bottom {
@@ -183,7 +217,7 @@
   align-items: center;
   justify-content: space-between;
   padding-top: 3rem;
-  border-top: 0.5px solid var(--color-border);
+  border-top: 0.5px solid rgba(255, 255, 255, 0.12);
   flex-wrap: wrap;
   gap: 1rem;
 }
@@ -195,7 +229,7 @@
   font-size: 0.62rem;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: var(--color-text-ghost);
+  color: rgba(250, 250, 250, 0.5);
 }
 
 @media (max-width: 768px) {

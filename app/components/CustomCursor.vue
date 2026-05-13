@@ -1,5 +1,13 @@
 <template>
-  <div class="cursor" :class="{ 'cursor--active': isActive, 'cursor--view': label === 'VIEW' }" aria-hidden="true">
+  <div
+    class="cursor"
+    :class="{
+      'cursor--active': isActive,
+      'cursor--view': label === 'VIEW',
+      'cursor--dark-surface': isDarkSurface,
+    }"
+    aria-hidden="true"
+  >
     <span ref="dotRef" class="cursor__dot" />
     <span ref="followerRef" class="cursor__follower">
       <span class="cursor__label">{{ label }}</span>
@@ -14,6 +22,7 @@ const dotRef = ref<HTMLElement | null>(null)
 const followerRef = ref<HTMLElement | null>(null)
 const isActive = ref(false)
 const label = ref('')
+const isDarkSurface = ref(false)
 
 let raf = 0
 let targetX = 0
@@ -44,9 +53,16 @@ function render() {
   raf = requestAnimationFrame(render)
 }
 
+function syncDarkSurface() {
+  if (!import.meta.client) return
+  const el = document.elementFromPoint(targetX, targetY)
+  isDarkSurface.value = Boolean(el?.closest?.('[data-cursor-dark]'))
+}
+
 function onPointerMove(event: PointerEvent) {
   targetX = event.clientX
   targetY = event.clientY
+  syncDarkSurface()
 }
 
 function onPointerOver(event: PointerEvent) {
@@ -89,11 +105,14 @@ onMounted(() => {
   window.addEventListener('pointermove', onPointerMove, { passive: true })
   document.addEventListener('pointerover', onPointerOver)
   document.addEventListener('pointerout', onPointerOut)
+  window.addEventListener('scroll', syncDarkSurface, { passive: true, capture: true })
   raf = requestAnimationFrame(render)
+  syncDarkSurface()
 })
 
 onUnmounted(() => {
   window.removeEventListener('pointermove', onPointerMove)
+  window.removeEventListener('scroll', syncDarkSurface, true)
   document.removeEventListener('pointerover', onPointerOver)
   document.removeEventListener('pointerout', onPointerOut)
   cancelAnimationFrame(raf)
@@ -153,6 +172,25 @@ onUnmounted(() => {
   background: var(--color-text);
   border-color: var(--color-text);
   mix-blend-mode: difference;
+}
+
+/* Footer negru: cursor deschis, lizibil */
+.cursor--dark-surface .cursor__dot {
+  background: #fafafa;
+}
+
+.cursor--dark-surface .cursor__follower {
+  border-color: rgba(250, 250, 250, 0.42);
+}
+
+.cursor--dark-surface.cursor--active .cursor__follower {
+  background: #fafafa;
+  border-color: #fafafa;
+  mix-blend-mode: normal;
+}
+
+.cursor--dark-surface.cursor--active .cursor__label {
+  color: #0a0a0a;
 }
 
 .cursor__label {

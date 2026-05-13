@@ -1,0 +1,20 @@
+---
+description: Fundal 3D + modele GLB înghețate — fără editări decât la cerere explicită în mesajul curent.
+alwaysApply: true
+---
+
+# Locked — fundal site + model 3D
+
+**Nu modifica** fișierele de mai jos decât dacă utilizatorul **cere explicit** în **mesajul curent** modificarea acelui fișier. Altfel: alt fișier sau cere permisiune.
+
+- `app/components/ReliefSlab.client.vue`
+- `app/components/SiteBackground3d.vue`
+- `app/components/MorphingReliefBackground.vue`
+- `app/components/ReliefBackground.vue`
+- `app/components/ImmersiveReliefBackground.vue`
+- `app/components/SectionModelBackground.vue`
+- `app/components/SceneCanvas.vue`
+- `app/composables/useUnifiedScene.js`
+- `app/utils/trail.js`
+
+**`app/app.vue`:** nu modifica `ClientOnly` + `SiteBackground3d` / importurile de fundal 3D fără cerere explicită pentru `app.vue`.

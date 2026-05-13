@@ -6,36 +6,78 @@
     aria-hidden="true"
   >
     <canvas ref="canvasRef" class="relief-slab__canvas" />
-    <canvas ref="fogCanvasRef" class="relief-fog" aria-hidden="true" />
   </div>
 </template>
 
 <script setup>
 /**
- * Port în WebGL/GLSL al sketch-ului oficial (Yuri „Akella” Artiukh) — Immersive-Garden style.
- * Sursa: public/models/optimized/Official 3D model/src/{index.ts, trail.js}
- *
- * Tehnica:
- *  - Toate detaliile lumină + relief sunt PRE-RENDERATE (baked) în 6 canale (2 texturi RGB):
- *      tt2 = emissiveMap   → b = level0 (cel mai „plat”), g = level1, r = level2
- *      tt1 = baseColorMap  → b = level3,                  g = level4, r = level5 (cel mai „extrudat”)
- *  - Trail: Official trail.js + canvas 2048²; fade 0.025; rază pensulă TRAIL_CIRCLE_RADIUS_MULT_* (mouse vs ghost).
- *  - VERTEX / FRAGMENT: extrude din trail, Z mix(0.03,1.,extrude); nivele _l0…_l5 ca în index.ts.
- *  - .relief-fog = canvas 2D: același trail ca uTrail (Yuri) taie uniform fog-ul (destination-out), nu spotlight separat.
- *  - Input: WebGLRenderer + ShaderMaterial (același comportament, alt pipeline decât WebGPU).
+ * Relief fishpond: același efect ca sketch-ul oficial (trail → extrudare Z + blend niveluri din map / emissiveMap),
+ * cu `WebGPURenderer` + `MeshBasicNodeMaterial` + TSL — aliniat la tutorialul Yuri (Three.js WebGPU / TSL).
+ * Pe browsere fără WebGPU, renderer-ul folosește fallback WebGL2 în același API.
  */
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import * as THREE from 'three'
+import { WebGPURenderer, MeshBasicNodeMaterial, NoToneMapping, SRGBColorSpace } from 'three/webgpu'
+import {
+  Fn,
+  float,
+  vec2,
+  vec3,
+  vec4,
+  texture,
+  uv,
+  mix,
+  smoothstep,
+  max,
+  cameraProjectionMatrix,
+  modelViewMatrix,
+  positionLocal,
+  sRGBTransferOETF,
+  screenUV,
+} from 'three/tsl'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js'
 import { TrailCanvas } from '~/utils/trail.js'
 
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
 
-const GLB_PATH = '/models/optimized/original.glb'
+/**
+ * Ordinea: sketch oficial (`original.glb`), apoi asset-uri folosite în site dacă `original` lipsește din `public/`.
+ * Fără niciun fișier → încărcare eșuată, scenă goală (doar fundal); trail.js rulează oricum, dar nu are mesh pe care să „lucreze”.
+ */
+const RELIEF_GLB_CANDIDATES = [
+  '/models/optimized/original.glb',
+  '/models/optimized/bloom-optimized.glb',
+  '/models/optimized/fishpond_baked.glb',
+]
 const DRACO_DECODER = 'https://www.gstatic.com/draco/versioned/decoders/1.5.6/'
 
-/** Camera ca în sketch-ul original */
+/** Ultimul URL GLB încărcat cu succes (log / mesaje). */
+let reliefGltfSourceUrl = ''
+
+async function loadReliefGltf(loaderDraco, plainLoader) {
+  const failures = []
+  for (const url of RELIEF_GLB_CANDIDATES) {
+    try {
+      const g = await loaderDraco.loadAsync(url)
+      reliefGltfSourceUrl = url
+      return g
+    } catch (errDraco) {
+      try {
+        const g = await plainLoader.loadAsync(url)
+        reliefGltfSourceUrl = url
+        return g
+      } catch (errPlain) {
+        failures.push({ url, errDraco, errPlain })
+      }
+    }
+  }
+  const hint = `Pune un GLB în public la una din căile: ${RELIEF_GLB_CANDIDATES.join(', ')}`
+  console.error('[ReliefSlab]', hint, failures)
+  throw new Error(`[ReliefSlab] ${hint}`)
+}
+
+/** Camera ca în sketch-ul original (tutorial Yuri: 15). */
 const CAMERA_FOV = 30
 const CAMERA_Z = 15
 
@@ -45,6 +87,13 @@ const CAMERA_Z = 15
  */
 const VIEWPORT_COVER = 2.5
 /**
+ * <1: zoom out subiectiv (mai mult aer în cadru). Compensează parțial faptul că Z mai mare mărește
+ * sx/sy în fit — vrem vizitatorului să i se pară sculptul mai „departe”, nu mai mare.
+ * Creștere ușoară = zoom in pe mesh (marginile laterale ale GLB-ului ies mai mult în afara ecranului),
+ * fără a schimba celelalte constante de poziționare verticală (RELIEF_TOP_*, offset-uri).
+ */
+const RELIEF_COMFORT_ZOOM_OUT = 0.77
+/**
  * Ținta pe Y pentru vârful bbox (fracție din semi-înălțimea vizibilă, de la centru spre marginea de sus).
  * RELIEF_TOP_BLEND amestecă această țintă cu centrarea verticală: 0 = centrat pe ecran, 1 = aliniere completă sus.
  * Prea mare → muchia de sus a mesh-ului / capătul GLB-ului devine vizibil sub navbar.
@@ -53,6 +102,12 @@ const VIEWPORT_COVER = 2.5
 const RELIEF_TOP_FRAC = 0.9
 const RELIEF_TOP_BLEND = 0.95
 const MAX_PIXEL_RATIO = 2
+
+/**
+ * Bandă stânga/dreaptă: extrude trail forțat la 0 (Z plat + level0) — fără hover pe margini.
+ * Nu mută/scală GLB-ul.
+ */
+const RELIEF_LATERAL_HOVER_DEAD_FRAC = 0.12
 
 /** Ca în Official 3D model/src/index.ts după load: `model.position.set(0, 2, 0)`. */
 const MODEL_ORIGINAL_OFFSET_Y = 2
@@ -64,20 +119,12 @@ const RELIEF_SCENE_BG = 0xa8a6a2
 const RELIEF_SCENE_BG_CSS = `#${RELIEF_SCENE_BG.toString(16).padStart(6, '0')}`
 const reliefSlabCssVars = { '--relief-scene-bg': RELIEF_SCENE_BG_CSS }
 
-/** Alpha strat fog înainte de tăierea cu trail (uniform peste viewport). */
-const RELIEF_FOG_LAYER_OPACITY = 0.95
-/** Lățime scratch pentru maparea trail→mask (getImageData); păstrează aspect viewport. */
-const FOG_MASK_SCRATCH_MAX_W = 640
-
 /** Dimensiune trail canvas — SketchSettings.dimensions [2048, 2048] din index.ts. */
 const TRAIL_CANVAS_SIZE = 2048
 
-/**
- * Rază pensulă trail (fracție din lățimea buffer 2048) — tutorial Yuri folosește 0.12;
- * aici mai mică la hover + și mai mică la ghost (fog + shader folosesc același trail).
- */
-const TRAIL_CIRCLE_RADIUS_MULT_MOUSE = 0.088
-const TRAIL_CIRCLE_RADIUS_MULT_GHOST = 0.056
+/** Ca `trail.js` implicit: `circleRadius = width * 0.12` — Official sketch. */
+const TRAIL_CIRCLE_RADIUS_MULT_MOUSE = 0.12
+const TRAIL_CIRCLE_RADIUS_MULT_GHOST = 0.12
 
 /** Ca positionNode: pos.z *= mix(0.03, 1., extrude) */
 const Z_EXTRUDE_MIN = 0.03
@@ -108,10 +155,6 @@ const SCROLL_PAN_CONTENT_FRAC = 0.96
 
 const containerRef = ref(null)
 const canvasRef = ref(null)
-const fogCanvasRef = ref(null)
-
-/** Canvas mic: trail scalat + conversie R→alpha pentru destination-out pe fog. */
-let fogMaskScratch = null
 
 let renderer = null
 let scene = null
@@ -123,10 +166,18 @@ let disposed = false
 let trailLayer = null
 let trailTexture = null
 
-const sharedUniforms = {
-  uTrail: { value: null },
-  uResolution: { value: new THREE.Vector2(1, 1) },
-}
+/** Coordonate canvas trail (pixeli) — același obiect pasat la `trailLayer.update(mouse2D)` ca în sketch. */
+const mouse2D = { x: 0, y: 0 }
+
+/** 1×1 gri — dacă un mesh nu are map / emissiveMap. */
+const FALLBACK_MAP = new THREE.DataTexture(
+  new Uint8Array([0xa8, 0xa6, 0xa2, 255]),
+  1,
+  1,
+  THREE.RGBAFormat,
+)
+FALLBACK_MAP.colorSpace = THREE.NoColorSpace
+FALLBACK_MAP.needsUpdate = true
 
 const reliefMaterials = []
 const pool = { geometries: [], materials: [], textures: new Set() }
@@ -172,7 +223,10 @@ function configureTrailThreeTexture(tex) {
   tex.needsUpdate = true
 }
 
-/** TrailCanvas 2048×2048 fix (ca Yuri); textura Three se recreează doar dacă lipsește sau dimensiunea s-a schimbat. */
+/**
+ * O singură instanță `CanvasTexture` pentru trail — `texture()` din TSL cere THREE.Texture, nu `uniform()`.
+ * La recreate TrailCanvas păstrăm aceeași textură și schimbăm doar `.image`, ca nodurile din materiale să rămână valide.
+ */
 function ensureTrailLayer() {
   if (!renderer) return false
   const bw = TRAIL_CANVAS_SIZE
@@ -184,19 +238,26 @@ function ensureTrailLayer() {
     return true
   }
 
-  if (trailTexture) {
-    pool.textures.delete(trailTexture)
-    trailTexture.dispose()
-    trailTexture = null
+  if (trailLayer) {
+    trailLayer = null
   }
 
   trailLayer = new TrailCanvas(bw, bh)
   trailLayer.setFadeSpeed(0.025)
   trailLayer.setCircleRadius(bw * TRAIL_CIRCLE_RADIUS_MULT_MOUSE)
-  trailTexture = new THREE.CanvasTexture(trailLayer.getTexture())
-  configureTrailThreeTexture(trailTexture)
-  pool.textures.add(trailTexture)
-  sharedUniforms.uTrail.value = trailTexture
+  const canvas = trailLayer.getTexture()
+
+  if (!trailTexture) {
+    trailTexture = new THREE.CanvasTexture(canvas)
+    configureTrailThreeTexture(trailTexture)
+    pool.textures.add(trailTexture)
+  } else {
+    pool.textures.delete(trailTexture)
+    trailTexture.image = canvas
+    configureTrailThreeTexture(trailTexture)
+    pool.textures.add(trailTexture)
+  }
+  trailTexture.needsUpdate = true
   return true
 }
 
@@ -247,83 +308,6 @@ function updateTrailPaintTargetCss() {
   }
 }
 
-/**
- * Fog peste WebGL: fill culoare + alpha, apoi taie cu același câmp trail ca shader-ul
- * (canal R scalat ca extrude), ca să nu fie spotlight la pointer — ci „spargere” cinematică pe urma pensulei Yuri.
- */
-function paintReliefFog() {
-  const fc = fogCanvasRef.value
-  if (!fc) return
-
-  const w = Math.max(1, Math.floor(window.innerWidth))
-  const h = Math.max(1, Math.floor(window.innerHeight))
-  const dpr = Math.min(window.devicePixelRatio ?? 1, MAX_PIXEL_RATIO)
-  const bw = Math.floor(w * dpr)
-  const bh = Math.floor(h * dpr)
-  if (fc.width !== bw || fc.height !== bh) {
-    fc.width = bw
-    fc.height = bh
-  }
-
-  const ctx = fc.getContext('2d', { alpha: true })
-  if (!ctx) return
-
-  const br = (RELIEF_SCENE_BG >> 16) & 255
-  const bg = (RELIEF_SCENE_BG >> 8) & 255
-  const bb = RELIEF_SCENE_BG & 255
-
-  ctx.globalCompositeOperation = 'source-over'
-  ctx.globalAlpha = 1
-  ctx.fillStyle = `rgba(${br},${bg},${bb},${RELIEF_FOG_LAYER_OPACITY})`
-  ctx.fillRect(0, 0, bw, bh)
-
-  if (!trailLayer) return
-
-  const aspect = bw / bh
-  let mw = Math.min(FOG_MASK_SCRATCH_MAX_W, Math.max(256, Math.floor(bw / 2)))
-  let mh = Math.max(2, Math.round(mw / aspect))
-
-  if (!fogMaskScratch) fogMaskScratch = document.createElement('canvas')
-  if (fogMaskScratch.width !== mw || fogMaskScratch.height !== mh) {
-    fogMaskScratch.width = mw
-    fogMaskScratch.height = mh
-  }
-
-  const mctx = fogMaskScratch.getContext('2d', { willReadFrequently: true })
-  if (!mctx) return
-  mctx.imageSmoothingEnabled = true
-  mctx.imageSmoothingQuality = 'high'
-  mctx.drawImage(
-    trailLayer.canvas,
-    0,
-    0,
-    TRAIL_CANVAS_SIZE,
-    TRAIL_CANVAS_SIZE,
-    0,
-    0,
-    mw,
-    mh,
-  )
-
-  const id = mctx.getImageData(0, 0, mw, mh)
-  const d = id.data
-  for (let i = 0; i < d.length; i += 4) {
-    const srcA = d[i + 3] / 255
-    const extrude = (d[i] / 255) * srcA
-    d[i] = 255
-    d[i + 1] = 255
-    d[i + 2] = 255
-    d[i + 3] = Math.min(255, Math.round(extrude * 255))
-  }
-  mctx.putImageData(id, 0, 0)
-
-  ctx.globalCompositeOperation = 'destination-out'
-  ctx.imageSmoothingEnabled = true
-  ctx.imageSmoothingQuality = 'high'
-  ctx.drawImage(fogMaskScratch, 0, 0, mw, mh, 0, 0, bw, bh)
-  ctx.globalCompositeOperation = 'source-over'
-}
-
 function paintTrail() {
   if (ensureTrailLayer()) {
     updateTrailPaintTargetCss()
@@ -331,93 +315,20 @@ function paintTrail() {
     trailLayer.setCircleRadius(
       bw * (isTrailUserActiveNow() ? TRAIL_CIRCLE_RADIUS_MULT_MOUSE : TRAIL_CIRCLE_RADIUS_MULT_GHOST),
     )
-    const { x, y } = cssToTrailBuffer(trailPaintCss.x, trailPaintCss.y)
-    trailLayer.update({ x, y })
+    const p = cssToTrailBuffer(trailPaintCss.x, trailPaintCss.y)
+    mouse2D.x = p.x
+    mouse2D.y = p.y
+    trailLayer.update(mouse2D)
     trailTexture.needsUpdate = true
   }
-  paintReliefFog()
 }
 
-// ─── MATERIAL (GLSL pur — port 1:1 al pozițieiNode + colorNode din TSL) ───────
+// ─── MATERIAL (MeshBasicNodeMaterial + TSL — WebGPURenderer) ─
 
-const Z_EXTRUDE_MIN_GLSL = Z_EXTRUDE_MIN.toFixed(4)
+function makeReliefMaterial(baseMap, emMap, _skinned, _morphTargets) {
+  const texture1 = baseMap ?? FALLBACK_MAP
+  const texture2 = emMap ?? FALLBACK_MAP
 
-const RELIEF_VERT = /* glsl */ `
-  uniform sampler2D uTrail;
-
-  varying vec2 vReliefUv;
-
-  void main() {
-    // 1) calc NDC din poziția ORIGINALĂ a vertex-ului → uv pentru trail
-    vec4 _ndc4 = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-    vec2 _uvScreen = _ndc4.xy / _ndc4.w * 0.5 + 0.5;
-    _uvScreen.y = 1.0 - _uvScreen.y; // top-left origin (canvas), vezi trail.flipY = false
-    float _extrude = texture2D(uTrail, _uvScreen).r;
-
-    // 2) Ca index.ts positionNode: pos.z *= mix(0.03, 1., extrude)
-    vec3 _pos = position;
-    _pos.z *= mix(${Z_EXTRUDE_MIN_GLSL}, 1.0, _extrude);
-
-    // 3) proiecție finală cu pos modificat
-    vReliefUv = uv;
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(_pos, 1.0);
-  }
-`
-
-const RELIEF_FRAG = /* glsl */ `
-  precision highp float;
-
-  uniform sampler2D uMap;        // baseColorTexture (tt1)
-  uniform sampler2D uEmissive;   // emissiveTexture  (tt2)
-  uniform sampler2D uTrail;
-  uniform vec2 uResolution;      // = drawing buffer (renderer.domElement.width/height), ca screenUV TSL
-
-  varying vec2 vReliefUv;
-
-  // sRGB OETF (linear → sRGB) — port 1:1 din TSL.
-  vec3 reliefSrgbOETF(vec3 c) {
-    vec3 a = pow(c, vec3(0.41666)) * 1.055 - 0.055;
-    vec3 b = c * 12.92;
-    vec3 f = vec3(lessThanEqual(c, vec3(0.0031308)));
-    return mix(a, b, f);
-  }
-
-  vec3 reliefSrgbToLinear(vec3 c) {
-    vec3 a = pow((c + 0.055) / 1.055, vec3(2.4));
-    vec3 b = c / 12.92;
-    vec3 f = vec3(lessThanEqual(c, vec3(0.04045)));
-    return mix(a, b, f);
-  }
-
-  void main() {
-    vec3 _tt1 = reliefSrgbOETF(texture2D(uMap,      vReliefUv).rgb);
-    vec3 _tt2 = reliefSrgbOETF(texture2D(uEmissive, vReliefUv).rgb);
-
-    vec2 _screenUV = vec2(
-      gl_FragCoord.x / uResolution.x,
-      1.0 - gl_FragCoord.y / uResolution.y
-    );
-    float extrude = texture2D(uTrail, _screenUV).r;
-
-    float _l0 = _tt2.b;
-    float _l1 = _tt2.g;
-    float _l2 = _tt2.r;
-    float _l3 = _tt1.b;
-    float _l4 = _tt1.g;
-    float _l5 = _tt1.r;
-
-    float _final = _l0;
-    _final = mix(_final, _l1, smoothstep(0.0, 0.2, extrude));
-    _final = mix(_final, _l2, smoothstep(0.2, 0.4, extrude));
-    _final = mix(_final, _l3, smoothstep(0.4, 0.6, extrude));
-    _final = mix(_final, _l4, smoothstep(0.6, 0.8, extrude));
-    _final = mix(_final, _l5, smoothstep(0.8, 1.0, extrude));
-
-    gl_FragColor = vec4(reliefSrgbToLinear(vec3(_final)), 1.0);
-  }
-`
-
-function makeReliefMaterial(baseMap, emMap) {
   if (baseMap) {
     baseMap.colorSpace = THREE.NoColorSpace
     baseMap.minFilter = THREE.LinearFilter
@@ -435,24 +346,69 @@ function makeReliefMaterial(baseMap, emMap) {
     pool.textures.add(emMap)
   }
 
-  const mat = new THREE.ShaderMaterial({
-    uniforms: {
-      uMap: { value: baseMap ?? null },
-      uEmissive: { value: emMap ?? null },
-      uTrail: sharedUniforms.uTrail,
-      uResolution: sharedUniforms.uResolution,
-    },
-    vertexShader: RELIEF_VERT,
-    fragmentShader: RELIEF_FRAG,
-    side: THREE.FrontSide,
-    transparent: false,
+  const lat0 = float(0)
+  const latF = float(RELIEF_LATERAL_HOVER_DEAD_FRAC)
+  const lat1m = float(1).sub(float(RELIEF_LATERAL_HOVER_DEAD_FRAC))
+  const lat1 = float(1)
+  const zMinF = float(Z_EXTRUDE_MIN)
+  const oneF = float(1)
+  const epsW = float(1e-6)
+
+  const trailTex = trailTexture && trailTexture.isTexture ? trailTexture : FALLBACK_MAP
+  const trailMap = texture(trailTex)
+  const map1 = texture(texture1 && texture1.isTexture ? texture1 : FALLBACK_MAP)
+  const map2 = texture(texture2 && texture2.isTexture ? texture2 : FALLBACK_MAP)
+
+  const positionNode = Fn(() => {
+    const clipPre = cameraProjectionMatrix.mul(modelViewMatrix).mul(vec4(positionLocal, 1))
+    const w = max(clipPre.w, epsW)
+    const uvx = clipPre.x.div(w).mul(0.5).add(0.5)
+    const uvy = oneF.sub(clipPre.y.div(w).mul(0.5).add(0.5))
+    const uvScreen = vec2(uvx, uvy)
+    const ex = trailMap.sample(uvScreen).r
+    const lat = smoothstep(lat0, latF, uvScreen.x).mul(oneF.sub(smoothstep(lat1m, lat1, uvScreen.x)))
+    const extrude = ex.mul(lat)
+    const zScale = mix(zMinF, oneF, extrude)
+    return vec3(positionLocal.x, positionLocal.y, positionLocal.z.mul(zScale))
+  })()
+
+  const colorNode = Fn(() => {
+    /* `screenUV` (TSL / WebGPU) e deja aliniat la viewport ca trail-ul (Y de sus); fără `1-y` ca la gl_FragCoord. */
+    const sv = screenUV
+    const exf = trailMap.sample(sv).r
+    const latf = smoothstep(lat0, latF, sv.x).mul(oneF.sub(smoothstep(lat1m, lat1, sv.x)))
+    const extrude = exf.mul(latf)
+    const tt1 = sRGBTransferOETF(map1.sample(uv()).rgb)
+    const tt2 = sRGBTransferOETF(map2.sample(uv()).rgb)
+    const level0 = tt2.z
+    const level1 = tt2.y
+    const level2 = tt2.x
+    const level3 = tt1.z
+    const level4 = tt1.y
+    const level5 = tt1.x
+    const sh1 = mix(level0, level1, smoothstep(float(0), float(0.2), extrude))
+    const sh2 = mix(sh1, level2, smoothstep(float(0.2), float(0.4), extrude))
+    const sh3 = mix(sh2, level3, smoothstep(float(0.4), float(0.6), extrude))
+    const sh4 = mix(sh3, level4, smoothstep(float(0.6), float(0.8), extrude))
+    const shade = mix(sh4, level5, smoothstep(float(0.8), float(1), extrude))
+    return vec3(shade, shade, shade)
+  })()
+
+  const mat = new MeshBasicNodeMaterial({
+    transparent: true,
     depthTest: true,
     depthWrite: true,
-    toneMapped: false,
     polygonOffset: true,
     polygonOffsetFactor: -1,
     polygonOffsetUnits: -1,
   })
+  mat.name = 'ReliefSlabRelief'
+  mat.fog = false
+  mat.lights = false
+  mat.toneMapped = false
+  mat.positionNode = positionNode
+  mat.colorNode = colorNode
+
   return mat
 }
 
@@ -479,7 +435,7 @@ function fitModelToViewport() {
 
   const sx = visibleW / Math.max(size.x, 1e-6)
   const sy = visibleH / Math.max(size.y, 1e-6)
-  const scale = Math.max(sx, sy) * VIEWPORT_COVER
+  const scale = Math.max(sx, sy) * VIEWPORT_COVER * RELIEF_COMFORT_ZOOM_OUT
   modelRoot.scale.setScalar(scale)
   modelRoot.updateMatrixWorld(true)
 
@@ -504,16 +460,17 @@ function fitModelToViewport() {
 // ─── INIT ────────────────────────────────────────────────────────────────────
 
 async function initScene(canvas) {
-  renderer = new THREE.WebGLRenderer({
+  renderer = new WebGPURenderer({
     canvas,
     antialias: true,
     alpha: false,
     powerPreference: 'high-performance',
-    logarithmicDepthBuffer: true,
   })
+  await renderer.init()
+
   renderer.setClearColor(RELIEF_SCENE_BG, 1)
-  renderer.toneMapping = THREE.NoToneMapping
-  renderer.outputColorSpace = THREE.SRGBColorSpace
+  renderer.toneMapping = NoToneMapping
+  renderer.outputColorSpace = SRGBColorSpace
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, MAX_PIXEL_RATIO))
   renderer.setSize(window.innerWidth, window.innerHeight, false)
   renderer.shadowMap.enabled = false
@@ -532,31 +489,19 @@ async function initScene(canvas) {
 
   ensureTrailLayer()
 
-  sharedUniforms.uResolution.value.set(
-    renderer.domElement.width,
-    renderer.domElement.height,
-  )
-
   const draco = new DRACOLoader()
   draco.setDecoderPath(DRACO_DECODER)
   draco.preload()
   const loaderDraco = new GLTFLoader()
   loaderDraco.setDRACOLoader(draco)
 
+  const plainGltf = new GLTFLoader()
   let gltf
   try {
-    gltf = await loaderDraco.loadAsync(GLB_PATH)
-  } catch (errDraco) {
-    if (import.meta.dev) {
-      console.warn('[ReliefSlab] încărcare cu Draco eșuată, reîncerc fără Draco:', errDraco)
-    }
-    try {
-      gltf = await new GLTFLoader().loadAsync(GLB_PATH)
-    } catch (err2) {
-      console.error('[ReliefSlab] GLB lipsă sau invalid la', GLB_PATH, err2)
-      draco.dispose()
-      throw err2
-    }
+    gltf = await loadReliefGltf(loaderDraco, plainGltf)
+  } catch (err) {
+    draco.dispose()
+    throw err
   }
   draco.dispose()
 
@@ -578,11 +523,14 @@ async function initScene(canvas) {
       ? (Array.isArray(child.material) ? child.material : [child.material])
       : []
 
+    const skinned = child.isSkinnedMesh === true
+    const useMorph = !!(child.geometry?.morphAttributes?.position?.length)
+
     if (Array.isArray(child.material)) {
       const newMats = child.material.map((m) => {
         const baseMap = m?.map ?? null
         const emMap = m?.emissiveMap ?? null
-        const newMat = makeReliefMaterial(baseMap, emMap)
+        const newMat = makeReliefMaterial(baseMap, emMap, skinned, useMorph)
         reliefMaterials.push(newMat)
         pool.materials.push(newMat)
         materialCount += 1
@@ -592,7 +540,7 @@ async function initScene(canvas) {
     } else {
       const baseMap = child.material?.map ?? null
       const emMap = child.material?.emissiveMap ?? null
-      const newMat = makeReliefMaterial(baseMap, emMap)
+      const newMat = makeReliefMaterial(baseMap, emMap, skinned, useMorph)
       reliefMaterials.push(newMat)
       pool.materials.push(newMat)
       materialCount += 1
@@ -609,9 +557,9 @@ async function initScene(canvas) {
   })
 
   if (meshCount === 0) {
-    console.warn('[ReliefSlab] GLB fără mesh-uri:', GLB_PATH)
+    console.warn('[ReliefSlab] GLB fără mesh-uri:', reliefGltfSourceUrl || RELIEF_GLB_CANDIDATES[0])
   } else {
-    console.log('[ReliefSlab] mesh-uri:', meshCount, '| materiale relief:', materialCount, '| texturi:', pool.textures.size)
+    console.log('[ReliefSlab] GLB:', reliefGltfSourceUrl, '| mesh-uri:', meshCount, '| materiale relief:', materialCount, '| texturi:', pool.textures.size)
   }
 
   scene.add(modelRoot)
@@ -647,11 +595,6 @@ function onResize() {
 
   ensureTrailLayer()
 
-  sharedUniforms.uResolution.value.set(
-    renderer.domElement.width,
-    renderer.domElement.height,
-  )
-
   scrollSmoothed = window.scrollY
   trailPaintCss.x = w * 0.5
   trailPaintCss.y = h * 0.5
@@ -678,6 +621,7 @@ function tick() {
   }
 
   if (renderer && scene && camera) {
+    if (trailTexture) trailTexture.needsUpdate = true
     renderer.render(scene, camera)
   }
 }
@@ -708,7 +652,7 @@ onMounted(async () => {
   }
 })
 
-onUnmounted(() => {
+onBeforeUnmount(() => {
   disposed = true
   if (raf) cancelAnimationFrame(raf)
 
@@ -758,16 +702,5 @@ onUnmounted(() => {
   height: 100%;
   vertical-align: top;
   background: var(--relief-scene-bg);
-}
-
-/* Peste WebGL; conținut desenat din trail (vezi paintReliefFog). */
-.relief-fog {
-  position: absolute;
-  inset: 0;
-  display: block;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 1;
 }
 </style>
