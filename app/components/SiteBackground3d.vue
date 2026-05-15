@@ -6,7 +6,7 @@
   -->
   <Teleport to="body">
     <div class="site-bg-3d" aria-hidden="true">
-      <MorphingReliefBackground v-if="!isHome" />
+      <MorphingReliefBackground v-if="!isHome && !isServicii" />
       <ReliefSlab v-if="isHome" />
     </div>
   </Teleport>
@@ -18,7 +18,8 @@ import MorphingReliefBackground from '~/components/MorphingReliefBackground.vue'
 import ReliefSlab from '~/components/ReliefSlab.client.vue'
 
 const route = useRoute()
-const isHome = computed(() => route.path === '/' || route.name === 'index')
+const isHome     = computed(() => route.path === '/' || route.name === 'index')
+const isServicii = computed(() => route.path === '/servicii' || route.name === 'servicii')
 </script>
 
 <style scoped>

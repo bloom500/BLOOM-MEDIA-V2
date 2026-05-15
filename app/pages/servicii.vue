@@ -1,14 +1,9 @@
 <template>
   <main class="site-main">
     <section class="configurator">
-      <video
-        class="cfg-video"
-        autoplay loop muted playsinline preload="auto"
-        aria-hidden="true"
-      >
-        <source src="/serviciivideo.mp4" type="video/mp4">
-      </video>
-      <div class="cfg-overlay" aria-hidden="true" />
+      <ClientOnly>
+        <ServiciiBackground />
+      </ClientOnly>
       <div class="cfg-grain"  aria-hidden="true" />
 
       <!-- ── Header ─────────────────────────────────────────────── -->
@@ -126,8 +121,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch, nextTick } from 'vue'
+import { ref, reactive, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { gsap } from 'gsap'
+
+// Force white cursor on dark background
+const cursorDark = useState('cursorDark', () => false)
+onMounted(() => { cursorDark.value = true })
+onUnmounted(() => { cursorDark.value = false })
 
 useHead({
   title: 'Servicii — Bloom Media',
@@ -135,7 +135,9 @@ useHead({
     { name: 'description', content: 'Configurează-ți pachetul de marketing digital. Meta Ads, Google Ads, Web Design, AI Automatizări — prețuri transparente, zero surprize.' },
     { property: 'og:title', content: 'Servicii — Bloom Media' },
     { property: 'og:description', content: 'Configurează-ți pachetul de marketing digital.' },
-  ]
+  ],
+  htmlAttrs: { 'data-page': 'servicii' },
+  bodyAttrs: { style: 'background: #060604 !important;' },
 })
 
 const categories = [
@@ -217,52 +219,33 @@ async function handleSubmit() {
 
 <style scoped>
 /* ─── Reset ───────────────────────────────────────────────────── */
-.site-main { background: transparent; }
+.site-main { background: #060604; }
 
 /* ─── Section ─────────────────────────────────────────────────── */
 .configurator {
   position: relative;
-  z-index: 2;
+  z-index: 0;
   width: 100%;
   min-height: 100dvh;
   padding: 7rem 3rem 6rem;
-  overflow: hidden;
-  /* Prevent browser scroll-anchoring from jumping when accordion expands */
+  overflow: visible;
   overflow-anchor: none;
-}
-
-.cfg-video {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
-  pointer-events: none;
-}
-
-.cfg-overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  background: rgba(6, 6, 4, 0.58);
-  pointer-events: none;
+  background: #060604;
 }
 
 .cfg-grain {
   position: absolute;
   inset: 0;
-  z-index: 2;
+  z-index: 1;
   pointer-events: none;
   opacity: 0.07;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   background-size: 160px 160px;
 }
 
-/* Everything above the video layers */
+/* Everything above the 3D canvas */
 .cfg-header,
-.cfg-body { position: relative; z-index: 3; }
+.cfg-body { position: relative; z-index: 2; }
 
 /* ─── Header ──────────────────────────────────────────────────── */
 .cfg-header {
@@ -308,7 +291,6 @@ async function handleSubmit() {
   align-items: start;
 }
 
-/* ─── Left: accordion ─────────────────────────────────────────── */
 .cfg-cats {
   display: flex;
   flex-direction: column;
@@ -620,8 +602,6 @@ async function handleSubmit() {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .cfg-video { display: none; }
-  .cfg-overlay { background: rgba(6, 6, 4, 0.9); }
   .cfg-cat-body-wrap,
   .cfg-item-bar,
   .cfg-cat-sub { transition: none; }

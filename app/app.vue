@@ -42,4 +42,10 @@ onMounted(async () => {
   z-index: 2;
   min-height: 100vh;
 }
+
+/* Servicii page — dark html+body so scroll area never shows white */
+html[data-page="servicii"],
+html[data-page="servicii"] body {
+  background: #060604;
+}
 </style>

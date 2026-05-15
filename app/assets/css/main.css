@@ -198,6 +198,18 @@ section,
   z-index: 20;
 }
 
+/* Servicii — pagină full-dark; override global light backgrounds */
+html[data-page="servicii"],
+html[data-page="servicii"] body {
+  background: #060604 !important;
+}
+html[data-page="servicii"] .site-main {
+  background: #060604 !important;
+}
+html[data-page="servicii"] section.configurator {
+  background: #060604 !important;
+}
+
 /* Hero — StringTune word reveal (word[start]) */
 .hero__statement.-splitted .-s-word {
   display: inline-flex;
