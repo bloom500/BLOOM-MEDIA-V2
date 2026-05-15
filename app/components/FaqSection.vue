@@ -26,10 +26,7 @@
           Cât costă serviciile Bloom Media?
         </summary>
         <p class="faq__answer">
-          Depinde de serviciile alese și complexitatea
-          proiectului. Completează configuratorul sau
-          scrie-ne direct — îți facem o propunere
-          clară în 24h, fără obligații.
+          Site-urile custom încep de la 2.200€. Marketing-ul pornește de la 800€/lună. Primești ofertă fixă în 24h. Fără taxe ascunse.
         </p>
       </details>
 
@@ -38,10 +35,7 @@
           Există contract pe termen lung?
         </summary>
         <p class="faq__answer">
-          Nu. Lucrăm pe retainer lunar sau per proiect.
-          Dacă nu ești mulțumit, oprești cu o lună
-          preaviz. Asta ne ține focusați pe rezultatele
-          tale, nu pe retenția artificială.
+          Nu. Lucrăm lunar, cu o lună preaviz. Dacă nu livrăm, pleci. Ne ține atenți.
         </p>
       </details>
 
@@ -50,10 +44,7 @@
           Cât durează până văd rezultate?
         </summary>
         <p class="faq__answer">
-          Primele semne apar în 2-4 săptămâni.
-          Rezultatele semnificative vin după
-          60-90 de zile de optimizare continuă.
-          Nu promitem magie overnight.
+          Site: 10–14 zile. Ads: primele semnale în 2–3 săptămâni, rezultate consistente după 60–90 de zile.
         </p>
       </details>
 
@@ -62,10 +53,7 @@
           Cu ce tipuri de business lucrați?
         </summary>
         <p class="faq__answer">
-          Medical, e-commerce, servicii B2B, retail.
-          Important e să existe un produs validat
-          și un buget de marketing realist.
-          Nu lucrăm cu proiecte fără fundament.
+          Cu afaceri care au deja tracțiune: clinici, e-commerce, servicii locale, B2B. Nu luăm proiecte la nivel de idee.
         </p>
       </details>
 
@@ -74,10 +62,7 @@
           Oferiți rapoarte și transparență?
         </summary>
         <p class="faq__answer">
-          Da. Raport săptămânal + dashboard live
-          cu toate datele în timp real.
-          Nu vei afla niciodată ce se întâmplă
-          cu bugetul tău din rapoarte lunare vagi.
+          Da. Ai acces direct în conturile tale de Google și Meta. Noi trimitem un raport scurt săptămânal. Fără dashboard-uri inventate.
         </p>
       </details>
 
@@ -86,9 +71,7 @@
           Pot lua un singur serviciu?
         </summary>
         <p class="faq__answer">
-          Da. Doar Meta Ads, doar un landing page
-          sau doar consultanță. Nu te obligăm
-          la pachete complete dacă nu ai nevoie.
+          Da. Doar site, doar ads sau doar consultanță. Nu forțăm pachete.
         </p>
       </details>
 
@@ -97,10 +80,7 @@
           Cum încep colaborarea?
         </summary>
         <p class="faq__answer">
-          Completezi formularul de audit gratuit
-          sau ne contactezi direct. Facem un call
-          de 30 de minute să înțelegem situația ta,
-          după care îți trimitem o propunere concretă.
+          Completezi auditul gratuit. Facem un call de 20 de minute. În 24h ai propunerea pe masă.
         </p>
       </details>
     </div>
