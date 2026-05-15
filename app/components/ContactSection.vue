@@ -5,13 +5,12 @@
     <div class="contact__content">
       <div class="contact__left">
         <h2 id="contact-heading" class="contact__title">
-          <span>Să</span>
-          <span class="contact__title--accent">vorbim.</span>
+          <span class="contact__title--accent">Începem?</span>
         </h2>
         <p class="contact__sub">
-          Fie că ai un proiect concret sau vrei
-          să înțelegi cum te putem ajuta —
-          suntem la un mesaj distanță.
+          Luăm un proiect pro bono pe trimestru.
+          Dacă e pentru o cauză bună, menționează
+          asta la mesaj.
         </p>
       </div>
 
@@ -151,7 +150,6 @@
 .contact__title--accent {
   font-style: italic;
   color: var(--color-text);
-  padding-left: 8vw;
 }
 
 .contact__sub {
@@ -284,7 +282,7 @@
   }
 
   .contact__title--accent {
-    padding-left: 14vw;
+    padding-left: 0;
   }
 
   .contact__actions {

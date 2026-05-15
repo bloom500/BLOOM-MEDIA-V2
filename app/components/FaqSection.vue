@@ -21,73 +21,66 @@
     </div>
 
     <div class="faq__list">
-      <details class="faq__item">
-        <summary class="faq__question">
-          Cât costă serviciile Bloom Media?
-        </summary>
-        <p class="faq__answer">
-          Site-urile custom încep de la 2.200€. Marketing-ul pornește de la 800€/lună. Primești ofertă fixă în 24h. Fără taxe ascunse.
-        </p>
-      </details>
-
-      <details class="faq__item">
-        <summary class="faq__question">
-          Există contract pe termen lung?
-        </summary>
-        <p class="faq__answer">
-          Nu. Lucrăm lunar, cu o lună preaviz. Dacă nu livrăm, pleci. Ne ține atenți.
-        </p>
-      </details>
-
-      <details class="faq__item">
-        <summary class="faq__question">
-          Cât durează până văd rezultate?
-        </summary>
-        <p class="faq__answer">
-          Site: 10–14 zile. Ads: primele semnale în 2–3 săptămâni, rezultate consistente după 60–90 de zile.
-        </p>
-      </details>
-
-      <details class="faq__item">
-        <summary class="faq__question">
-          Cu ce tipuri de business lucrați?
-        </summary>
-        <p class="faq__answer">
-          Cu afaceri care au deja tracțiune: clinici, e-commerce, servicii locale, B2B. Nu luăm proiecte la nivel de idee.
-        </p>
-      </details>
-
-      <details class="faq__item">
-        <summary class="faq__question">
-          Oferiți rapoarte și transparență?
-        </summary>
-        <p class="faq__answer">
-          Da. Ai acces direct în conturile tale de Google și Meta. Noi trimitem un raport scurt săptămânal. Fără dashboard-uri inventate.
-        </p>
-      </details>
-
-      <details class="faq__item">
-        <summary class="faq__question">
-          Pot lua un singur serviciu?
-        </summary>
-        <p class="faq__answer">
-          Da. Doar site, doar ads sau doar consultanță. Nu forțăm pachete.
-        </p>
-      </details>
-
-      <details class="faq__item">
-        <summary class="faq__question">
-          Cum încep colaborarea?
-        </summary>
-        <p class="faq__answer">
-          Completezi auditul gratuit. Facem un call de 20 de minute. În 24h ai propunerea pe masă.
-        </p>
-      </details>
+      <div
+        v-for="(item, i) in items"
+        :key="i"
+        class="faq__item"
+        :class="{ 'faq__item--open': openIndex === i }"
+      >
+        <button
+          class="faq__question"
+          :aria-expanded="openIndex === i"
+          @click="toggle(i)"
+        >
+          {{ item.q }}
+        </button>
+        <div class="faq__body">
+          <p class="faq__answer">{{ item.a }}</p>
+        </div>
+      </div>
     </div>
   </section>
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
+
+const openIndex = ref<number | null>(null)
+
+function toggle(i: number) {
+  openIndex.value = openIndex.value === i ? null : i
+}
+
+const items = [
+  {
+    q: 'Cât costă serviciile Bloom Media?',
+    a: 'Site-urile custom încep de la 2.200€. Marketing-ul pornește de la 800€/lună. Primești ofertă fixă în 24h. Fără taxe ascunse.',
+  },
+  {
+    q: 'Există contract pe termen lung?',
+    a: 'Nu. Lucrăm lunar, cu o lună preaviz. Dacă nu livrăm, pleci. Ne ține atenți.',
+  },
+  {
+    q: 'Cât durează până văd rezultate?',
+    a: 'Site: 10–14 zile. Ads: primele semnale în 2–3 săptămâni, rezultate consistente după 60–90 de zile.',
+  },
+  {
+    q: 'Cu ce tipuri de business lucrați?',
+    a: 'Cu afaceri care au deja tracțiune: clinici, e-commerce, servicii locale, B2B. Nu luăm proiecte la nivel de idee.',
+  },
+  {
+    q: 'Oferiți rapoarte și transparență?',
+    a: 'Da. Ai acces direct în conturile tale de Google și Meta. Noi trimitem un raport scurt săptămânal. Fără dashboard-uri inventate.',
+  },
+  {
+    q: 'Pot lua un singur serviciu?',
+    a: 'Da. Doar site, doar ads sau doar consultanță. Nu forțăm pachete.',
+  },
+  {
+    q: 'Cum încep colaborarea?',
+    a: 'Completezi auditul gratuit. Facem un call de 20 de minute. În 24h ai propunerea pe masă.',
+  },
+]
 </script>
 
 <style scoped>
@@ -141,26 +134,32 @@
 
 .faq__item {
   border-top: 0.5px solid var(--color-border);
+  display: grid;
+  grid-template-rows: auto 0fr;
+  transition: grid-template-rows 0.45s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .faq__item:last-child {
   border-bottom: 0.5px solid var(--color-border);
 }
 
+.faq__item--open {
+  grid-template-rows: auto 1fr;
+}
+
 .faq__question {
+  all: unset;
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
   font-family: var(--font-display);
   font-weight: 400;
   font-size: clamp(1.2rem, 2.5vw, 1.8rem);
-  color: var(--color-text-muted);
+  color: var(--color-text);
   padding: 2rem 3rem 2rem 0;
   cursor: pointer;
-  list-style: none;
   position: relative;
   transition: color 0.3s ease;
-}
-
-.faq__question::-webkit-details-marker {
-  display: none;
 }
 
 .faq__question::after {
@@ -178,13 +177,17 @@
     color 0.3s ease;
 }
 
-.faq__item[open] .faq__question::after {
+.faq__item--open .faq__question::after {
   transform: translateY(-50%) rotate(45deg);
   color: var(--color-text);
 }
 
-.faq__item[open] .faq__question {
+.faq__item--open .faq__question {
   color: var(--color-text);
+}
+
+.faq__body {
+  overflow: hidden;
 }
 
 .faq__answer {

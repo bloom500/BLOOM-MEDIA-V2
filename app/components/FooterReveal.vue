@@ -1,0 +1,447 @@
+<template>
+  <!--
+    Scroll anchor on desktop (100vh, black) — drives ScrollTrigger.
+    On mobile/SSR this is the static footer with visible content.
+  -->
+  <footer
+    id="footer-reveal"
+    ref="footerEl"
+    class="footer-reveal"
+    aria-label="Site footer"
+  >
+    <div v-if="!isDesktop" class="footer-static">
+      <!-- Top-right socials -->
+      <div class="footer-static__socials">
+        <a
+          href="https://www.instagram.com/bloom_media_marketing/"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Instagram"
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+            <circle cx="12" cy="12" r="4.5"/>
+            <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/>
+          </svg>
+        </a>
+        <a
+          href="https://www.facebook.com/profile.php?id=61587068890787"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Facebook"
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
+          </svg>
+        </a>
+      </div>
+
+      <!-- Center: statement + email -->
+      <div class="footer-static__center">
+        <p class="footer-static__statement">
+          <span>Unele lucruri</span>
+          <span>merită făcute bine.</span>
+        </p>
+        <a href="mailto:hello@bloommedia.ro" class="footer-static__email">
+          hello@bloommedia.ro
+        </a>
+      </div>
+
+      <!-- Bottom bar: legal + CUI -->
+      <div class="footer-static__bottom">
+        <NuxtLink to="/privacy-policy" class="footer-static__legal-link">Politică Confidențialitate</NuxtLink>
+        <span class="footer-dot">·</span>
+        <NuxtLink to="/termeni" class="footer-static__legal-link">Termeni &amp; Condiții</NuxtLink>
+        <span class="footer-static__cui">CUI: 50654818</span>
+      </div>
+    </div>
+  </footer>
+
+  <!--
+    Teleported to <body> so fixed children escape site-content's stacking context (z:2).
+    Curtain: z-index 9997 covers everything except cursor (9999) and CTA (10000).
+    Stage: z-index 9998, sits above curtain.
+  -->
+  <Teleport v-if="isDesktop" to="body">
+    <div ref="curtainEl" class="footer-curtain" aria-hidden="true"></div>
+    <div ref="stageEl" class="footer-stage" data-cursor-dark>
+
+      <!-- Top-right: social icons -->
+      <div ref="socialsEl" class="footer-stage__socials">
+        <a
+          href="https://www.instagram.com/bloom_media_marketing/"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Instagram"
+          class="footer-stage__social"
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+            <circle cx="12" cy="12" r="4.5"/>
+            <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/>
+          </svg>
+        </a>
+        <a
+          href="https://www.facebook.com/profile.php?id=61587068890787"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Facebook"
+          class="footer-stage__social"
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
+          </svg>
+        </a>
+      </div>
+
+      <!-- Center: statement + email -->
+      <div class="footer-stage__center">
+        <p ref="statementEl" class="footer-stage__statement">
+          <span class="footer-stage__line">Unele lucruri</span>
+          <span class="footer-stage__line">merită făcute bine.</span>
+        </p>
+        <a
+          ref="emailEl"
+          href="mailto:hello@bloommedia.ro"
+          class="footer-stage__email"
+        >
+          hello@bloommedia.ro
+        </a>
+      </div>
+
+      <!-- Bottom bar: legal + CUI -->
+      <div ref="metaEl" class="footer-stage__bottom">
+        <NuxtLink to="/privacy-policy" class="footer-stage__legal-link">Politică Confidențialitate</NuxtLink>
+        <span class="footer-dot">·</span>
+        <NuxtLink to="/termeni" class="footer-stage__legal-link">Termeni &amp; Condiții</NuxtLink>
+        <span class="footer-stage__cui">CUI: 50654818</span>
+      </div>
+
+    </div>
+  </Teleport>
+</template>
+
+<script setup lang="ts">
+import { ref, nextTick, onMounted, onBeforeUnmount } from 'vue'
+
+const footerEl = ref<HTMLElement | null>(null)
+const curtainEl = ref<HTMLElement | null>(null)
+const stageEl = ref<HTMLElement | null>(null)
+const statementEl = ref<HTMLElement | null>(null)
+const emailEl = ref<HTMLElement | null>(null)
+const metaEl = ref<HTMLElement | null>(null)
+const socialsEl = ref<HTMLElement | null>(null)
+
+const isDesktop = ref(false)
+let ctx: any = null
+
+// Shared with CustomCursor — turns white when the screen goes black
+const cursorDark = useState('cursorDark', () => false)
+
+onMounted(async () => {
+  if (!import.meta.client) return
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+  if (window.matchMedia('(max-width: 767px)').matches) return
+
+  isDesktop.value = true
+  await nextTick()
+
+  const { gsap } = await import('gsap')
+  const { ScrollTrigger } = await import('gsap/ScrollTrigger')
+  gsap.registerPlugin(ScrollTrigger)
+
+  ctx = gsap.context(() => {
+    const lines = statementEl.value!.querySelectorAll('.footer-stage__line')
+
+    gsap.set(curtainEl.value, { opacity: 0 })
+    gsap.set([lines, emailEl.value, metaEl.value, socialsEl.value], { opacity: 0, y: 24 })
+
+    // Switch cursor to white as soon as the curtain starts fading in (top 80%)
+    ScrollTrigger.create({
+      trigger: footerEl.value,
+      start: 'top 80%',
+      onEnter: () => { cursorDark.value = true },
+      onLeaveBack: () => { cursorDark.value = false },
+    })
+
+    // Phase 1: full-viewport curtain fades in as footer approaches top
+    gsap.timeline({
+      scrollTrigger: {
+        trigger: footerEl.value,
+        start: 'top 80%',
+        end: 'top 8%',
+        scrub: 0.7,
+      },
+    }).to(curtainEl.value, { opacity: 1, ease: 'power1.inOut' })
+
+    // Phase 2: pin + reveal content
+    gsap.timeline({
+      scrollTrigger: {
+        trigger: footerEl.value,
+        start: 'top top',
+        end: '+=75%',
+        pin: true,
+        scrub: 0.9,
+      },
+    })
+      .to(socialsEl.value, { opacity: 1, y: 0, duration: 0.3, ease: 'power2.out' })
+      .to(lines, { opacity: 1, y: 0, duration: 0.5, stagger: 0.14, ease: 'power2.out' }, '>-0.1')
+      .to(emailEl.value, { opacity: 1, y: 0, duration: 0.4, ease: 'power2.out' }, '>+0.06')
+      .to(metaEl.value, { opacity: 1, y: 0, duration: 0.35, ease: 'power2.out' }, '>+0.06')
+  })
+})
+
+onBeforeUnmount(() => {
+  ctx?.revert()
+  cursorDark.value = false
+})
+</script>
+
+<style scoped>
+.footer-reveal {
+  position: relative;
+  background: #000;
+  min-height: 100vh;
+}
+
+@media (max-width: 767px) {
+  .footer-reveal {
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+/* ── Mobile / SSR static layout ── */
+.footer-static {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-height: 100svh;
+  padding: 5rem 2rem 3rem;
+}
+
+.footer-static__socials {
+  position: absolute;
+  top: 2.5rem;
+  right: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.footer-static__socials a {
+  color: rgba(255, 255, 255, 0.5);
+  display: flex;
+  align-items: center;
+  transition: color 0.25s ease;
+}
+
+.footer-static__socials a:hover {
+  color: #fff;
+}
+
+.footer-static__center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2.5rem;
+  text-align: center;
+  flex: 1;
+  justify-content: center;
+}
+
+.footer-static__statement {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: clamp(2rem, 9vw, 3rem);
+  line-height: 1.05;
+  color: #fff;
+  letter-spacing: -0.02em;
+}
+
+.footer-static__statement span {
+  display: block;
+}
+
+.footer-static__email {
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: rgba(255, 255, 255, 0.45);
+  text-decoration: none;
+  border-bottom: 0.5px solid rgba(255, 255, 255, 0.12);
+  padding-bottom: 3px;
+  transition: color 0.3s ease, border-color 0.3s ease;
+}
+
+.footer-static__email:hover {
+  color: rgba(255, 255, 255, 0.88);
+  border-bottom-color: rgba(255, 255, 255, 0.4);
+}
+
+.footer-static__bottom {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 3rem;
+}
+
+.footer-static__legal-link {
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.5);
+  text-decoration: none;
+  transition: color 0.25s ease;
+}
+
+.footer-static__legal-link:hover {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.footer-dot {
+  color: rgba(255, 255, 255, 0.2);
+}
+
+.footer-static__cui {
+  font-family: var(--font-body);
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: rgba(255, 255, 255, 0.2);
+  margin-left: 0.5rem;
+}
+</style>
+
+<!-- Global: teleported elements are outside this component's scoped DOM -->
+<style>
+.footer-curtain {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 9997;
+}
+
+.footer-stage {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9998;
+  padding: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Top-right: social icons */
+.footer-stage__socials {
+  position: absolute;
+  top: 2.5rem;
+  right: 2.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.footer-stage__social {
+  color: rgba(255, 255, 255, 0.5);
+  display: flex;
+  align-items: center;
+  transition: color 0.25s ease;
+  pointer-events: auto;
+}
+
+.footer-stage__social:hover {
+  color: #fff;
+}
+
+/* Center: statement + email */
+.footer-stage__center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 80px;
+  text-align: center;
+  flex: 1;
+  justify-content: center;
+}
+
+.footer-stage__statement {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: clamp(2.8rem, 5.5vw, 5.5rem);
+  line-height: 1.05;
+  color: #fff;
+  letter-spacing: -0.02em;
+}
+
+.footer-stage__line {
+  display: block;
+}
+
+.footer-stage__email {
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: rgba(255, 255, 255, 0.45);
+  text-decoration: none;
+  border-bottom: 0.5px solid rgba(255, 255, 255, 0.12);
+  padding-bottom: 3px;
+  transition: color 0.3s ease, border-color 0.3s ease;
+  pointer-events: auto;
+}
+
+.footer-stage__email:hover {
+  color: rgba(255, 255, 255, 0.88);
+  border-bottom-color: rgba(255, 255, 255, 0.4);
+}
+
+/* Bottom bar: legal links + CUI */
+.footer-stage__bottom {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding-bottom: 0.5rem;
+}
+
+.footer-stage .footer-dot {
+  color: rgba(255, 255, 255, 0.2);
+}
+
+.footer-stage__legal-link {
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.5);
+  text-decoration: none;
+  transition: color 0.25s ease;
+  pointer-events: auto;
+}
+
+.footer-stage__legal-link:hover {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.footer-stage__cui {
+  font-family: var(--font-body);
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: rgba(255, 255, 255, 0.2);
+  margin-left: 0.5rem;
+}
+</style>

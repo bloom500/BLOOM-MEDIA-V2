@@ -30,7 +30,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 10rem 1.5rem;
+  padding: 14rem 1.5rem;
 }
 
 .services__inner {
@@ -74,7 +74,7 @@
 
 @media (max-width: 768px) {
   .services {
-    padding: 6rem 1.5rem;
+    padding: 8rem 1.5rem;
   }
 
   .services__body {

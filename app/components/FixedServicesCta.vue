@@ -19,7 +19,7 @@
 const inFooter = ref(false)
 
 onMounted(() => {
-  const footer = document.querySelector('footer.footer')
+  const footer = document.querySelector('footer.footer-reveal')
   if (!footer) return
 
   const observer = new IntersectionObserver(

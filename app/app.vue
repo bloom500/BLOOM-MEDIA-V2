@@ -11,7 +11,6 @@
   <div class="site-content">
     <TheNavbar />
     <NuxtPage />
-    <TheFooter />
   </div>
 
   <FixedServicesCta />

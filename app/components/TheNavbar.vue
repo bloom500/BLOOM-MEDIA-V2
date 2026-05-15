@@ -1,5 +1,5 @@
 <template>
-  <header class="navbar">
+  <header class="navbar" :class="{ 'navbar--light': isLightOnDark }">
     <NuxtLink to="/" class="navbar__brand" aria-label="Bloom Media — acasă">
       Bloom Media<span class="navbar__dot">.</span>
     </NuxtLink>
@@ -21,6 +21,12 @@
 </template>
 
 <script setup lang="ts">
+const route = useRoute()
+
+// Pages with a dark full-bleed background that need white navbar text
+const darkBgRoutes = ['/servicii']
+const isLightOnDark = computed(() => darkBgRoutes.includes(route.path))
+
 const navLinks = [
   { to: '/servicii', label: 'Servicii' },
   { to: '/portofoliu', label: 'Portofoliu' },
@@ -112,5 +118,31 @@ const navLinks = [
   .navbar {
     padding: 1.25rem 1.25rem;
   }
+}
+
+/* ─── White-on-dark variant ───────────────────────────────────── */
+.navbar--light .navbar__brand,
+.navbar--light .navbar__dot {
+  color: #fff;
+}
+
+.navbar--light .navbar__nav a {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.navbar--light .navbar__nav a:hover,
+.navbar--light .navbar__nav a.router-link-active {
+  color: #fff;
+}
+
+.navbar--light .navbar__btn {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.navbar--light .navbar__btn:hover {
+  background: #fff;
+  color: #060604;
+  border-color: #fff;
 }
 </style>

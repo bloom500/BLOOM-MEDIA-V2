@@ -1,5 +1,6 @@
 <template>
   <footer
+    id="footer-reveal"
     class="footer"
     aria-label="Site footer"
     string="progress"

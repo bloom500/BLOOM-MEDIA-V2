@@ -34,26 +34,18 @@ useHead({
     <VideoMeshSection />
     <ServicesSection />
     <ProcessSection />
+    <VideoMeshDuo />
     <WhyBloomSection />
     <FaqSection />
     <ContactSection />
+    <FooterReveal />
   </main>
 </template>
 
 <style scoped>
-/*
- * Footer SpringTune: trebuie strat opac peste zona de jos ca footer-ul translat
- * să nu se vadă peste Contact (vezi tutorial-01-footer-shifting + main.css).
- * Gradient: sus transparent → 3D vizibil; jos --color-bg → mască pentru footer.
- */
+/* SpringTune footer removed — .site-main no longer needs to mask it */
 .site-main {
-  background: linear-gradient(
-    180deg,
-    transparent 0%,
-    transparent 68%,
-    var(--color-bg) 76%,
-    var(--color-bg) 100%
-  ) !important;
+  background: transparent !important;
 }
 
 .manifest {

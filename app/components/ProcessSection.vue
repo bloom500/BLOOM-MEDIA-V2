@@ -29,7 +29,7 @@
 .process {
   position: relative;
   width: 100%;
-  padding: 10rem 1.5rem;
+  padding: 14rem 1.5rem;
 }
 
 .process__title {
@@ -88,7 +88,7 @@
 
 @media (max-width: 768px) {
   .process {
-    padding: 6rem 1.25rem;
+    padding: 8rem 1.25rem;
   }
 
   .process__body {
