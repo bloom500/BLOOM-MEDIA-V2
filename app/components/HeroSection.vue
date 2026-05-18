@@ -1,5 +1,5 @@
 <template>
-  <section class="hero">
+  <section class="hero" :style="heroStyle">
     <div class="hero__shell">
       <div class="hero__top">
         <div class="hero__top-left">
@@ -42,6 +42,77 @@
 </template>
 
 <script setup lang="ts">
+import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
+
+/*
+ * iOS browser-bar resize fix (1:1 with the WEBFINAL Svelte original).
+ *
+ * Capture window.innerHeight ONCE on mount and pin the hero to that
+ * exact pixel value. iOS Safari/Chrome browser bars then collapse and
+ * expand without changing the hero's height — the bar movement plays out
+ * in the body's spare height (body has min-height: 100dvh which absorbs
+ * the freed space below the hero), not by stretching the hero itself.
+ *
+ * Why JS-set pixels beat dvh/svh/lvh:
+ *  - dvh: tracks the bar live → hero visibly grows/shrinks every scroll
+ *  - svh: locked to small viewport → leaves a gray gap below the hero
+ *  - lvh: locked to large → first scroll has dead-zone before content moves
+ *  - JS px: locked to whatever the viewport was AT LOAD → no jumps, no gaps
+ *
+ * On mobile we deliberately don't listen to resize (only orientation).
+ * The point is to NOT respond to bar collapse; resize fires for that.
+ */
+const heroHeightPx = ref<string | null>(null)
+const heroStyle = computed(() =>
+  heroHeightPx.value ? { height: heroHeightPx.value } : {}
+)
+
+let removeResize: (() => void) | null = null
+let removeOrientation: (() => void) | null = null
+
+onMounted(() => {
+  if (!import.meta.client) return
+
+  const isMobileLayout = window.matchMedia('(max-width: 768px)').matches
+  const isCoarse = window.matchMedia('(pointer: coarse)').matches
+  const isMobile = isMobileLayout || isCoarse
+
+  const setHeight = () => {
+    heroHeightPx.value = `${window.innerHeight}px`
+  }
+  setHeight()
+
+  if (!isMobile) {
+    // Desktop: only update on width changes (keyboard / devtools docking).
+    // Height-only resizes (window manager) shouldn't disturb the hero.
+    let lastWidth = window.innerWidth
+    const onResize = () => {
+      if (window.innerWidth !== lastWidth) {
+        lastWidth = window.innerWidth
+        setHeight()
+      }
+    }
+    window.addEventListener('resize', onResize, { passive: true })
+    removeResize = () => window.removeEventListener('resize', onResize)
+  } else {
+    // Mobile: only re-measure on real orientation changes. Browser-bar
+    // collapse fires resize too, which is exactly what we want to ignore.
+    const onOrientation = () => {
+      // Two RAFs: iOS reports stale innerHeight on the orientationchange
+      // event itself; the next two paint cycles have the correct value.
+      requestAnimationFrame(() =>
+        requestAnimationFrame(setHeight)
+      )
+    }
+    window.addEventListener('orientationchange', onOrientation, { passive: true })
+    removeOrientation = () => window.removeEventListener('orientationchange', onOrientation)
+  }
+})
+
+onBeforeUnmount(() => {
+  removeResize?.()
+  removeOrientation?.()
+})
 </script>
 
 <style scoped>
@@ -50,19 +121,10 @@
   overflow: hidden;
   width: 100%;
   /*
-   * Stable height across iOS browser-bar collapse/expand. Sequence of
-   * fallbacks that all evaluate to "fixed = small viewport, bar visible":
-   *   - 100vh: legacy unit, on iOS evaluates to lvh (large) and *grows*
-   *     when the bar collapses — that's the bug we're avoiding.
-   *   - 100svh: small viewport height, locked to the size with the bar
-   *     fully visible. Never changes during scroll. This is what we want.
-   *   - dvh would track the bar dynamically (resizes the hero as the bar
-   *     animates) — feels alive on first swipe but creates the "hero
-   *     stretches/shrinks every scroll" sensation we're seeing.
-   *
-   * Tradeoff: ~50px of black space appears under the hero once the bar
-   * collapses, before the manifest section. Acceptable; consistent with
-   * editorial reference sites.
+   * Height comes from JS-set inline style="height: <innerHeight>px;",
+   * captured ONCE on mount. See the script block above for the rationale.
+   * Fallback values here are only used pre-hydration / before onMounted
+   * fires — keep them at svh so SSR doesn't render a giant initial frame.
    */
   height: 100svh;
   min-height: 100svh;

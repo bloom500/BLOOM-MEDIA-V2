@@ -54,9 +54,14 @@ onMounted(async () => {
 .site-content {
   position: relative;
   z-index: 2;
-  /* svh = stable height; avoids iOS bar-collapse resize that ripples down
-     to all child sections and StringTune's measurements. */
+  /*
+   * Like body: track dvh so the freed space below the hero (when iOS
+   * collapses its bar) is absorbed by the wrapper, not visible as a
+   * gap. Hero itself is pinned to JS-captured pixel height — see
+   * HeroSection.vue.
+   */
   min-height: 100svh;
+  min-height: 100dvh;
 }
 
 /* Servicii page — dark html+body so scroll area never shows white */

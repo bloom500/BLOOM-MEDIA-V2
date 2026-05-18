@@ -79,11 +79,18 @@ html {
 }
 
 body {
-  /* svh = stable height; lvh would force the body to the large viewport
-     and make iOS bars un-collapsible on short pages. svh keeps the page
-     measured at the small (bar-visible) state and lets iOS handle the
-     bar reveal naturally without resizing flow content. */
+  /*
+   * Hero is pinned to a JS-captured pixel height (window.innerHeight at
+   * mount). The body needs to grow with the dynamic viewport so that when
+   * iOS collapses its browser bar, the freed space is absorbed BELOW the
+   * hero — by the body — not exposed as a gray gap. dvh is exactly that
+   * unit: it tracks the live visible viewport.
+   *
+   * No transition here: dvh jumps are absorbed inside the body's bottom,
+   * not visible because content lives at the top.
+   */
   min-height: 100svh;
+  min-height: 100dvh;
   height: auto;
   overflow-x: hidden;
   overflow-y: auto;
