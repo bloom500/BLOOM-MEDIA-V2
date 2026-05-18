@@ -101,7 +101,19 @@ const RELIEF_COMFORT_ZOOM_OUT = 0.77
 /** Scroll=0: marginea de sus a viewport-ului lângă zona păsărilor (bbox.max.y → +halfVisibleH). */
 const RELIEF_TOP_FRAC = 0.9
 const RELIEF_TOP_BLEND = 0.95
-const MAX_PIXEL_RATIO = 2
+/*
+ * Pixel-ratio cap: 2 on desktop is fine, but on iOS Retina (DPR=3) the
+ * WebGPU canvas balloons to ~5+ MP per frame and the relief shader runs
+ * a per-pixel TSL pipeline including trail texture sampling and 5-level
+ * mixing. 1.5 on mobile is a major perf win without visible quality loss
+ * on hand-held screens.
+ */
+const MAX_PIXEL_RATIO_DESKTOP = 2
+const MAX_PIXEL_RATIO_MOBILE = 1.5
+let isMobileLayout = false
+function maxPixelRatio() {
+  return isMobileLayout ? MAX_PIXEL_RATIO_MOBILE : MAX_PIXEL_RATIO_DESKTOP
+}
 
 /**
  * Bandă stânga/dreaptă: extrude trail forțat la 0 (Z plat + level0) — fără hover pe margini.
@@ -548,7 +560,7 @@ async function initScene(canvas) {
   renderer.setClearColor(RELIEF_SCENE_BG, 1)
   renderer.toneMapping = NoToneMapping
   renderer.outputColorSpace = SRGBColorSpace
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, MAX_PIXEL_RATIO))
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, maxPixelRatio()))
   renderer.setSize(frozenWidth, frozenHeight, false)
   renderer.shadowMap.enabled = false
 
@@ -670,7 +682,6 @@ function onPointerDown(e) {
  */
 let frozenWidth = 0
 let frozenHeight = 0
-let isMobileLayout = false
 
 function onResize() {
   if (!renderer || !camera) return
@@ -688,7 +699,7 @@ function onResize() {
   camera.aspect = w / h
   camera.updateProjectionMatrix()
 
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, MAX_PIXEL_RATIO))
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, maxPixelRatio()))
   renderer.setSize(w, h, false)
 
   ensureTrailLayer()
@@ -721,7 +732,7 @@ function onOrientation() {
     camera.aspect = frozenWidth / frozenHeight
     camera.updateProjectionMatrix()
 
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, MAX_PIXEL_RATIO))
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, maxPixelRatio()))
     renderer.setSize(frozenWidth, frozenHeight, false)
 
     ensureTrailLayer()
@@ -740,9 +751,18 @@ function tick() {
   if (modelRoot && camera) {
     const scrollTarget = window.scrollY
     scrollSmoothed += (scrollTarget - scrollSmoothed) * SCROLL_LERP
+    /*
+     * On mobile the iOS bar collapse bumps innerHeight by ~60px every
+     * scroll-direction change. If we read window.innerHeight here, the
+     * resulting scrollMax oscillates and the model "jumps" with the bar
+     * animation. frozenHeight (captured at mount, refreshed only on real
+     * orientation change) keeps the math stable.
+     */
+    const vh = isMobileLayout
+      ? Math.max(frozenHeight, 1)
+      : Math.max(typeof window !== 'undefined' ? window.innerHeight : 1, 1)
     const doc = typeof document !== 'undefined' ? document.documentElement : null
     const scrollH = doc ? Math.max(doc.scrollHeight, doc.clientHeight) : 1
-    const vh = Math.max(typeof window !== 'undefined' ? window.innerHeight : 1, 1)
     const scrollMax = Math.max(1, scrollH - vh)
     const t = Math.min(Math.max(scrollSmoothed / scrollMax, 0), 1)
     modelRoot.position.y = modelBaseY + t * modelScrollPanRange

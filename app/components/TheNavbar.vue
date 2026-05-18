@@ -268,35 +268,36 @@ onBeforeUnmount(() => {
 
 .navbar__burger-bar {
   position: absolute;
+  /*
+   * Anchor both bars at the center, then translateY apart for the
+   * default "= =" state. Animating only transform (no layout
+   * properties like `top`) keeps the burger morph compositor-only
+   * and smooth on mobile — the previous version animated `top` which
+   * triggered layout on every frame on iOS.
+   */
+  top: 50%;
   left: 50%;
   width: 22px;
   height: 1.5px;
   background: var(--color-text);
   transform-origin: center;
+  transform: translate3d(-50%, calc(-50% - 4px), 0);
   transition:
-    transform 0.4s cubic-bezier(0.86, 0, 0.07, 1),
-    top 0.3s cubic-bezier(0.86, 0, 0.07, 1),
+    transform 0.45s cubic-bezier(0.65, 0, 0.35, 1),
     background 0.3s ease;
-}
-
-.navbar__burger-bar:nth-child(1) {
-  top: calc(50% - 4px);
-  transform: translateX(-50%);
+  will-change: transform;
 }
 
 .navbar__burger-bar:nth-child(2) {
-  top: calc(50% + 4px);
-  transform: translateX(-50%);
+  transform: translate3d(-50%, calc(-50% + 4px), 0);
 }
 
 .navbar__burger.is-active .navbar__burger-bar:nth-child(1) {
-  top: 50%;
-  transform: translateX(-50%) rotate(45deg);
+  transform: translate3d(-50%, -50%, 0) rotate(45deg);
 }
 
 .navbar__burger.is-active .navbar__burger-bar:nth-child(2) {
-  top: 50%;
-  transform: translateX(-50%) rotate(-45deg);
+  transform: translate3d(-50%, -50%, 0) rotate(-45deg);
 }
 
 /* When drawer is open, force burger to white on the dark drawer */

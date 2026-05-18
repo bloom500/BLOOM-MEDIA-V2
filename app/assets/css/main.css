@@ -283,7 +283,8 @@ html[data-page="servicii"] section.configurator {
 
 .hero__statement.-splitted .-s-word > * {
   transform: translateY(110%);
-  will-change: transform;
+  /* No will-change here: this fires once on load and never again.
+     Persistent will-change creates a layer that's never released. */
 }
 
 .hero__statement.-splitted.-inview .-s-word > * {

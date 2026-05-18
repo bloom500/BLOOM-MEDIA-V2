@@ -18,17 +18,20 @@
 
 .-splitted .-s-line {
   display: flex;
-  will-change: contents;
+  /*
+   * No `will-change` here — splitting hundreds of words/chars per page
+   * with will-change creates an explosion of compositor layers (one per
+   * word/char) which spikes GPU memory and slows down everything else.
+   * We let the browser decide what to layer based on actual transitions.
+   */
 }
 
 .-splitted .-s-word {
   display: inline-flex;
-  will-change: contents;
 }
 
 .-splitted .-s-char {
   display: inline-flex;
-  will-change: contents;
 }
 
 /* ─── Reveal pe caractere (titluri, numere) ─── */
@@ -81,11 +84,9 @@
 /* ─── Premium media reveals / cards ─── */
 [data-anim="image-reveal"] {
   overflow: hidden;
-  will-change: clip-path;
-}
-
-[data-anim="image-reveal"] img {
-  will-change: transform;
+  /* Removed will-change: clip-path (created persistent compositor layer
+     even after the animation finished). Browser auto-promotes when the
+     transition is in flight, releases when done. */
 }
 
 [data-anim="stagger-item"] {
@@ -157,7 +158,12 @@
   color: #a8a6a2;
   filter: blur(4px) brightness(1.1);
   display: inline-block;
-  will-change: color, filter;
+  /*
+   * No will-change: applying it to every animated word created an
+   * isolated compositor layer per word, which on long sections
+   * (manifest, services, process, why) means 50-100 layers — enough
+   * to spike GPU memory on iOS and slow the whole page.
+   */
   /* Exit (scroll up): ultimele cuvinte dispar primele */
   transition:
     color 0.7s cubic-bezier(0.4, 0, 0.2, 1),

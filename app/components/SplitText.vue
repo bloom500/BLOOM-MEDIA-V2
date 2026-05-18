@@ -42,6 +42,5 @@ useScrollAnimation(rootRef, {
 
 .split-text__line {
   display: block;
-  will-change: transform, opacity;
 }
 </style>

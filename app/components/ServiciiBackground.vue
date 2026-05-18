@@ -28,6 +28,16 @@ const HOVER_IDLE_MS = 600    // after this many ms without movement, treat as no
 // Each mesh gets a stable noise seed based on its index
 const meshSeeds: number[] = []
 
+/*
+ * iOS browser-bar fix — same pattern as ReliefSlab/HeroSection. On mobile
+ * we freeze the canvas size at mount so iOS bar collapse/expand doesn't
+ * trigger setSize() + camera.aspect rebuild on every scroll-direction
+ * change (which was making the flowers visibly grow/shrink).
+ */
+let frozenWidth = 0
+let frozenHeight = 0
+let isMobileLayout = false
+
 function onMouseMove(e: MouseEvent) {
   hoverX = (e.clientX / window.innerWidth) * 2 - 1
   isHovering = true
@@ -45,21 +55,46 @@ function onMouseLeave() {
 
 function onResize() {
   if (!renderer || !camera) return
+  // Mobile: ignore bar-collapse resize. Real orientation change has its
+  // own handler that re-measures from scratch.
+  if (isMobileLayout && window.innerWidth === frozenWidth) return
+
   const w = window.innerWidth
-  const h = window.innerHeight
+  const h = isMobileLayout ? frozenHeight : window.innerHeight
   camera.aspect = w / h
   camera.updateProjectionMatrix()
   renderer.setSize(w, h)
+}
+
+function onOrientation() {
+  // Two RAFs: iOS reports stale dims on the orientationchange event itself.
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    if (!renderer || !camera) return
+    frozenWidth = window.innerWidth
+    frozenHeight = window.innerHeight
+    camera.aspect = frozenWidth / frozenHeight
+    camera.updateProjectionMatrix()
+    renderer.setSize(frozenWidth, frozenHeight)
+  }))
 }
 
 onMounted(() => {
   const canvas = canvasRef.value!
   clock = new THREE.Clock()
 
+  isMobileLayout = window.matchMedia('(max-width: 768px)').matches
+    || window.matchMedia('(pointer: coarse)').matches
+  frozenWidth = window.innerWidth
+  frozenHeight = window.innerHeight
+
   // ── Renderer — alpha:false + scene.background = dark, no bleed-through ──
   renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false })
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-  renderer.setSize(window.innerWidth, window.innerHeight)
+  /*
+   * On Retina mobile (DPR=3) capping at 2 doubles the work for no
+   * perceptible quality gain. Cap to 1.5 there to free GPU budget.
+   */
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobileLayout ? 1.5 : 2))
+  renderer.setSize(frozenWidth, frozenHeight)
   renderer.outputColorSpace = THREE.SRGBColorSpace
   renderer.toneMapping = THREE.ACESFilmicToneMapping
   renderer.toneMappingExposure = 1.35
@@ -67,7 +102,7 @@ onMounted(() => {
   scene = new THREE.Scene()
   scene.background = new THREE.Color(0x060604)
 
-  camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100)
+  camera = new THREE.PerspectiveCamera(45, frozenWidth / frozenHeight, 0.1, 100)
   camera.position.set(0, 0, 5)
   camera.lookAt(0, 0, 0)
 
@@ -162,6 +197,7 @@ onMounted(() => {
   window.addEventListener('mousemove', onMouseMove, { passive: true })
   window.addEventListener('mouseleave', onMouseLeave, { passive: true })
   window.addEventListener('resize', onResize, { passive: true })
+  window.addEventListener('orientationchange', onOrientation, { passive: true })
 
   // ── Render loop ───────────────────────────────────────────────
   function tick() {
@@ -198,6 +234,7 @@ onBeforeUnmount(() => {
   window.removeEventListener('mousemove', onMouseMove)
   window.removeEventListener('mouseleave', onMouseLeave)
   window.removeEventListener('resize', onResize)
+  window.removeEventListener('orientationchange', onOrientation)
   if (hoverDecayTimer) { clearTimeout(hoverDecayTimer); hoverDecayTimer = null }
   meshChildren = []
   renderer?.dispose()
