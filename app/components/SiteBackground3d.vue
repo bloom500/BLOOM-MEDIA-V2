@@ -13,9 +13,21 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import MorphingReliefBackground from '~/components/MorphingReliefBackground.vue'
-import ReliefSlab from '~/components/ReliefSlab.client.vue'
+import { computed, defineAsyncComponent } from 'vue'
+
+/*
+ * Async-loaded so each route only ships the renderer it actually uses.
+ * MorphingReliefBackground uses three (~600KB), ReliefSlab uses
+ * three/webgpu and TSL — heavier still. Static imports were forcing
+ * both bundles onto every page. Async cuts initial-load JS for any
+ * non-home/non-servicii route by hundreds of KB.
+ */
+const MorphingReliefBackground = defineAsyncComponent(() =>
+  import('~/components/MorphingReliefBackground.vue')
+)
+const ReliefSlab = defineAsyncComponent(() =>
+  import('~/components/ReliefSlab.client.vue')
+)
 
 const route = useRoute()
 const isHome     = computed(() => route.path === '/' || route.name === 'index')

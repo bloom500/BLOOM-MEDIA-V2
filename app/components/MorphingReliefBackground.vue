@@ -139,6 +139,8 @@ onMounted(async () => {
     let raf = 0
     const tick = () => {
       raf = requestAnimationFrame(tick)
+      // Background-tab idle: skip work
+      if (typeof document !== 'undefined' && document.hidden) return
       if (compiledShader) {
         compiledShader.uniforms.uMorphTime.value = performance.now() * 0.001
       }

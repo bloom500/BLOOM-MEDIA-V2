@@ -1,14 +1,19 @@
 <template>
   <section class="videomesh" aria-label="Video showcase">
     <div ref="frame" class="videomesh__frame" :class="{ 'is-visible': visible }">
+      <!--
+        autoplay + muted + playsinline = the only conditions Safari/iOS
+        Chrome require for inline muted-autoplay. We bind src directly
+        so the element is fully formed at parse time. preload=metadata
+        loads enough to start playing without buffering the whole file.
+      -->
       <video
         ref="player"
         autoplay
         muted
         loop
         playsinline
-        webkit-playsinline
-        preload="auto"
+        preload="metadata"
         class="videomesh__video"
         :src="currentSrc"
         @ended="nextVideo"
@@ -20,20 +25,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 
-/*
- * Single MP4 source per playlist entry. Audio is stripped at build time
- * (scripts/strip-audio-mp4.ps1), so we can rely entirely on the browser's
- * native autoplay-muted policy. No play() calls, no forcePlay() retries,
- * no watchdog interval — every JS intervention we tried turned out to
- * sabotage the very autoplay it was meant to recover. On Safari (macOS
- * + iOS), mutating currentTime programmatically is treated as a
- * user-mediated seek and disables autoplay-muted on subsequent play().
- *
- * The simplest possible markup IS the most reliable: <video autoplay
- * muted loop playsinline> with a direct src binding. The browser will
- * autoplay because all four conditions of the spec heuristic are met
- * declaratively at parse time.
- */
 const playlist = [
   '/videos/ad1demo.mp4',
   '/videos/ad2demo.mp4',
@@ -54,27 +45,59 @@ function nextVideo() {
 
 let observer: IntersectionObserver | null = null
 
+/*
+ * Why we still need a play() call despite autoplay attribute:
+ *   On SPA hydration, the <video> element is created by Vue on the
+ *   client, not parsed at HTML load. Safari evaluates the autoplay
+ *   attribute on initial parse — for hydrated elements it may not
+ *   fire because the element wasn't there at parse time.
+ *
+ *   Calling play() once after mount triggers Safari's autoplay
+ *   heuristic again. Because the element is muted+playsinline AND
+ *   we're not mutating currentTime/muted/etc. the call counts as
+ *   "autoplay-like" and Safari allows it.
+ *
+ *   Critically: NO currentTime mutations, NO muted property writes,
+ *   NO load() calls. Each of those flips Safari into "user-mediated"
+ *   mode and BLOCKS muted-autoplay until the next page load.
+ */
+function tryPlay(v: HTMLVideoElement | null) {
+  if (!v) return
+  const promise = v.play()
+  // Some Safari builds return undefined instead of a promise on success.
+  if (promise && typeof promise.catch === 'function') {
+    promise.catch(() => { /* native policy — no recovery here on purpose */ })
+  }
+}
+
 onMounted(() => {
   if (!import.meta.client) return
 
   /*
-   * Visibility observer drives ONLY two things:
-   *  - .is-visible class for the entrance animation
-   *  - pause() when the player goes off-screen (perf: stops decoder work
-   *    when the user isn't looking at it)
-   *  - resume play() when it comes back. Browser still has the muted+
-   *    autoplay flags so the resumed play() succeeds without gestures.
+   * Safari quirk: calling play() synchronously in onMounted (right after
+   * Vue has appended the element) sometimes lands BEFORE the element's
+   * media pipeline is ready. The play() promise resolves but the video
+   * stays paused until a user gesture. A 100ms tick lets the pipeline
+   * complete metadata loading first; the play() then succeeds.
+   *
+   * requestAnimationFrame alone isn't enough on Safari — it fires before
+   * the media engine has registered preload="metadata" was honored.
    */
+  setTimeout(() => tryPlay(player.value), 100)
+
   observer = new IntersectionObserver(
     (entries) => {
       const entry = entries[0]
       if (!entry) return
       if (entry.isIntersecting) {
         visible.value = true
-        const v = player.value
-        if (v && v.paused) v.play().catch(() => { /* native policy handles it */ })
+        // Second chance: when the video enters the viewport. Same
+        // play() — no other manipulation.
+        tryPlay(player.value)
       }
       else if (player.value && !player.value.paused) {
+        // Off-screen: pause to free decoder cycles. Resume happens
+        // on the next intersect.
         player.value.pause()
       }
     },
@@ -104,19 +127,19 @@ onUnmounted(() => {
   border-radius: 4px;
   overflow: hidden;
   position: relative;
-  /*
-   * Let vertical scroll pass through the video element on touch devices.
-   * Without this iOS Safari can intercept swipes that begin on the video
-   * and treat them as media-control gestures.
-   */
   touch-action: pan-y;
 
-  /* entrance state */
   opacity: 0;
   transform: translateY(48px) scale(0.97);
   transition:
     opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1),
     transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+  /*
+   * content-visibility: auto on entrance allows the browser to skip
+   * rendering this frame until it's near viewport. Major TBT win.
+   */
+  content-visibility: auto;
+  contain-intrinsic-size: 680px 680px;
 }
 
 .videomesh__frame.is-visible {
@@ -125,15 +148,12 @@ onUnmounted(() => {
 }
 
 @media (max-width: 768px) {
-  /*
-   * Soften the entrance on touch: shorter travel, no scale (which felt
-   * snappy/poppy on small screens), longer easing for a calmer feel.
-   */
   .videomesh__frame {
     transform: translateY(20px) scale(1);
     transition:
       opacity 1.1s cubic-bezier(0.22, 1, 0.36, 1),
       transform 1.1s cubic-bezier(0.22, 1, 0.36, 1);
+    contain-intrinsic-size: 88vw 88vw;
   }
 }
 

@@ -746,6 +746,15 @@ function tick() {
   if (disposed) return
   raf = requestAnimationFrame(tick)
 
+  /*
+   * Skip ALL per-frame work when the tab is hidden. Browser already
+   * throttles rAF to ~1Hz when hidden, but stopping paint + WebGPU
+   * commit unconditionally avoids any leftover work and lets the GPU
+   * fully idle. Resumes automatically when the tab becomes visible
+   * (rAF starts firing at 60Hz again).
+   */
+  if (typeof document !== 'undefined' && document.hidden) return
+
   paintTrail()
 
   if (modelRoot && camera) {

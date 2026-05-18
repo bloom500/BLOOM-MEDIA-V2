@@ -8,8 +8,7 @@
           muted
           loop
           playsinline
-          webkit-playsinline
-          preload="auto"
+          preload="metadata"
           class="videoduo__video"
           :src="currentA"
           @ended="nextA"
@@ -22,8 +21,7 @@
           muted
           loop
           playsinline
-          webkit-playsinline
-          preload="auto"
+          preload="metadata"
           class="videoduo__video"
           :src="currentB"
           @ended="nextB"
@@ -36,11 +34,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 
-/*
- * Same minimal autoplay strategy as VideoMeshSection — no play() calls,
- * no currentTime mutations. Browser native muted-autoplay heuristic
- * handles everything. See VideoMeshSection for the long version.
- */
 const playlistA = ['/videos/ad1section2.mp4', '/videos/ad2section2.mp4']
 const playlistB = ['/videos/ad3section2.mp4', '/videos/ad4section2.mp4']
 
@@ -61,10 +54,25 @@ function nextB() {
   indexB.value = (indexB.value + 1) % playlistB.length
 }
 
+// See VideoMeshSection.vue for why we play() without any other mutation.
+function tryPlay(v: HTMLVideoElement | null) {
+  if (!v) return
+  const promise = v.play()
+  if (promise && typeof promise.catch === 'function') {
+    promise.catch(() => { /* native policy */ })
+  }
+}
+
 let observer: IntersectionObserver | null = null
 
 onMounted(() => {
   if (!import.meta.client) return
+
+  // Safari pipeline-ready delay — see VideoMeshSection.vue.
+  setTimeout(() => {
+    tryPlay(playerA.value)
+    tryPlay(playerB.value)
+  }, 100)
 
   observer = new IntersectionObserver(
     (entries) => {
@@ -72,9 +80,8 @@ onMounted(() => {
       if (!entry) return
       if (entry.isIntersecting) {
         visible.value = true
-        for (const v of [playerA.value, playerB.value]) {
-          if (v && v.paused) v.play().catch(() => { /* native policy */ })
-        }
+        tryPlay(playerA.value)
+        tryPlay(playerB.value)
       }
       else {
         for (const v of [playerA.value, playerB.value]) {
@@ -123,6 +130,8 @@ onUnmounted(() => {
   transition:
     opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1),
     transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+  content-visibility: auto;
+  contain-intrinsic-size: 380px 676px;
 }
 
 .videoduo__frame--b {
@@ -156,6 +165,7 @@ onUnmounted(() => {
     transition:
       opacity 1.1s cubic-bezier(0.22, 1, 0.36, 1),
       transform 1.1s cubic-bezier(0.22, 1, 0.36, 1);
+    contain-intrinsic-size: 44vw 78vw;
   }
 
   .videoduo__frame--b {

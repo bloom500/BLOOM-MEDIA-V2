@@ -202,6 +202,9 @@ onMounted(() => {
   // ── Render loop ───────────────────────────────────────────────
   function tick() {
     animFrame = requestAnimationFrame(tick)
+    // Skip work when tab is hidden — browser throttles rAF anyway, this
+    // ensures no GPU commit / WebGL state changes during background.
+    if (typeof document !== 'undefined' && document.hidden) return
     const t = clock.getElapsedTime()
 
     // Lerp hover strength
