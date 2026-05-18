@@ -45,24 +45,20 @@
 import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
 
 /*
- * iOS browser-bar resize fix.
+ * iOS browser-bar resize fix — replicated 1:1 from BLOOM-MEDIA-WEBFINAL
+ * (sveltekit_app/src/lib/components/Hero.svelte). Capture innerHeight
+ * once on mount, freeze the hero to that pixel value.
  *
- * Strategy: pin the hero to a JS-set pixel height (NOT dvh/svh/lvh which
- * either jitter or leave gaps). On mobile we resync the pixel value
- * whenever the visible viewport actually changes — that catches the
- * Chrome iOS / Safari bar collapse and expand WITHOUT firing on every
- * scroll frame. window.innerHeight only updates when the bar actually
- * snaps to a new state, so reading it from a scroll/visualViewport
- * resize listener gives us natural growth/shrinkage.
+ * Desktop: re-measure only when width changes (devtools dock, etc.).
+ * Mobile: never re-measure. The whole point is to NOT respond to bar
+ * collapse — that's the resize event we're trying to ignore.
  *
- * Why JS-set pixels with viewport sync, not dvh:
- *  - dvh interpolates live with bar movement → hero "stretches" on every
- *    swipe (the bug that started this thread).
- *  - svh: locked to small viewport → leaves a gray gap when bar collapses.
- *  - lvh: locked to large → first scroll has dead-zone before content moves.
- *  - JS px synced on visualViewport.resize: jumps only at the bar's
- *    discrete snap points (collapsed / expanded), filling the available
- *    space cleanly without micro-resizes during the scroll itself.
+ * Why JS pixel value beats CSS units:
+ *  - dvh stretches the hero live with bar movement
+ *  - svh leaves a gap below the hero
+ *  - lvh has dead-zone scroll on first swipe
+ *  - JS px frozen on mount: hero is invariant, bar movement plays out
+ *    in the body's spare height (body has min-height: 100dvh)
  */
 const heroHeightPx = ref<string | null>(null)
 const heroStyle = computed(() =>
@@ -70,30 +66,20 @@ const heroStyle = computed(() =>
 )
 
 let removeResize: (() => void) | null = null
-let removeOrientation: (() => void) | null = null
-let removeVVResize: (() => void) | null = null
 
 onMounted(() => {
   if (!import.meta.client) return
 
   const isMobileLayout = window.matchMedia('(max-width: 768px)').matches
-  const isCoarse = window.matchMedia('(pointer: coarse)').matches
-  const isMobile = isMobileLayout || isCoarse
+  const isMobile = isMobileLayout || window.matchMedia('(pointer: coarse)').matches
 
   const setHeight = () => {
-    /*
-     * visualViewport.height (where supported) reports the actual visible
-     * area excluding the bar; window.innerHeight is the fallback. Both
-     * give the same result when the bar is collapsed; visualViewport is
-     * just more reliable on iOS Safari.
-     */
-    const h = (window.visualViewport?.height ?? window.innerHeight)
-    heroHeightPx.value = `${Math.round(h)}px`
+    heroHeightPx.value = `${window.innerHeight}px`
   }
   setHeight()
 
-  if (!isMobile) {
-    // Desktop: only update on width changes (keyboard / devtools docking).
+  if (!isMobileLayout) {
+    // Desktop: only update on width changes.
     let lastWidth = window.innerWidth
     const onResize = () => {
       if (window.innerWidth !== lastWidth) {
@@ -104,42 +90,12 @@ onMounted(() => {
     window.addEventListener('resize', onResize, { passive: true })
     removeResize = () => window.removeEventListener('resize', onResize)
   }
-  else {
-    /*
-     * Mobile: sync to visualViewport.resize. iOS fires this event ONLY
-     * when the bar actually snaps to a new state (collapsed/expanded),
-     * NOT on every scroll frame. So we get smooth two-state height
-     * transitions without the "live stretching" of dvh.
-     *
-     * Fallback to window.resize if visualViewport API is unavailable.
-     */
-    if (window.visualViewport) {
-      const onVV = () => setHeight()
-      window.visualViewport.addEventListener('resize', onVV, { passive: true } as AddEventListenerOptions)
-      removeVVResize = () => window.visualViewport?.removeEventListener('resize', onVV)
-    }
-    else {
-      const onResize = () => setHeight()
-      window.addEventListener('resize', onResize, { passive: true })
-      removeResize = () => window.removeEventListener('resize', onResize)
-    }
-
-    // Re-measure on real orientation changes too. Two RAFs because iOS
-    // reports stale innerHeight in the orientationchange event itself.
-    const onOrientation = () => {
-      requestAnimationFrame(() =>
-        requestAnimationFrame(setHeight)
-      )
-    }
-    window.addEventListener('orientationchange', onOrientation, { passive: true })
-    removeOrientation = () => window.removeEventListener('orientationchange', onOrientation)
-  }
+  // Mobile: pixel height frozen on mount. No listeners.
+  void isMobile
 })
 
 onBeforeUnmount(() => {
   removeResize?.()
-  removeOrientation?.()
-  removeVVResize?.()
 })
 </script>
 
@@ -149,16 +105,13 @@ onBeforeUnmount(() => {
   overflow: hidden;
   width: 100%;
   /*
-   * Height comes from JS-set inline style="height: <pixels>px;", synced
-   * to visualViewport on bar collapse/expand. Smooth tween on the JS
-   * change keeps the snap from feeling abrupt — bar collapse animation
-   * and our height update finish at the same time visually.
-   * Fallbacks here are pre-hydration only (SSR + before onMounted).
+   * Height comes from JS-set inline style="height: <pixels>px;",
+   * captured ONCE on mount. Pre-hydration fallback is svh so SSR
+   * doesn't render a giant frame.
    */
   height: 100svh;
   min-height: 100svh;
   background: transparent;
-  transition: height 0.32s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .hero__shell {

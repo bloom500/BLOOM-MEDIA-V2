@@ -513,6 +513,17 @@ function fitModelToViewport() {
 // ─── INIT ────────────────────────────────────────────────────────────────────
 
 async function initScene(canvas) {
+  /*
+   * Capture viewport state once. On mobile we freeze the height so iOS
+   * bar collapse doesn't trigger a setSize() cascade (which was the
+   * source of the model "squash" during swipes). orientationchange is
+   * still honoured via a separate handler in onMounted.
+   */
+  isMobileLayout = window.matchMedia('(max-width: 768px)').matches
+    || window.matchMedia('(pointer: coarse)').matches
+  frozenWidth = window.innerWidth
+  frozenHeight = window.innerHeight
+
   renderer = new WebGPURenderer({
     canvas,
     antialias: true,
@@ -525,7 +536,7 @@ async function initScene(canvas) {
   renderer.toneMapping = NoToneMapping
   renderer.outputColorSpace = SRGBColorSpace
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, MAX_PIXEL_RATIO))
-  renderer.setSize(window.innerWidth, window.innerHeight, false)
+  renderer.setSize(frozenWidth, frozenHeight, false)
   renderer.shadowMap.enabled = false
 
   scene = new THREE.Scene()
@@ -533,7 +544,7 @@ async function initScene(canvas) {
 
   camera = new THREE.PerspectiveCamera(
     CAMERA_FOV,
-    window.innerWidth / window.innerHeight,
+    frozenWidth / frozenHeight,
     0.1,
     100,
   )
@@ -635,10 +646,31 @@ function onPointerDown(e) {
   trailPaintCss.y = e.clientY
 }
 
+/*
+ * iOS browser-bar resize fix — same strategy as HeroSection. On mobile
+ * we freeze the canvas size on mount so the WebGPU renderer doesn't get
+ * a setSize() + camera.aspect rebuild every time the URL bar collapses
+ * or expands. That was causing the relief model to visibly squash/stretch
+ * with each scroll-direction change.
+ *
+ * Stored at module scope so onResize can read them.
+ */
+let frozenWidth = 0
+let frozenHeight = 0
+let isMobileLayout = false
+
 function onResize() {
   if (!renderer || !camera) return
+  /*
+   * On mobile, ignore the bar-collapse resize entirely — return early
+   * before touching the renderer. The frozen size from initScene stays.
+   * Real orientation changes hit a separate orientationchange listener
+   * which re-measures and re-fits.
+   */
+  if (isMobileLayout && window.innerWidth === frozenWidth) return
+
   const w = window.innerWidth
-  const h = window.innerHeight
+  const h = isMobileLayout ? frozenHeight : window.innerHeight
 
   camera.aspect = w / h
   camera.updateProjectionMatrix()
@@ -652,6 +684,28 @@ function onResize() {
   trailPaintCss.x = w * 0.5
   trailPaintCss.y = h * 0.5
   fitModelToViewport()
+}
+
+/*
+ * Real orientation change: capture a fresh frozen size so the canvas
+ * matches the new viewport. Two RAFs because iOS reports stale dims on
+ * the orientationchange event itself.
+ */
+function onOrientation() {
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    if (!renderer || !camera) return
+    frozenWidth = window.innerWidth
+    frozenHeight = window.innerHeight
+
+    camera.aspect = frozenWidth / frozenHeight
+    camera.updateProjectionMatrix()
+
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, MAX_PIXEL_RATIO))
+    renderer.setSize(frozenWidth, frozenHeight, false)
+
+    ensureTrailLayer()
+    fitModelToViewport()
+  }))
 }
 
 // ─── LOOP ────────────────────────────────────────────────────────────────────
@@ -691,6 +745,13 @@ onMounted(async () => {
   window.addEventListener('pointermove', onPointerMove, { passive: true })
   window.addEventListener('pointerdown', onPointerDown, { passive: true })
   window.addEventListener('resize', onResize, { passive: true })
+  /*
+   * On real orientation change, force a full re-measure: the frozen size
+   * captured at mount becomes stale once the device rotates. Two RAFs
+   * because iOS reports stale innerHeight/Width on the orientationchange
+   * event itself.
+   */
+  window.addEventListener('orientationchange', onOrientation, { passive: true })
 
   try {
     await initScene(canvas)
@@ -714,6 +775,7 @@ onBeforeUnmount(() => {
   window.removeEventListener('pointermove', onPointerMove)
   window.removeEventListener('pointerdown', onPointerDown)
   window.removeEventListener('resize', onResize)
+  window.removeEventListener('orientationchange', onOrientation)
 
   for (const g of pool.geometries) g?.dispose?.()
   for (const m of pool.materials) m?.dispose?.()
