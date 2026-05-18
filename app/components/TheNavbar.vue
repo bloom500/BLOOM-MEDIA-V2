@@ -132,8 +132,12 @@ watch(isMenuOpen, (open) => {
   if (!import.meta.client) return
   if (open) {
     savedScrollY = window.scrollY
-    document.body.style.top = `-${savedScrollY}px`
-    document.documentElement.classList.add('drawer-open')
+    // Defer the position:fixed lock by one rAF so the opacity/transform
+    // animation starts on a clean frame without a layout flush alongside it.
+    requestAnimationFrame(() => {
+      document.body.style.top = `-${savedScrollY}px`
+      document.documentElement.classList.add('drawer-open')
+    })
   }
   else {
     document.documentElement.classList.remove('drawer-open')
@@ -378,15 +382,18 @@ onBeforeUnmount(() => {
   background: #060604;
   /* Cover the whole visible viewport including under the iOS bar. */
   min-height: 100lvh;
-  /* Clip-path drawn from top-right circle (matches burger origin) → full coverage */
-  clip-path: circle(0% at calc(100% - 2.5rem) 2.5rem);
-  transition: clip-path 0.65s cubic-bezier(0.86, 0, 0.07, 1);
   /*
-   * Pre-promote to a GPU layer so the clip-path animation begins on an
-   * already-composited surface. Without this the browser upgrades the
-   * layer mid-animation, causing the first few frames to stutter.
+   * opacity + transform instead of clip-path: both are compositor-only
+   * on mobile (no layout/paint), so the drawer enters/exits smoothly
+   * even on low-end devices. clip-path circle() at 150% was triggering
+   * software rasterisation on iOS Safari, causing the stutter on tap.
    */
-  will-change: clip-path;
+  opacity: 0;
+  transform: translateY(-8px);
+  transition:
+    opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: opacity, transform;
   pointer-events: none;
   display: flex;
   flex-direction: column;
@@ -396,7 +403,8 @@ onBeforeUnmount(() => {
 }
 
 .mobile-drawer.is-open {
-  clip-path: circle(150% at calc(100% - 2.5rem) 2.5rem);
+  opacity: 1;
+  transform: translateY(0);
   pointer-events: auto;
 }
 
@@ -430,7 +438,7 @@ onBeforeUnmount(() => {
 .mobile-drawer.is-open .mobile-drawer__link {
   opacity: 1;
   transform: translateY(0);
-  transition-delay: calc(0.18s + var(--i, 0) * 0.06s);
+  transition-delay: calc(0.28s + var(--i, 0) * 0.06s);
 }
 
 .mobile-drawer__num {
@@ -500,6 +508,7 @@ onBeforeUnmount(() => {
 
 .mobile-drawer.is-open .mobile-drawer__foot {
   opacity: 1;
+  transition-delay: 0.55s;
 }
 
 .mobile-drawer__foot a {

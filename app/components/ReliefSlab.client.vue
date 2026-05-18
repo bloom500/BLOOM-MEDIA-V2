@@ -196,6 +196,9 @@ let disposed = false
 let trailLayer = null
 let trailTexture = null
 
+// Mobile: render at ~30fps to cut GPU pressure during touch-scroll.
+let frameSkip = 0
+
 /** Coordonate canvas trail (pixeli) — același obiect pasat la `trailLayer.update(mouse2D)` ca în sketch. */
 const mouse2D = { x: 0, y: 0 }
 
@@ -754,6 +757,11 @@ function tick() {
    * (rAF starts firing at 60Hz again).
    */
   if (typeof document !== 'undefined' && document.hidden) return
+
+  if (isMobileLayout) {
+    frameSkip = (frameSkip + 1) % 2
+    if (frameSkip !== 0) return
+  }
 
   paintTrail()
 

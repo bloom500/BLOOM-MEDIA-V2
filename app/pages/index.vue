@@ -164,15 +164,16 @@ onMounted(async () => {
 
   curtainCtx = gsap.context(() => {
     /*
-     * Opacity scrubs from 0 → 1 over a 30vh window starting where the FAQ
-     * section ends. Opacity is on .page-curtain (not on individual sections),
-     * so the relief 3D background is the thing that actually gets covered.
+     * Opacity scrubs from 0 → 1 over a scroll window starting where the FAQ
+     * section ends. On mobile: wider window (starts earlier, ends later) so a
+     * fast touch-swipe sees a gradual paper→black crossfade rather than a pop.
      */
+    const isMobile = window.matchMedia('(max-width: 768px)').matches
     ScrollTrigger.create({
       trigger: faqEndAnchor.value,
-      start: 'top 65%',
-      end: 'top 25%',
-      scrub: 0.6,
+      start: isMobile ? 'top 90%' : 'top 65%',
+      end: isMobile ? 'top -30%' : 'top 25%',
+      scrub: isMobile ? 1.8 : 0.6,
       onUpdate: (self) => {
         const p = self.progress
         document.documentElement.style.setProperty('--page-curtain-opacity', String(p))
