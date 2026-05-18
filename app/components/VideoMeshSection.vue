@@ -63,10 +63,15 @@ let observer: IntersectionObserver | null = null
  */
 function tryPlay(v: HTMLVideoElement | null) {
   if (!v) return
-  const promise = v.play()
-  // Some Safari builds return undefined instead of a promise on success.
-  if (promise && typeof promise.catch === 'function') {
-    promise.catch(() => { /* native policy — no recovery here on purpose */ })
+  const doPlay = () => {
+    const p = v.play()
+    if (p && typeof p.catch === 'function') p.catch(() => {})
+  }
+  // readyState 0 = HAVE_NOTHING — pipeline not ready yet (common on mobile)
+  if (v.readyState === 0) {
+    v.addEventListener('loadedmetadata', doPlay, { once: true })
+  } else {
+    doPlay()
   }
 }
 
@@ -83,7 +88,7 @@ onMounted(() => {
    * requestAnimationFrame alone isn't enough on Safari — it fires before
    * the media engine has registered preload="metadata" was honored.
    */
-  setTimeout(() => tryPlay(player.value), 100)
+  tryPlay(player.value)
 
   observer = new IntersectionObserver(
     (entries) => {
@@ -138,8 +143,6 @@ onUnmounted(() => {
    * content-visibility: auto on entrance allows the browser to skip
    * rendering this frame until it's near viewport. Major TBT win.
    */
-  content-visibility: auto;
-  contain-intrinsic-size: 680px 680px;
 }
 
 .videomesh__frame.is-visible {
@@ -153,7 +156,6 @@ onUnmounted(() => {
     transition:
       opacity 1.1s cubic-bezier(0.22, 1, 0.36, 1),
       transform 1.1s cubic-bezier(0.22, 1, 0.36, 1);
-    contain-intrinsic-size: 88vw 88vw;
   }
 }
 

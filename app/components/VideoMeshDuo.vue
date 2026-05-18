@@ -54,12 +54,16 @@ function nextB() {
   indexB.value = (indexB.value + 1) % playlistB.length
 }
 
-// See VideoMeshSection.vue for why we play() without any other mutation.
 function tryPlay(v: HTMLVideoElement | null) {
   if (!v) return
-  const promise = v.play()
-  if (promise && typeof promise.catch === 'function') {
-    promise.catch(() => { /* native policy */ })
+  const doPlay = () => {
+    const p = v.play()
+    if (p && typeof p.catch === 'function') p.catch(() => {})
+  }
+  if (v.readyState === 0) {
+    v.addEventListener('loadedmetadata', doPlay, { once: true })
+  } else {
+    doPlay()
   }
 }
 
@@ -68,11 +72,8 @@ let observer: IntersectionObserver | null = null
 onMounted(() => {
   if (!import.meta.client) return
 
-  // Safari pipeline-ready delay — see VideoMeshSection.vue.
-  setTimeout(() => {
-    tryPlay(playerA.value)
-    tryPlay(playerB.value)
-  }, 100)
+  tryPlay(playerA.value)
+  tryPlay(playerB.value)
 
   observer = new IntersectionObserver(
     (entries) => {
@@ -130,8 +131,6 @@ onUnmounted(() => {
   transition:
     opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1),
     transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
-  content-visibility: auto;
-  contain-intrinsic-size: 380px 676px;
 }
 
 .videoduo__frame--b {
@@ -165,7 +164,6 @@ onUnmounted(() => {
     transition:
       opacity 1.1s cubic-bezier(0.22, 1, 0.36, 1),
       transform 1.1s cubic-bezier(0.22, 1, 0.36, 1);
-    contain-intrinsic-size: 44vw 78vw;
   }
 
   .videoduo__frame--b {
