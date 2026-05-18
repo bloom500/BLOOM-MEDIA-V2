@@ -27,9 +27,13 @@ const isServicii = computed(() => route.path === '/servicii' || route.name === '
   position: fixed;
   inset: 0;
   width: 100vw;
-  /* svh = stable; canvas resize on iOS bar-collapse triggers WebGL renderer
-     resize too, which is expensive on every scroll-direction change. */
-  min-height: 100svh;
+  /*
+   * lvh = LARGE viewport (URL bar collapsed). Extends behind the iOS bar
+   * so that when the bar collapses on scroll, the freshly revealed area
+   * is still covered by the 3D background. svh would leave a strip of
+   * exposed body underneath = visible gap.
+   */
+  min-height: 100lvh;
   z-index: 0;
   pointer-events: none;
   overflow: hidden;

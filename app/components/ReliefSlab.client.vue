@@ -514,15 +514,28 @@ function fitModelToViewport() {
 
 async function initScene(canvas) {
   /*
-   * Capture viewport state once. On mobile we freeze the height so iOS
-   * bar collapse doesn't trigger a setSize() cascade (which was the
-   * source of the model "squash" during swipes). orientationchange is
-   * still honoured via a separate handler in onMounted.
+   * Capture viewport state once. Frozen size uses the container's
+   * computed lvh (it has CSS `height: 100lvh` so getBoundingClientRect
+   * always returns the LARGE viewport dimensions, even at load when iOS
+   * still shows its bar). That way the canvas covers the area that will
+   * be visible AFTER the bar collapses on first scroll, not just the
+   * shrunken initial viewport. Eliminates the "gray gap below relief"
+   * artifact when the bar disappears.
+   *
+   * orientationchange triggers a separate handler that re-measures.
    */
   isMobileLayout = window.matchMedia('(max-width: 768px)').matches
     || window.matchMedia('(pointer: coarse)').matches
-  frozenWidth = window.innerWidth
-  frozenHeight = window.innerHeight
+
+  const wrap = containerRef.value
+  if (wrap) {
+    const r = wrap.getBoundingClientRect()
+    frozenWidth = Math.max(Math.round(r.width), window.innerWidth)
+    frozenHeight = Math.max(Math.round(r.height), window.innerHeight)
+  } else {
+    frozenWidth = window.innerWidth
+    frozenHeight = window.innerHeight
+  }
 
   renderer = new WebGPURenderer({
     canvas,
@@ -687,15 +700,23 @@ function onResize() {
 }
 
 /*
- * Real orientation change: capture a fresh frozen size so the canvas
- * matches the new viewport. Two RAFs because iOS reports stale dims on
- * the orientationchange event itself.
+ * Real orientation change: capture a fresh frozen size from the
+ * container's rect (which reflects the new lvh after rotation).
+ * Two RAFs because iOS reports stale dims on the orientationchange
+ * event itself.
  */
 function onOrientation() {
   requestAnimationFrame(() => requestAnimationFrame(() => {
     if (!renderer || !camera) return
-    frozenWidth = window.innerWidth
-    frozenHeight = window.innerHeight
+    const wrap = containerRef.value
+    if (wrap) {
+      const r = wrap.getBoundingClientRect()
+      frozenWidth = Math.max(Math.round(r.width), window.innerWidth)
+      frozenHeight = Math.max(Math.round(r.height), window.innerHeight)
+    } else {
+      frozenWidth = window.innerWidth
+      frozenHeight = window.innerHeight
+    }
 
     camera.aspect = frozenWidth / frozenHeight
     camera.updateProjectionMatrix()
@@ -801,11 +822,15 @@ onBeforeUnmount(() => {
   inset: 0;
   width: 100vw;
   min-width: 100vw;
-  /* svh = stable; WebGPU canvas no longer fires resize() at every iOS
-     bar-collapse, which prevents the relief shader from re-uploading
-     uniforms on each scroll-direction change. */
-  height: 100svh;
-  min-height: 100svh;
+  /*
+   * lvh = LARGE viewport height (URL bar collapsed). Critical: we WANT
+   * the relief canvas to extend behind the iOS browser bar so that when
+   * the bar collapses on scroll, the freshly-revealed strip is still
+   * covered by the relief instead of exposing the body's solid color
+   * underneath. svh would leave that strip uncovered = visible gray gap.
+   */
+  height: 100lvh;
+  min-height: 100lvh;
   background: var(--relief-scene-bg);
   overflow: hidden;
   pointer-events: none;

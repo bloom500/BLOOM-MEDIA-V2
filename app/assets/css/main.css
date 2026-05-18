@@ -204,10 +204,34 @@ footer span {
   color: var(--color-text);
 }
 
-/* Fundal deschis + text negru; relief tintat în ReliefBackground.vue */
+/*
+ * Body bg + text default — used by all "light" pages (homepage included).
+ * Override via html[data-page="..."] for dark pages (servicii, etc.).
+ *
+ * IMPORTANT: on the homepage we deliberately DON'T set a solid color
+ * here, because the ReliefSlab fixed canvas (teleported to <body>)
+ * already paints the full viewport with the procedural paper texture.
+ * If we put a solid #fafafa under it, every time iOS collapses its URL
+ * bar a strip of the body shows through above/below the relief — that
+ * was the visible "gray gap" on screenshots.
+ *
+ * Solution: keep body transparent so the relief always shows through
+ * the dynamic gap. Pages that don't have ReliefSlab (servicii, etc.)
+ * already override this with a solid color via [data-page].
+ */
 html, body {
-  background: var(--color-bg) !important;
+  background: transparent !important;
   color: var(--color-text) !important;
+}
+
+/*
+ * Fallback solid color on <html> only — paints behind the relief if for
+ * any reason it isn't loaded yet (SSR flash, WebGPU init failure).
+ * Approximates the relief's paper hue (#a8a6a2) so the transition is
+ * imperceptible.
+ */
+html {
+  background-color: var(--relief-scene-bg, #a8a6a2);
 }
 
 section,

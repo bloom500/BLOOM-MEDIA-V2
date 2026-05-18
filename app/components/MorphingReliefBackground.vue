@@ -171,9 +171,9 @@ onUnmounted(() => {
   inset: 0;
   width: 100vw;
   min-width: 100vw;
-  /* svh = stable; the WebGL plane is sized once and stays there. */
-  height: 100svh;
-  min-height: 100svh;
+  /* lvh = large viewport, behind iOS bar — same rationale as ReliefSlab. */
+  height: 100lvh;
+  min-height: 100lvh;
   z-index: 0;
   pointer-events: none;
 }
