@@ -108,6 +108,22 @@ let onPageShow: (() => void) | null = null
 onMounted(() => {
   if (!import.meta.client) return
 
+  /*
+   * iOS muted-autoplay quirk: the `muted` HTML attribute alone is
+   * sometimes not enough — iOS Safari/Chrome occasionally refuse autoplay
+   * unless the property AND `defaultMuted` are both set as JS properties
+   * before play() is called. Set them as soon as the element exists.
+   */
+  const v = player.value
+  if (v) {
+    v.muted = true
+    v.defaultMuted = true
+    v.playsInline = true
+    // Try an early play() — covers the case where the section is in
+    // viewport from the start (e.g. user lands directly on it via #hash).
+    v.play().catch(() => { /* will retry via observer / forcePlay */ })
+  }
+
   observer = new IntersectionObserver(
     ([entry]) => {
       if (entry.isIntersecting) {

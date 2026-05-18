@@ -136,6 +136,19 @@ let onPageShow: (() => void) | null = null
 onMounted(() => {
   if (!import.meta.client) return
 
+  /*
+   * iOS muted-autoplay hardening — see VideoMeshSection note. Set the
+   * muted properties as JS properties (not just HTML attributes) on
+   * both players before any play() attempt.
+   */
+  for (const v of [playerA.value, playerB.value]) {
+    if (!v) continue
+    v.muted = true
+    v.defaultMuted = true
+    v.playsInline = true
+    v.play().catch(() => { /* observer / forcePlay handles retry */ })
+  }
+
   observer = new IntersectionObserver(
     ([entry]) => {
       if (entry.isIntersecting) {
