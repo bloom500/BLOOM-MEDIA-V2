@@ -63,11 +63,15 @@ let observer: IntersectionObserver | null = null
  */
 function tryPlay(v: HTMLVideoElement | null) {
   if (!v) return
+  // iOS Safari: the `muted` HTML attribute does not reflect to the DOM
+  // property when the element is created dynamically (SPA). Safari checks
+  // the property, not the attribute, so it sees an unmuted video and blocks
+  // autoplay. Setting the property explicitly fixes it.
+  v.muted = true
   const doPlay = () => {
     const p = v.play()
     if (p && typeof p.catch === 'function') p.catch(() => {})
   }
-  // readyState 0 = HAVE_NOTHING — pipeline not ready yet (common on mobile)
   if (v.readyState === 0) {
     v.addEventListener('loadedmetadata', doPlay, { once: true })
   } else {

@@ -56,6 +56,7 @@ function nextB() {
 
 function tryPlay(v: HTMLVideoElement | null) {
   if (!v) return
+  v.muted = true  // iOS Safari SPA fix — see VideoMeshSection.vue
   const doPlay = () => {
     const p = v.play()
     if (p && typeof p.catch === 'function') p.catch(() => {})
