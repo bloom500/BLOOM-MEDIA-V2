@@ -76,6 +76,12 @@ onMounted(() => {
   tryPlay(playerA.value)
   tryPlay(playerB.value)
 
+  // iOS unlock — same pattern as VideoMeshSection
+  document.addEventListener('touchstart', () => {
+    tryPlay(playerA.value)
+    tryPlay(playerB.value)
+  }, { once: true, passive: true })
+
   observer = new IntersectionObserver(
     (entries) => {
       const entry = entries[0]
@@ -84,8 +90,7 @@ onMounted(() => {
         visible.value = true
         tryPlay(playerA.value)
         tryPlay(playerB.value)
-      }
-      else {
+      } else {
         for (const v of [playerA.value, playerB.value]) {
           if (v && !v.paused) v.pause()
         }

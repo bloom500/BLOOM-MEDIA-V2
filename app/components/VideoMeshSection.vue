@@ -45,28 +45,8 @@ function nextVideo() {
 
 let observer: IntersectionObserver | null = null
 
-/*
- * Why we still need a play() call despite autoplay attribute:
- *   On SPA hydration, the <video> element is created by Vue on the
- *   client, not parsed at HTML load. Safari evaluates the autoplay
- *   attribute on initial parse — for hydrated elements it may not
- *   fire because the element wasn't there at parse time.
- *
- *   Calling play() once after mount triggers Safari's autoplay
- *   heuristic again. Because the element is muted+playsinline AND
- *   we're not mutating currentTime/muted/etc. the call counts as
- *   "autoplay-like" and Safari allows it.
- *
- *   Critically: NO currentTime mutations, NO muted property writes,
- *   NO load() calls. Each of those flips Safari into "user-mediated"
- *   mode and BLOCKS muted-autoplay until the next page load.
- */
 function tryPlay(v: HTMLVideoElement | null) {
   if (!v) return
-  // iOS Safari: the `muted` HTML attribute does not reflect to the DOM
-  // property when the element is created dynamically (SPA). Safari checks
-  // the property, not the attribute, so it sees an unmuted video and blocks
-  // autoplay. Setting the property explicitly fixes it.
   v.muted = true
   const doPlay = () => {
     const p = v.play()
@@ -82,17 +62,12 @@ function tryPlay(v: HTMLVideoElement | null) {
 onMounted(() => {
   if (!import.meta.client) return
 
-  /*
-   * Safari quirk: calling play() synchronously in onMounted (right after
-   * Vue has appended the element) sometimes lands BEFORE the element's
-   * media pipeline is ready. The play() promise resolves but the video
-   * stays paused until a user gesture. A 100ms tick lets the pipeline
-   * complete metadata loading first; the play() then succeeds.
-   *
-   * requestAnimationFrame alone isn't enough on Safari — it fires before
-   * the media engine has registered preload="metadata" was honored.
-   */
   tryPlay(player.value)
+
+  // iOS Chrome/Safari: even muted autoplay requires a WebKit "user gesture
+  // context". touchstart fires on the first scroll tap — invisible to the
+  // user but enough to unlock autoplay for muted elements.
+  document.addEventListener('touchstart', () => tryPlay(player.value), { once: true, passive: true })
 
   observer = new IntersectionObserver(
     (entries) => {
@@ -100,13 +75,8 @@ onMounted(() => {
       if (!entry) return
       if (entry.isIntersecting) {
         visible.value = true
-        // Second chance: when the video enters the viewport. Same
-        // play() — no other manipulation.
         tryPlay(player.value)
-      }
-      else if (player.value && !player.value.paused) {
-        // Off-screen: pause to free decoder cycles. Resume happens
-        // on the next intersect.
+      } else if (player.value && !player.value.paused) {
         player.value.pause()
       }
     },
