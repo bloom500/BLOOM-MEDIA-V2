@@ -175,6 +175,24 @@
   transition-delay: calc(var(--word-index, 0) * 0.06s);
 }
 
+/*
+ * Mobile: drop the blur (very expensive on iOS GPU when applied to many
+ * inline-block words) and lengthen the transition to a calmer cadence.
+ * Color-only reveal still reads as "emerging from the relief" but
+ * doesn't feel snappy/poppy on a touch device.
+ */
+@media (max-width: 768px) {
+  [data-anim="surface-dissolve"] .-s-word {
+    filter: none;
+    transition: color 1.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  [data-anim="surface-dissolve"].-inview .-s-word {
+    filter: none;
+    transition: color 1.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transition-delay: calc(var(--word-index, 0) * 0.08s);
+  }
+}
+
 /* Reduced motion: dezactivăm tot */
 @media (prefers-reduced-motion: reduce) {
   [data-anim="char-reveal"] .-s-char,

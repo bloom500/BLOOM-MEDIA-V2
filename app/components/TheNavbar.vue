@@ -1,5 +1,5 @@
 <template>
-  <header class="navbar" :class="{ 'navbar--light': isLightOnDark }">
+  <header class="navbar" :class="{ 'navbar--light': isLightOnDark, 'is-menu-open': isMenuOpen }">
     <NuxtLink to="/" class="navbar__brand" aria-label="Bloom Media — acasă">
       Bloom Media<span class="navbar__dot">.</span>
     </NuxtLink>
@@ -17,10 +17,70 @@
     <NuxtLink to="/audit" class="navbar__btn">
       Audit gratuit
     </NuxtLink>
+
+    <!--
+      Burger only on mobile (≤900px). aria-controls links it to the drawer
+      teleported below, aria-expanded reflects state for screen readers.
+    -->
+    <button
+      class="navbar__burger"
+      :class="{ 'is-active': isMenuOpen }"
+      :aria-expanded="String(isMenuOpen)"
+      aria-controls="mobile-drawer"
+      :aria-label="isMenuOpen ? 'Închide meniul' : 'Deschide meniul'"
+      @click="toggleMenu"
+    >
+      <span class="navbar__burger-bar" aria-hidden="true" />
+      <span class="navbar__burger-bar" aria-hidden="true" />
+    </button>
   </header>
+
+  <!--
+    Mobile drawer — teleported to <body> so it escapes the navbar's
+    stacking context and can sit above all page content (including the
+    fixed 3D backgrounds and the navbar gradient scrim).
+  -->
+  <Teleport to="body">
+    <div
+      id="mobile-drawer"
+      class="mobile-drawer"
+      :class="{ 'is-open': isMenuOpen }"
+      :aria-hidden="String(!isMenuOpen)"
+    >
+      <nav class="mobile-drawer__nav" aria-label="Mobile">
+        <NuxtLink
+          v-for="(item, i) in navLinks"
+          :key="item.to"
+          :to="item.to"
+          class="mobile-drawer__link"
+          :style="{ '--i': i }"
+          @click="closeMenu"
+        >
+          <span class="mobile-drawer__num">0{{ i + 1 }}</span>
+          <span class="mobile-drawer__label">{{ item.label }}</span>
+        </NuxtLink>
+
+        <NuxtLink
+          to="/audit"
+          class="mobile-drawer__cta"
+          :style="{ '--i': navLinks.length }"
+          @click="closeMenu"
+        >
+          Audit gratuit
+        </NuxtLink>
+      </nav>
+
+      <footer class="mobile-drawer__foot">
+        <a href="mailto:hello@bloommedia.ro">hello@bloommedia.ro</a>
+        <span>Cluj-Napoca, RO</span>
+      </footer>
+    </div>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
+import { ref, computed, watch, onBeforeUnmount } from 'vue'
+
 const route = useRoute()
 // Shared signal — set by FooterReveal (curtain over footer) and by index.vue
 // (FAQ → Contact dark transition). When true, navbar flips to white.
@@ -36,6 +96,37 @@ const navLinks = [
   { to: '/despre', label: 'Despre' },
   { to: '/contact', label: 'Contact' },
 ]
+
+// ── Mobile drawer state ───────────────────────────────────────
+const isMenuOpen = ref(false)
+
+function openMenu() {
+  isMenuOpen.value = true
+}
+function closeMenu() {
+  isMenuOpen.value = false
+}
+function toggleMenu() {
+  isMenuOpen.value = !isMenuOpen.value
+}
+
+// Close on route change so navigation actually feels like it dismisses.
+watch(() => route.fullPath, () => {
+  if (isMenuOpen.value) closeMenu()
+})
+
+// Lock body scroll while drawer is open (prevents background StringTune
+// from scrolling under the drawer on touch).
+watch(isMenuOpen, (open) => {
+  if (!import.meta.client) return
+  if (open) document.documentElement.classList.add('drawer-open')
+  else document.documentElement.classList.remove('drawer-open')
+})
+
+onBeforeUnmount(() => {
+  if (!import.meta.client) return
+  document.documentElement.classList.remove('drawer-open')
+})
 </script>
 
 <style scoped>
@@ -88,6 +179,8 @@ const navLinks = [
   line-height: 1.1;
   text-decoration: none;
   transition: color 0.4s ease;
+  position: relative;
+  z-index: 2;
 }
 
 .navbar__dot {
@@ -130,6 +223,8 @@ const navLinks = [
   border-radius: 999px;
   text-decoration: none;
   transition: all 0.3s ease;
+  position: relative;
+  z-index: 2;
 }
 
 .navbar__btn:hover {
@@ -138,10 +233,67 @@ const navLinks = [
   border-color: var(--color-text);
 }
 
+/* ─── Burger ───────────────────────────────────────────────────
+   Hidden on desktop, shown ≤900px in place of the nav row + button.
+*/
+.navbar__burger {
+  display: none;
+  position: relative;
+  z-index: 2;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: none; /* overridden by media query below */
+  align-items: center;
+  justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.navbar__burger-bar {
+  position: absolute;
+  left: 50%;
+  width: 22px;
+  height: 1.5px;
+  background: var(--color-text);
+  transform-origin: center;
+  transition:
+    transform 0.4s cubic-bezier(0.86, 0, 0.07, 1),
+    top 0.3s cubic-bezier(0.86, 0, 0.07, 1),
+    background 0.3s ease;
+}
+
+.navbar__burger-bar:nth-child(1) {
+  top: calc(50% - 4px);
+  transform: translateX(-50%);
+}
+
+.navbar__burger-bar:nth-child(2) {
+  top: calc(50% + 4px);
+  transform: translateX(-50%);
+}
+
+.navbar__burger.is-active .navbar__burger-bar:nth-child(1) {
+  top: 50%;
+  transform: translateX(-50%) rotate(45deg);
+}
+
+.navbar__burger.is-active .navbar__burger-bar:nth-child(2) {
+  top: 50%;
+  transform: translateX(-50%) rotate(-45deg);
+}
+
+/* When drawer is open, force burger to white on the dark drawer */
+.navbar.is-menu-open .navbar__burger-bar {
+  background: #fff;
+}
+
 @media (max-width: 900px) {
-  .navbar__nav {
-    display: none;
-  }
+  .navbar__nav { display: none; }
+  .navbar__btn { display: none; }
+  .navbar__burger { display: inline-flex; }
 
   .navbar {
     padding: 1.25rem 1.25rem;
@@ -172,5 +324,159 @@ const navLinks = [
   background: #fff;
   color: #060604;
   border-color: #fff;
+}
+
+.navbar--light .navbar__burger-bar {
+  background: #fff;
+}
+</style>
+
+<!--
+  Drawer styles are unscoped (or rather, scoped via separate <style>
+  with v-deep-equivalent) because the Teleport target lives in <body>
+  outside this component's scoped scope.
+-->
+<style>
+.mobile-drawer {
+  position: fixed;
+  inset: 0;
+  z-index: 99;
+  background: #060604;
+  /* Cover the whole visible viewport including under the iOS bar. */
+  min-height: 100lvh;
+  /* Clip-path drawn from top-right circle (matches burger origin) → full coverage */
+  clip-path: circle(0% at calc(100% - 2.5rem) 2.5rem);
+  transition: clip-path 0.65s cubic-bezier(0.86, 0, 0.07, 1);
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 6rem 2rem 3rem;
+  box-sizing: border-box;
+}
+
+.mobile-drawer.is-open {
+  clip-path: circle(150% at calc(100% - 2.5rem) 2.5rem);
+  pointer-events: auto;
+}
+
+.mobile-drawer__nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  flex: 1;
+  justify-content: center;
+}
+
+.mobile-drawer__link {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: baseline;
+  gap: 1.25rem;
+  padding: 1.1rem 0;
+  border-bottom: 0.5px solid rgba(255, 255, 255, 0.08);
+  text-decoration: none;
+  color: #fff;
+  /* Stagger entrance keyed to --i, only when drawer is open */
+  opacity: 0;
+  transform: translateY(20px);
+  transition:
+    opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: 0s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-drawer.is-open .mobile-drawer__link {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: calc(0.18s + var(--i, 0) * 0.06s);
+}
+
+.mobile-drawer__num {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 0.05em;
+}
+
+.mobile-drawer__label {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: clamp(2rem, 9vw, 3.2rem);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  line-height: 1.05;
+  /* Reserve room for descenders inside the overflow-hidden parent */
+  padding-bottom: 0.05em;
+}
+
+.mobile-drawer__cta {
+  margin-top: 2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem 1.6rem;
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: #060604;
+  background: #fff;
+  border-radius: 999px;
+  text-decoration: none;
+  align-self: flex-start;
+  opacity: 0;
+  transform: translateY(20px);
+  transition:
+    opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.mobile-drawer.is-open .mobile-drawer__cta {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: calc(0.18s + var(--i, 4) * 0.06s);
+}
+
+.mobile-drawer__foot {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-top: 2rem;
+  margin-top: 2rem;
+  border-top: 0.5px solid rgba(255, 255, 255, 0.1);
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: rgba(255, 255, 255, 0.5);
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  transition-delay: 0.4s;
+}
+
+.mobile-drawer.is-open .mobile-drawer__foot {
+  opacity: 1;
+}
+
+.mobile-drawer__foot a {
+  color: rgba(255, 255, 255, 0.85);
+  text-decoration: none;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 1.15rem;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* While drawer is open, freeze body scroll. Targets <html> via class
+   because Vue scoped styles can't reach the html element. */
+html.drawer-open,
+html.drawer-open body {
+  overflow: hidden;
+  touch-action: none;
 }
 </style>

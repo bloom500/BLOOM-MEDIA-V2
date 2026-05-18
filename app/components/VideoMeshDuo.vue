@@ -6,15 +6,19 @@
       <div class="videoduo__frame videoduo__frame--a" :class="{ 'is-visible': visible }">
         <video
           ref="playerA"
+          autoplay
           muted
+          loop
           playsinline
-          preload="none"
+          webkit-playsinline
+          disablePictureInPicture
+          preload="metadata"
           class="videoduo__video"
           aria-hidden="true"
           @ended="nextA"
         >
-          <source v-if="visible && currentA.webm" :src="currentA.webm" type="video/webm" />
-          <source v-if="visible" :src="currentA.mp4" type="video/mp4" />
+          <source v-if="currentA.webm" :src="currentA.webm" type="video/webm" />
+          <source :src="currentA.mp4" type="video/mp4" />
         </video>
       </div>
 
@@ -22,15 +26,19 @@
       <div class="videoduo__frame videoduo__frame--b" :class="{ 'is-visible': visible }">
         <video
           ref="playerB"
+          autoplay
           muted
+          loop
           playsinline
-          preload="none"
+          webkit-playsinline
+          disablePictureInPicture
+          preload="metadata"
           class="videoduo__video"
           aria-hidden="true"
           @ended="nextB"
         >
-          <source v-if="visible && currentB.webm" :src="currentB.webm" type="video/webm" />
-          <source v-if="visible" :src="currentB.mp4" type="video/mp4" />
+          <source v-if="currentB.webm" :src="currentB.webm" type="video/webm" />
+          <source :src="currentB.mp4" type="video/mp4" />
         </video>
       </div>
 
@@ -72,45 +80,116 @@ function nextB() {
   indexB.value = (indexB.value + 1) % playlistB.length
 }
 
-watch(currentA, async () => {
-  const v = playerA.value
+/*
+ * iOS playback hardening — same pattern as VideoMeshSection.
+ */
+let watchdog: ReturnType<typeof setInterval> | null = null
+let isResumingA = false
+let isResumingB = false
+
+async function forcePlay(v: HTMLVideoElement | null, lock: 'A' | 'B') {
   if (!v) return
-  if (!visible.value) return
+  if (lock === 'A' && isResumingA) return
+  if (lock === 'B' && isResumingB) return
+  if (lock === 'A') isResumingA = true
+  else isResumingB = true
+  try {
+    const t = v.currentTime
+    v.currentTime = t + 0.001
+    v.muted = true
+    v.playsInline = true
+    await new Promise(r => setTimeout(r, 50))
+    await v.play()
+  }
+  catch {
+    try {
+      const t = v.currentTime
+      v.load()
+      v.currentTime = t
+      v.muted = true
+      await v.play()
+    } catch { /* silent */ }
+  } finally {
+    if (lock === 'A') isResumingA = false
+    else isResumingB = false
+  }
+}
+
+watch(currentA, () => {
+  const v = playerA.value
+  if (!v || !visible.value) return
   v.load()
-  await v.play().catch(() => {})
+  forcePlay(v, 'A')
 })
 
-watch(currentB, async () => {
+watch(currentB, () => {
   const v = playerB.value
-  if (!v) return
-  if (!visible.value) return
+  if (!v || !visible.value) return
   v.load()
-  await v.play().catch(() => {})
+  forcePlay(v, 'B')
 })
 
 let observer: IntersectionObserver | null = null
+let onVisibility: (() => void) | null = null
+let onPageShow: (() => void) | null = null
 
 onMounted(() => {
+  if (!import.meta.client) return
+
   observer = new IntersectionObserver(
     ([entry]) => {
       if (entry.isIntersecting) {
         visible.value = true
         observer?.disconnect()
+        observer = null
         nextTick(() => {
-          for (const v of [playerA.value, playerB.value]) {
-            if (!v) continue
-            v.load()
-            v.play().catch(() => {})
-          }
+          forcePlay(playerA.value, 'A')
+          forcePlay(playerB.value, 'B')
         })
       }
     },
     { threshold: 0.15 }
   )
   if (sectionEl.value) observer.observe(sectionEl.value)
+
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+  onVisibility = () => {
+    if (document.hidden || !visible.value) return
+    setTimeout(() => {
+      if (playerA.value?.paused) forcePlay(playerA.value, 'A')
+      if (playerB.value?.paused) forcePlay(playerB.value, 'B')
+    }, isIOS ? 300 : 150)
+  }
+  document.addEventListener('visibilitychange', onVisibility)
+
+  onPageShow = () => {
+    if (!visible.value) return
+    setTimeout(() => {
+      if (playerA.value?.paused) forcePlay(playerA.value, 'A')
+      if (playerB.value?.paused) forcePlay(playerB.value, 'B')
+    }, isIOS ? 300 : 150)
+  }
+  window.addEventListener('pageshow', onPageShow)
+
+  if (isIOS) {
+    watchdog = setInterval(() => {
+      if (document.hidden || !visible.value) return
+      const a = playerA.value
+      const b = playerB.value
+      if (a && (a.paused || a.ended)) forcePlay(a, 'A')
+      if (b && (b.paused || b.ended)) forcePlay(b, 'B')
+    }, 1500)
+  }
 })
 
-onUnmounted(() => observer?.disconnect())
+onUnmounted(() => {
+  observer?.disconnect()
+  observer = null
+  if (onVisibility) document.removeEventListener('visibilitychange', onVisibility)
+  if (onPageShow) window.removeEventListener('pageshow', onPageShow)
+  if (watchdog) clearInterval(watchdog)
+})
+
 </script>
 
 <style scoped>
@@ -174,6 +253,15 @@ onUnmounted(() => observer?.disconnect())
 
   .videoduo__frame {
     width: min(200px, 44vw);
+    /* Soft entrance on touch — see VideoMeshSection note. */
+    transform: translateY(20px) scale(1);
+    transition:
+      opacity 1.1s cubic-bezier(0.22, 1, 0.36, 1),
+      transform 1.1s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .videoduo__frame--b {
+    transition-delay: 0.1s;
   }
 }
 </style>

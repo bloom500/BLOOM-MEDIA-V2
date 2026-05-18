@@ -3,21 +3,25 @@
     <div ref="frame" class="videomesh__frame" :class="{ 'is-visible': visible }">
       <video
         ref="player"
+        autoplay
         muted
+        loop
         playsinline
-        preload="none"
+        webkit-playsinline
+        disablePictureInPicture
+        preload="metadata"
         class="videomesh__video"
         aria-hidden="true"
         @ended="nextVideo"
       >
         <!--
-          Dual-format: WebM (VP9) preferred for smaller payload on modern
-          browsers, MP4 (H.264) as universal fallback. Browser picks the
-          first <source> it can decode. v-if="visible" defers the actual
-          download until the section enters the viewport.
+          Sources are always rendered (no v-if) so iOS Safari/Chrome
+          register them at parse time and autoplay works without a
+          manual .load(). preload="metadata" keeps the network footprint
+          tiny until IntersectionObserver triggers a play.
         -->
-        <source v-if="visible && currentWebm" :src="currentWebm" type="video/webm" />
-        <source v-if="visible" :src="currentMp4" type="video/mp4" />
+        <source v-if="currentWebm" :src="currentWebm" type="video/webm" />
+        <source :src="currentMp4" type="video/mp4" />
       </video>
     </div>
   </section>
@@ -50,37 +54,109 @@ function nextVideo() {
   index.value = (index.value + 1) % playlist.length
 }
 
-watch(currentMp4, async () => {
+/*
+ * iOS playback is finicky: muted+autoplay+playsinline is supposed to be
+ * enough, but iOS Safari/Chrome routinely pause inline videos when the
+ * tab returns from background, after `currentTime` mutations, etc.
+ * forcePlay() recovers from that by nudging currentTime and retrying
+ * play(); a watchdog interval catches paused state every 1.5s on iOS.
+ *
+ * Pattern matches BLOOM-MEDIA-WEBFINAL/Hero.svelte.
+ */
+let watchdog: ReturnType<typeof setInterval> | null = null
+let isResuming = false
+
+async function forcePlay() {
   const v = player.value
-  if (!v) return
-  if (!visible.value) return
+  if (!v || isResuming) return
+  isResuming = true
+  try {
+    const t = v.currentTime
+    v.currentTime = t + 0.001
+    v.muted = true
+    v.playsInline = true
+    await new Promise(r => setTimeout(r, 50))
+    await v.play()
+  }
+  catch {
+    try {
+      const t = v.currentTime
+      v.load()
+      v.currentTime = t
+      v.muted = true
+      await v.play()
+    } catch { /* silent */ }
+  } finally {
+    isResuming = false
+  }
+}
+
+watch(currentMp4, () => {
+  // Source change → trigger metadata reload then play. forcePlay is
+  // safer than .play() directly because iOS may still be in an
+  // ambiguous "paused-but-not-really" state after a source swap.
+  const v = player.value
+  if (!v || !visible.value) return
   v.load()
-  await v.play().catch(() => {})
+  forcePlay()
 })
 
 let observer: IntersectionObserver | null = null
+let onVisibility: (() => void) | null = null
+let onPageShow: (() => void) | null = null
 
 onMounted(() => {
+  if (!import.meta.client) return
+
   observer = new IntersectionObserver(
     ([entry]) => {
       if (entry.isIntersecting) {
         visible.value = true
         observer?.disconnect()
-        // Kick off load + play once we're actually visible.
-        nextTick(() => {
-          const v = player.value
-          if (!v) return
-          v.load()
-          v.play().catch(() => {})
-        })
+        observer = null
+        nextTick(() => forcePlay())
       }
     },
-    { threshold: 0.2 }
+    { threshold: 0.15 }
   )
   if (frame.value) observer.observe(frame.value)
+
+  // iOS pauses media when the tab is backgrounded. Resume on return.
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+  onVisibility = () => {
+    if (!document.hidden && player.value?.paused && visible.value) {
+      setTimeout(forcePlay, isIOS ? 300 : 150)
+    }
+  }
+  document.addEventListener('visibilitychange', onVisibility)
+
+  // Safari fires pageshow when the user navigates back via swipe/cache.
+  onPageShow = () => {
+    if (player.value?.paused && visible.value) {
+      setTimeout(forcePlay, isIOS ? 300 : 150)
+    }
+  }
+  window.addEventListener('pageshow', onPageShow)
+
+  // Last-resort watchdog only on iOS where pauses can come out of
+  // nowhere (audio session interruptions, lock screen, etc.).
+  if (isIOS) {
+    watchdog = setInterval(() => {
+      if (!document.hidden && player.value && visible.value
+          && (player.value.paused || player.value.ended)) {
+        forcePlay()
+      }
+    }, 1500)
+  }
 })
 
-onUnmounted(() => observer?.disconnect())
+onUnmounted(() => {
+  observer?.disconnect()
+  observer = null
+  if (onVisibility) document.removeEventListener('visibilitychange', onVisibility)
+  if (onPageShow) window.removeEventListener('pageshow', onPageShow)
+  if (watchdog) clearInterval(watchdog)
+})
 </script>
 
 <style scoped>
@@ -116,6 +192,19 @@ onUnmounted(() => observer?.disconnect())
 .videomesh__frame.is-visible {
   opacity: 1;
   transform: translateY(0) scale(1);
+}
+
+@media (max-width: 768px) {
+  /*
+   * Soften the entrance on touch: shorter travel, no scale (which felt
+   * snappy/poppy on small screens), longer easing for a calmer feel.
+   */
+  .videomesh__frame {
+    transform: translateY(20px) scale(1);
+    transition:
+      opacity 1.1s cubic-bezier(0.22, 1, 0.36, 1),
+      transform 1.1s cubic-bezier(0.22, 1, 0.36, 1);
+  }
 }
 
 .videomesh__video {
