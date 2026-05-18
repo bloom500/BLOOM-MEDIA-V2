@@ -50,12 +50,18 @@
   overflow: hidden;
   width: 100%;
   /*
-   * iOS Safari pre-16: 100vh includes the URL bar height even after it
-   * collapses on scroll, causing layout shift. Order: native dvh first
-   * (correct in modern browsers), then JS-set --vh fallback for old iOS.
+   * iOS Safari address-bar behaviour:
+   *  - dvh would size to the *current* visible viewport, leaving the URL
+   *    bar visible at load. First swipe then has to scroll the bar away
+   *    before any actual content moves — feels like a dead zone.
+   *  - lvh assumes the bar is collapsed; the bottom of the hero sits
+   *    *under* the bar until the user starts scrolling. iOS then
+   *    collapses the bar smoothly and the layout settles. This is the
+   *    behaviour reference sites (immersive-g.com etc.) use.
+   *  - svh fallback for very old browsers without lvh support.
    */
-  height: 100dvh;
-  height: calc(var(--vh, 1dvh) * 100);
+  height: 100svh;
+  height: 100lvh;
   min-height: 100svh;
   background: transparent;
 }
