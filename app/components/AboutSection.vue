@@ -10,7 +10,7 @@
     <!-- ── Hero ──────────────────────────────────────────────── -->
     <div class="about__hero">
       <div class="about__hero-inner">
-        <p class="about__eyebrow" id="about-heading">Despre Bloom Media</p>
+        <p class="about__eyebrow" id="about-heading">Bloom Media — Cluj-Napoca</p>
 
         <h1 class="about__headline">
           <span
@@ -18,22 +18,31 @@
             string="split"
             string-split="word"
             data-anim="surface-dissolve"
-          >Suntem o agenție mică.</span>
+          >Livrăm creștere</span>
           <span
             class="about__hl-line about__hl-line--indent"
             string="split"
             string-split="word"
             data-anim="surface-dissolve"
-          >Intenționat.</span>
+          >măsurabilă.</span>
         </h1>
 
-        <p class="about__intro">
-          <span
-            string="split"
-            string-split="word"
-            data-anim="surface-dissolve"
-          >Nu facem marketing pentru toată lumea. Lucrăm cu business-uri care știu ce vor și sunt pregătite să crească. Pentru ele, construim strategii testate, măsurabile și ajustate până când funcționează cu adevărat — nu până când expiră contractul.</span>
-        </p>
+        <div class="about__hero-cols">
+          <p class="about__intro">
+            <span
+              string="split"
+              string-split="word"
+              data-anim="surface-dissolve"
+            >Suntem o agenție de marketing digital construită în jurul unui singur principiu: testăm înainte să promitem și măsurăm tot ce facem.</span>
+          </p>
+          <p class="about__intro">
+            <span
+              string="split"
+              string-split="word"
+              data-anim="surface-dissolve"
+            >Nu lucrăm cu oricine. Lucrăm cu business-uri care știu ce vor și sunt pregătite să crească — și construim strategii care funcționează în realitate, nu în slide-uri.</span>
+          </p>
+        </div>
       </div>
     </div>
 
@@ -149,7 +158,7 @@ const philosophy = [
   line-height: 1.0;
   letter-spacing: -0.02em;
   color: #edebe6;
-  margin: 0 0 3.5rem;
+  margin: 0 0 0;
   display: flex;
   flex-direction: column;
 }
@@ -163,12 +172,21 @@ const philosophy = [
   padding-left: 14vw;
 }
 
+/* Two-column intro below the headline */
+.about__hero-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2.5rem;
+  margin-top: 4rem;
+  padding-top: 2.5rem;
+  border-top: 0.5px solid rgba(255, 255, 255, 0.1);
+}
+
 .about__intro {
   font-family: var(--font-body);
-  font-size: clamp(0.95rem, 1.25vw, 1.1rem);
+  font-size: clamp(0.92rem, 1.2vw, 1.05rem);
   line-height: 1.8;
   color: var(--color-text-muted);
-  max-width: 560px;
   margin: 0;
 }
 
@@ -253,13 +271,19 @@ const philosophy = [
 /* ── Mobile ───────────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .about__hero {
-    padding: 7rem 1.25rem 5rem;
+    padding: 9rem 1.25rem 5rem;
     align-items: flex-start;
-    padding-top: 9rem;
   }
 
   .about__hl-line--indent {
     padding-left: 18vw;
+  }
+
+  .about__hero-cols {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    margin-top: 2.5rem;
+    padding-top: 2rem;
   }
 
   .about__philo {

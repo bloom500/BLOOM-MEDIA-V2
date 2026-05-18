@@ -11,6 +11,7 @@ import TheFooter from '~/components/TheFooter.vue'
 
 useHead({
   title: 'Despre — Bloom Media',
+  htmlAttrs: { 'data-page': 'despre' },
   meta: [
     {
       name: 'description',

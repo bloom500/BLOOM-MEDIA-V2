@@ -5,6 +5,7 @@
   -->
   <Teleport to="body">
     <NuxtLink
+      v-if="isHome"
       to="/servicii"
       class="fixed-services-cta"
       :class="{ '-in-footer': inFooter || cursorDark }"
@@ -16,6 +17,9 @@
 </template>
 
 <script setup lang="ts">
+const route = useRoute()
+const isHome = computed(() => route.path === '/' || route.name === 'index')
+
 const inFooter = ref(false)
 // Shared signal — same useState used by CustomCursor / Navbar / FooterReveal /
 // the homepage curtain transition. When true, CTA flips to white.
