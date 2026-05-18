@@ -57,8 +57,9 @@
   position: relative;
   overflow: hidden;
   width: 100%;
+  /* svh = stable; avoid the iOS bar-collapse resize that retriggers
+     layout/StringTune progress recalc on every scroll-direction change. */
   min-height: 100svh;
-  min-height: 100dvh;
   background: transparent;
   /* Stack above global relief + charcoal base */
   margin-top: -1px;

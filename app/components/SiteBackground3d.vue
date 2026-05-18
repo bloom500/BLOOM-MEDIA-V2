@@ -27,8 +27,9 @@ const isServicii = computed(() => route.path === '/servicii' || route.name === '
   position: fixed;
   inset: 0;
   width: 100vw;
-  min-height: 100vh;
-  min-height: 100dvh;
+  /* svh = stable; canvas resize on iOS bar-collapse triggers WebGL renderer
+     resize too, which is expensive on every scroll-direction change. */
+  min-height: 100svh;
   z-index: 0;
   pointer-events: none;
   overflow: hidden;

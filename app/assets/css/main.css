@@ -79,7 +79,11 @@ html {
 }
 
 body {
-  min-height: 100lvh;
+  /* svh = stable height; lvh would force the body to the large viewport
+     and make iOS bars un-collapsible on short pages. svh keeps the page
+     measured at the small (bar-visible) state and lets iOS handle the
+     bar reveal naturally without resizing flow content. */
+  min-height: 100svh;
   height: auto;
   overflow-x: hidden;
   overflow-y: auto;

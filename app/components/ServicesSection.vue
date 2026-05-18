@@ -26,7 +26,8 @@
 .services {
   position: relative;
   width: 100%;
-  min-height: 100dvh;
+  /* svh, see DeclarationSection note */
+  min-height: 100svh;
   display: flex;
   align-items: center;
   justify-content: center;

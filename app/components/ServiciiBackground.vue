@@ -211,7 +211,8 @@ onBeforeUnmount(() => {
   left: 0;
   z-index: 0;
   width: 100%;
-  height: 100dvh;
+  /* svh = stable; canvas size doesn't track iOS bar collapse */
+  height: 100svh;
   display: block;
   pointer-events: none;
 }

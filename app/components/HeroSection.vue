@@ -50,18 +50,21 @@
   overflow: hidden;
   width: 100%;
   /*
-   * iOS Safari address-bar behaviour:
-   *  - dvh would size to the *current* visible viewport, leaving the URL
-   *    bar visible at load. First swipe then has to scroll the bar away
-   *    before any actual content moves — feels like a dead zone.
-   *  - lvh assumes the bar is collapsed; the bottom of the hero sits
-   *    *under* the bar until the user starts scrolling. iOS then
-   *    collapses the bar smoothly and the layout settles. This is the
-   *    behaviour reference sites (immersive-g.com etc.) use.
-   *  - svh fallback for very old browsers without lvh support.
+   * Stable height across iOS browser-bar collapse/expand. Sequence of
+   * fallbacks that all evaluate to "fixed = small viewport, bar visible":
+   *   - 100vh: legacy unit, on iOS evaluates to lvh (large) and *grows*
+   *     when the bar collapses — that's the bug we're avoiding.
+   *   - 100svh: small viewport height, locked to the size with the bar
+   *     fully visible. Never changes during scroll. This is what we want.
+   *   - dvh would track the bar dynamically (resizes the hero as the bar
+   *     animates) — feels alive on first swipe but creates the "hero
+   *     stretches/shrinks every scroll" sensation we're seeing.
+   *
+   * Tradeoff: ~50px of black space appears under the hero once the bar
+   * collapses, before the manifest section. Acceptable; consistent with
+   * editorial reference sites.
    */
   height: 100svh;
-  height: 100lvh;
   min-height: 100svh;
   background: transparent;
 }
@@ -71,8 +74,8 @@
   z-index: 2;
   display: grid;
   grid-template-rows: auto 1fr auto;
+  /* svh, not dvh — see .hero comment above. Stable height = no jitter. */
   min-height: 100svh;
-  min-height: 100dvh;
   padding: 5rem 2.5rem 1.5rem;
 }
 

@@ -130,9 +130,8 @@
 .footer__inner {
   position: relative;
   z-index: 1;
-  /* Native dvh first; JS-set --vh for iOS Safari < 16 fallback. */
-  min-height: 100dvh;
-  min-height: calc(var(--vh, 1dvh) * 100);
+  /* svh = stable; iOS bar-collapse must not reflow the footer reveal. */
+  min-height: 100svh;
   display: grid;
   grid-template-rows: 1fr auto;
   padding: 6rem 2.5rem 3rem;

@@ -254,7 +254,8 @@ async function handleSubmit() {
   position: relative;
   z-index: 0;
   width: 100%;
-  min-height: 100dvh;
+  /* svh = stable; iOS bar-collapse resizes are no longer felt here. */
+  min-height: 100svh;
   /* More breathing top + larger right gutter so the editorial rail has room */
   padding: 9rem 4rem 7rem;
   overflow: visible;

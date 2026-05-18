@@ -739,10 +739,11 @@ onBeforeUnmount(() => {
   inset: 0;
   width: 100vw;
   min-width: 100vw;
-  height: 100vh;
-  height: 100dvh;
-  min-height: 100vh;
-  min-height: 100dvh;
+  /* svh = stable; WebGPU canvas no longer fires resize() at every iOS
+     bar-collapse, which prevents the relief shader from re-uploading
+     uniforms on each scroll-direction change. */
+  height: 100svh;
+  min-height: 100svh;
   background: var(--relief-scene-bg);
   overflow: hidden;
   pointer-events: none;

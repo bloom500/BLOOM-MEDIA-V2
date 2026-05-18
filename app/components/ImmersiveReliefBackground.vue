@@ -326,7 +326,8 @@ onUnmounted(() => {
   position: fixed;
   inset: 0;
   width: 100vw;
-  height: 100vh;
+  /* svh = stable; canvas size locked, no resize on iOS bar collapse */
+  height: 100svh;
   z-index: 0;
   pointer-events: none;
 }

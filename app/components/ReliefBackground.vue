@@ -11,6 +11,7 @@
 .relief-content {
   position: relative;
   z-index: 1;
-  min-height: 100vh;
+  /* svh = stable; consistent with the global iOS bar-collapse fix. */
+  min-height: 100svh;
 }
 </style>

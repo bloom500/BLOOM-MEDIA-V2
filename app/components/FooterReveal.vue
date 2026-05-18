@@ -198,9 +198,8 @@ onBeforeUnmount(() => {
 .footer-reveal {
   position: relative;
   background: #000;
-  /* Native dvh first; --vh JS fallback for iOS Safari < 16. */
-  min-height: 100dvh;
-  min-height: calc(var(--vh, 1dvh) * 100);
+  /* svh = stable; iOS bar-collapse doesn't break ScrollTrigger pin offset. */
+  min-height: 100svh;
 }
 
 @media (max-width: 767px) {

@@ -310,6 +310,8 @@ onBeforeUnmount(() => {
 }
 
 .manifest {
+  /* svh = stable height; avoids the iOS bar-collapse resize that makes
+     the section visibly grow/shrink at every scroll direction change. */
   min-height: 100svh;
   display: flex;
   align-items: center;

@@ -171,10 +171,9 @@ onUnmounted(() => {
   inset: 0;
   width: 100vw;
   min-width: 100vw;
-  height: 100vh;
-  height: 100dvh;
-  min-height: 100vh;
-  min-height: 100dvh;
+  /* svh = stable; the WebGL plane is sized once and stays there. */
+  height: 100svh;
+  min-height: 100svh;
   z-index: 0;
   pointer-events: none;
 }

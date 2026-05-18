@@ -280,7 +280,8 @@ async function handleSubmit() {
 /* ── Page shell ─────────────────────────────────────────────────────── */
 .cfg {
   position: relative;
-  min-height: 100dvh;
+  /* svh = stable; iOS bar-collapse resizes don't propagate. */
+  min-height: 100svh;
   background: var(--color-bg-dark);
   color: var(--color-bg-light);
   --cfg-text: #EDEBE6;
