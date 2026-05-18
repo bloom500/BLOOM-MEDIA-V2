@@ -13,45 +13,45 @@
       <div class="why__columns">
         <div class="why__col">
           <p class="why__entry why__entry--label">
-            <span class="why__line" string="split" string-split="word" data-anim="surface-dissolve">Suntem fit dacă:</span>
+            <span class="why__line" string="split" string-split="word" data-anim="surface-dissolve">Lucrăm cu:</span>
           </p>
           <p class="why__entry">
-            <span class="why__line" string="split" string-split="word" data-anim="surface-dissolve">Bugetul tău de marketing</span>
-            <span class="why__line" string="split" string-split="word" data-anim="surface-dissolve">pornește de la 800€/lună</span>
+            <span class="why__line" string="split" string-split="word" data-anim="surface-dissolve">Antreprenori cu budget</span>
+            <span class="why__line" string="split" string-split="word" data-anim="surface-dissolve">de marketing de minim 800€/lună</span>
           </p>
           <p class="why__entry">
-            <span class="why__line" string="split" string-split="word" data-anim="surface-dissolve">Măsori succesul în vânzări</span>
-            <span class="why__line" string="split" string-split="word" data-anim="surface-dissolve">și cost per achiziție</span>
+            <span class="why__line" string="split" string-split="word" data-anim="surface-dissolve">Companii care măsoară succesul</span>
+            <span class="why__line" string="split" string-split="word" data-anim="surface-dissolve">în vânzări și cost per achiziție, nu în like-uri</span>
           </p>
           <p class="why__entry">
-            <span class="why__line" string="split" string-split="word" data-anim="surface-dissolve">Ești dispus să schimbi</span>
-            <span class="why__line" string="split" string-split="word" data-anim="surface-dissolve">ce nu funcționează</span>
+            <span class="why__line" string="split" string-split="word" data-anim="surface-dissolve">Clienți deschiși la feedback direct,</span>
+            <span class="why__line" string="split" string-split="word" data-anim="surface-dissolve">chiar și când e incomod</span>
           </p>
           <p class="why__entry">
-            <span class="why__line" string="split" string-split="word" data-anim="surface-dissolve">Vrei un partener care</span>
-            <span class="why__line" string="split" string-split="word" data-anim="surface-dissolve">îți spune și când greșești</span>
+            <span class="why__line" string="split" string-split="word" data-anim="surface-dissolve">Business-uri care vor un partener</span>
+            <span class="why__line" string="split" string-split="word" data-anim="surface-dissolve">cu opinie, nu un executant</span>
           </p>
         </div>
 
         <div class="why__col">
           <p class="why__entry why__entry--label">
-            <span class="why__line" string="split" string-split="word" data-anim="surface-dissolve">Probabil nu suntem fit dacă:</span>
+            <span class="why__line" string="split" string-split="word" data-anim="surface-dissolve">Nu lucrăm cu:</span>
           </p>
           <p class="why__entry">
-            <span class="why__line" string="split" string-split="word" data-anim="surface-dissolve">Vrei să „testezi cu 200€</span>
-            <span class="why__line" string="split" string-split="word" data-anim="surface-dissolve">să vezi dacă merge"</span>
+            <span class="why__line" string="split" string-split="word" data-anim="surface-dissolve">Cei care vor să „testeze cu 200€</span>
+            <span class="why__line" string="split" string-split="word" data-anim="surface-dissolve">să vadă dacă merge"</span>
           </p>
           <p class="why__entry">
-            <span class="why__line" string="split" string-split="word" data-anim="surface-dissolve">Vrei mai mulți followeri</span>
-            <span class="why__line" string="split" string-split="word" data-anim="surface-dissolve">și engagement frumos</span>
+            <span class="why__line" string="split" string-split="word" data-anim="surface-dissolve">Companii care urmăresc followeri,</span>
+            <span class="why__line" string="split" string-split="word" data-anim="surface-dissolve">reach și engagement în loc de revenue</span>
           </p>
           <p class="why__entry">
-            <span class="why__line" string="split" string-split="word" data-anim="surface-dissolve">Știi deja exact ce vrei</span>
-            <span class="why__line" string="split" string-split="word" data-anim="surface-dissolve">și cauți pe cineva să execute</span>
+            <span class="why__line" string="split" string-split="word" data-anim="surface-dissolve">Clienți care vin cu brief finalizat</span>
+            <span class="why__line" string="split" string-split="word" data-anim="surface-dissolve">și vor execuție fără input strategic</span>
           </p>
           <p class="why__entry">
-            <span class="why__line" string="split" string-split="word" data-anim="surface-dissolve">Ai nevoie de o agenție</span>
-            <span class="why__line" string="split" string-split="word" data-anim="surface-dissolve">care să aprobe orice</span>
+            <span class="why__line" string="split" string-split="word" data-anim="surface-dissolve">Cei care caută validare,</span>
+            <span class="why__line" string="split" string-split="word" data-anim="surface-dissolve">nu rezultate</span>
           </p>
         </div>
       </div>
