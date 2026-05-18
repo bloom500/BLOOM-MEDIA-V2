@@ -1,5 +1,12 @@
 <template>
-  <header class="navbar" :class="{ 'navbar--light': isLightOnDark, 'is-menu-open': isMenuOpen }">
+  <!--
+    Teleport the entire navbar to <body> so it escapes .site-content's
+    stacking context (z-index: 2). Without this, the mobile drawer
+    (teleported to body) would always sit on top of the navbar and the
+    burger would become un-tappable once the drawer is open.
+  -->
+  <Teleport to="body">
+    <header class="navbar" :class="{ 'navbar--light': isLightOnDark, 'is-menu-open': isMenuOpen }">
     <NuxtLink to="/" class="navbar__brand" aria-label="Bloom Media — acasă">
       Bloom Media<span class="navbar__dot">.</span>
     </NuxtLink>
@@ -34,6 +41,7 @@
       <span class="navbar__burger-bar" aria-hidden="true" />
     </button>
   </header>
+  </Teleport>
 
   <!--
     Mobile drawer — teleported to <body> so it escapes the navbar's
@@ -129,7 +137,13 @@ onBeforeUnmount(() => {
 })
 </script>
 
-<style scoped>
+<style>
+/*
+ * Unscoped because the navbar is teleported to <body> — Vue scoped CSS
+ * (data-v-* attribute) is inherited by descendants but not always by
+ * teleported roots in some renderer states. Class names are unique
+ * (.navbar*) so there's no conflict with other components.
+ */
 .navbar {
   position: fixed;
   top: 0;
@@ -340,7 +354,14 @@ onBeforeUnmount(() => {
 .mobile-drawer {
   position: fixed;
   inset: 0;
-  z-index: 99;
+  /*
+   * Drawer must sit BELOW the navbar so the burger remains tappable to
+   * close the menu. Navbar is z-index 100 inside .site-content (its
+   * stacking context resolves to z-index 2 against the body), so the
+   * drawer at z-index 90 still appears above all page content but lets
+   * the navbar's burger stay clickable on top.
+   */
+  z-index: 90;
   background: #060604;
   /* Cover the whole visible viewport including under the iOS bar. */
   min-height: 100lvh;
