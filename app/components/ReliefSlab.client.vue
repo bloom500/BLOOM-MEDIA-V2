@@ -122,19 +122,37 @@ const reliefSlabCssVars = { '--relief-scene-bg': RELIEF_SCENE_BG_CSS }
 /** Dimensiune trail canvas — SketchSettings.dimensions [2048, 2048] din index.ts. */
 const TRAIL_CANVAS_SIZE = 2048
 
-/** Ca `trail.js` implicit: `circleRadius = width * 0.12` — Official sketch. */
-const TRAIL_CIRCLE_RADIUS_MULT_MOUSE = 0.12
-const TRAIL_CIRCLE_RADIUS_MULT_GHOST = 0.12
+/**
+ * Trail fade: fracțiune din canvas-ul precedent care rămâne la fiecare frame.
+ * 0.025 (sketch original) = trail aproape permanent → mesh complet vizibil în repaus.
+ * 0.07 ≈ trail-ul dispare în ~1.5s la 60fps; mesh-ul se „retrage” în hârtie când nu miști mouse-ul,
+ * ca pe immersive-g.com. Aplicat și pentru pointer real, și pentru ghost.
+ */
+const TRAIL_FADE_ALPHA = 0.07
+
+/** Ca `trail.js` implicit: `circleRadius = width * 0.12` — Official sketch. Mouse: redus la jumătate ca reveal-ul să nu acopere ~30% din viewport (gradient × 2.5 → ~15% lățime). Ghost ușor mai mic decât mouse, ca să rămână discret. */
+const TRAIL_CIRCLE_RADIUS_MULT_MOUSE = 0.06
+const TRAIL_CIRCLE_RADIUS_MULT_GHOST = 0.05
 
 /** Ca positionNode: pos.z *= mix(0.03, 1., extrude) */
 const Z_EXTRUDE_MIN = 0.03
 
 /** Durată ciclu ghost — mai mare = mișcare mai lentă pe orbită. */
 const GHOST_PERIOD_MS = 12000
-/** Margine față de marginile viewport-ului (0–1), ca pensula să nu „șteargă” la colțuri. */
-const GHOST_VIEW_INSET = 0.08
+/** Margine față de marginile viewport-ului (0–1) — mai mare = ghost-ul stă mai centrat, nu mătură marginile. */
+const GHOST_VIEW_INSET = 0.22
+/** Amplitudine traiectorie ghost (fracție din semi-viewport). 0.36 → 0.18: insulă centrală, nu câmp. */
+const GHOST_AMP_PRIMARY = 0.18
+const GHOST_AMP_HARMONIC = 0.05
 /** Raport „auriu” pentru axa Y — traiectorie Lissajous, nu cerc. */
 const GHOST_FREQ_Y = 1.618033988749895
+/**
+ * Întârziere după mount înainte ca ghost-ul să înceapă să picteze.
+ * < 0 = niciodată (ghost activ doar dacă utilizatorul a mișcat mouse-ul măcar o dată
+ * și apoi s-a oprit). Setat negativ ca în repaus complet (de la load, fără pointer)
+ * mesh-ul să stea în hârtie, exact ca pe referință.
+ */
+const GHOST_START_AFTER_MS = -1
 
 /** După ultimul pointer, cât timp urmărim mouse-ul înainte de ghost (ms). */
 const USER_ACTIVE_MS = 2000
@@ -197,6 +215,9 @@ let modelScrollPanRange = 0
 /** Scroll Y netezit (px). */
 let scrollSmoothed = 0
 
+/** Timestamp `performance.now()` la prima inițializare; permite GHOST_START_AFTER_MS. */
+let mountTime = 0
+
 // ─── TRAIL ───────────────────────────────────────────────────────────────────
 
 /** Coordonate CSS (viewport) → pixeli în canvas trail (2048×2048). */
@@ -233,7 +254,7 @@ function ensureTrailLayer() {
   const bh = TRAIL_CANVAS_SIZE
 
   if (trailLayer && trailLayer.canvas.width === bw && trailLayer.canvas.height === bh) {
-    trailLayer.setFadeSpeed(0.025)
+    trailLayer.setFadeSpeed(TRAIL_FADE_ALPHA)
     trailLayer.setCircleRadius(bw * TRAIL_CIRCLE_RADIUS_MULT_MOUSE)
     return true
   }
@@ -243,7 +264,7 @@ function ensureTrailLayer() {
   }
 
   trailLayer = new TrailCanvas(bw, bh)
-  trailLayer.setFadeSpeed(0.025)
+  trailLayer.setFadeSpeed(TRAIL_FADE_ALPHA)
   trailLayer.setCircleRadius(bw * TRAIL_CIRCLE_RADIUS_MULT_MOUSE)
   const canvas = trailLayer.getTexture()
 
@@ -268,9 +289,9 @@ function ensureTrailLayer() {
 function ghostPointerFraction(phase) {
   const u = phase * Math.PI * 2
   const sx =
-    0.36 * Math.sin(u * 0.97 + 0.12) + 0.1 * Math.sin(u * 2.21 + 0.73)
+    GHOST_AMP_PRIMARY * Math.sin(u * 0.97 + 0.12) + GHOST_AMP_HARMONIC * Math.sin(u * 2.21 + 0.73)
   const sy =
-    0.36 * Math.sin(u * GHOST_FREQ_Y + 0.94) + 0.1 * Math.sin(u * 1.97 + 0.31)
+    GHOST_AMP_PRIMARY * Math.sin(u * GHOST_FREQ_Y + 0.94) + GHOST_AMP_HARMONIC * Math.sin(u * 1.97 + 0.31)
   const nx = Math.min(1, Math.max(0, 0.5 + sx))
   const ny = Math.min(1, Math.max(0, 0.5 + sy))
   const t = GHOST_VIEW_INSET
@@ -285,42 +306,74 @@ function isTrailUserActiveNow() {
 }
 
 /**
+ * Ghost are voie să picteze doar:
+ *  - dacă utilizatorul a mișcat mouse-ul măcar o dată (lastRealMouseTime ≥ 0), ȘI
+ *  - dacă a trecut de „fereastra activă” (USER_ACTIVE_MS), ȘI
+ *  - dacă întârzierea suplimentară GHOST_START_AFTER_MS de la mount a expirat (≥ 0).
+ *
+ * GHOST_START_AFTER_MS < 0 → ghost dezactivat complet la idle inițial: pe load, fără
+ * pointer, mesh-ul stă în hârtie (ca pe immersive-g.com).
+ */
+function isGhostAllowedNow() {
+  if (lastRealMouseTime < 0) return false
+  if (GHOST_START_AFTER_MS < 0) return true
+  const now = performance.now()
+  return (now - mountTime) >= GHOST_START_AFTER_MS
+}
+
+/**
  * Ghost: poziție directă din traiectoria de mai sus (fără lerp).
  * Mouse: lerp ușor spre poziția reală.
+ *
+ * Returnează `false` dacă nu trebuie pictat nimic (idle inițial fără pointer + ghost dezactivat).
  */
 function updateTrailPaintTargetCss() {
   const now = performance.now()
-  const vw = Math.max(window.innerWidth, 1)
-  const vh = Math.max(window.innerHeight, 1)
-  const phase = (now % GHOST_PERIOD_MS) / GHOST_PERIOD_MS
-  const g = ghostPointerFraction(phase)
-  const ghostX = g.x * vw
-  const ghostY = g.y * vh
-
   const userActive = lastRealMouseTime >= 0 && (now - lastRealMouseTime) < USER_ACTIVE_MS
+  const ghostOk = isGhostAllowedNow()
+
   if (userActive) {
     const k = LERP_TRAIL_TO_MOUSE
     trailPaintCss.x += (mouse.x - trailPaintCss.x) * k
     trailPaintCss.y += (mouse.y - trailPaintCss.y) * k
-  } else {
-    trailPaintCss.x = ghostX
-    trailPaintCss.y = ghostY
+    return true
   }
+
+  if (!ghostOk) {
+    return false
+  }
+
+  const vw = Math.max(window.innerWidth, 1)
+  const vh = Math.max(window.innerHeight, 1)
+  const phase = (now % GHOST_PERIOD_MS) / GHOST_PERIOD_MS
+  const g = ghostPointerFraction(phase)
+  trailPaintCss.x = g.x * vw
+  trailPaintCss.y = g.y * vh
+  return true
 }
 
 function paintTrail() {
-  if (ensureTrailLayer()) {
-    updateTrailPaintTargetCss()
-    const bw = TRAIL_CANVAS_SIZE
-    trailLayer.setCircleRadius(
-      bw * (isTrailUserActiveNow() ? TRAIL_CIRCLE_RADIUS_MULT_MOUSE : TRAIL_CIRCLE_RADIUS_MULT_GHOST),
-    )
+  if (!ensureTrailLayer()) return
+
+  const shouldPaint = updateTrailPaintTargetCss()
+  const bw = TRAIL_CANVAS_SIZE
+  trailLayer.setCircleRadius(
+    bw * (isTrailUserActiveNow() ? TRAIL_CIRCLE_RADIUS_MULT_MOUSE : TRAIL_CIRCLE_RADIUS_MULT_GHOST),
+  )
+
+  if (shouldPaint) {
     const p = cssToTrailBuffer(trailPaintCss.x, trailPaintCss.y)
     mouse2D.x = p.x
     mouse2D.y = p.y
     trailLayer.update(mouse2D)
-    trailTexture.needsUpdate = true
+  } else {
+    /*
+     * Idle complet: lăsăm fade-ul să șteargă canvas-ul fără să adăugăm o pată nouă.
+     * Așa mesh-ul colapsează în hârtie (extrude → 0, level0 = paper) ca pe immersive-g.com.
+     */
+    trailLayer.update(null)
   }
+  trailTexture.needsUpdate = true
 }
 
 // ─── MATERIAL (MeshBasicNodeMaterial + TSL — WebGPURenderer) ─
@@ -632,6 +685,8 @@ onMounted(async () => {
   if (!import.meta.client) return
   const canvas = canvasRef.value
   if (!canvas) return
+
+  mountTime = performance.now()
 
   window.addEventListener('pointermove', onPointerMove, { passive: true })
   window.addEventListener('pointerdown', onPointerDown, { passive: true })

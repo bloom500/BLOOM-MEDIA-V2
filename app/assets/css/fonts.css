@@ -1,150 +1,41 @@
 /*
   Bloom Media — fonturi web
   ───────────────────────────
-  „TRIAL FONT” / watermark = încorporat în fișierele trial/demo; nu se poate
-  ascunde curat cu CSS fără a încălca licența. Pentru producție fără artefacte:
-  folosim Outfit + Instrument Serif (Bunny, OFL) până la Mont/Gwen licențiate.
+  Font display principal: Gloock (Duarte Pinto, OFL, comercial free).
+  Încărcat via Google Fonts CDN în nuxt.config.ts.
 
-  Fișiere locale (decomentează @font-face + actualizează main.css când ai licență):
-  - Gwen: public/fonts/gwen/fonts/*.otf
-  - Mont: public/fonts/mont/*.otf (versiuni full, nu DEMO)
+  Fișiere locale dezactivate:
+  - Williwaw Book: public/fonts/Williwaw-Book.otf (SIL OFL — păstrat ca opțiune)
+  - Gwen: public/fonts/Gwen/Non-commercial/OTF/*.otf (trial, watermark)
+  - Mont: public/fonts/mont/*.otf (DEMO, watermark)
 */
 
-/* ─── Mont — dezactivat: DEMO include watermark ───
+/* ─── Williwaw Book — dezactivat în favoarea Gloock ──────────────────────
 @font-face {
-  font-family: Mont;
-  font-style: normal;
-  font-weight: 300;
-  font-display: swap;
-  src: url('/fonts/mont/Mont-ExtraLightDEMO.otf') format('opentype');
-}
-@font-face {
-  font-family: Mont;
+  font-family: 'Williwaw';
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url('/fonts/mont/Mont-ExtraLightDEMO.otf') format('opentype');
-}
-@font-face {
-  font-family: Mont;
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
-  src: url('/fonts/mont/Mont-ExtraLightDEMO.otf') format('opentype');
-}
-@font-face {
-  font-family: Mont;
-  font-style: normal;
-  font-weight: 600;
-  font-display: swap;
-  src: url('/fonts/mont/Mont-HeavyDEMO.otf') format('opentype');
-}
-@font-face {
-  font-family: Mont;
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url('/fonts/mont/Mont-HeavyDEMO.otf') format('opentype');
+  src: url('/fonts/Williwaw-Book.otf') format('opentype');
 }
 */
 
-/* ─── Gwen — dezactivat dacă sursa e trial (watermark în glyph-uri) ───
+/* ─── Mont — dezactivat: DEMO include watermark ─────────────────────────
 @font-face {
-  font-family: 'Gwen Display';
+  font-family: Mont;
   font-style: normal;
-  font-weight: 300;
+  font-weight: 400;
   font-display: swap;
-  src: url('/fonts/gwen/fonts/fonnts.com-gwen-light.otf') format('opentype');
+  src: url('/fonts/mont/Mont-ExtraLightDEMO.otf') format('opentype');
 }
+*/
+
+/* ─── Gwen — dezactivat: sursele sunt trial (watermark în glyph-uri) ────
 @font-face {
   font-family: 'Gwen Display';
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url('/fonts/gwen/fonts/fonnts.com-gwen-regular.otf') format('opentype');
-}
-@font-face {
-  font-family: 'Gwen Display';
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
-  src: url('/fonts/gwen/fonts/fonnts.com-gwen-book.otf') format('opentype');
-}
-@font-face {
-  font-family: 'Gwen Display';
-  font-style: normal;
-  font-weight: 600;
-  font-display: swap;
-  src: url('/fonts/gwen/fonts/fonnts.com-gwen-semibold.otf') format('opentype');
-}
-@font-face {
-  font-family: 'Gwen Display';
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url('/fonts/gwen/fonts/fonnts.com-gwen-bold.otf') format('opentype');
-}
-@font-face {
-  font-family: 'Gwen Display';
-  font-style: normal;
-  font-weight: 800;
-  font-display: swap;
-  src: url('/fonts/gwen/fonts/fonnts.com-gwen-extrabold.otf') format('opentype');
-}
-@font-face {
-  font-family: 'Gwen Display';
-  font-style: normal;
-  font-weight: 900;
-  font-display: swap;
-  src: url('/fonts/gwen/fonts/fonnts.com-gwen-black.otf') format('opentype');
-}
-@font-face {
-  font-family: 'Gwen Text';
-  font-style: normal;
-  font-weight: 300;
-  font-display: swap;
-  src: url('/fonts/gwen/fonts/fonnts.com-gwentext-light.otf') format('opentype');
-}
-@font-face {
-  font-family: 'Gwen Text';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url('/fonts/gwen/fonts/fonnts.com-gwentext-regular.otf') format('opentype');
-}
-@font-face {
-  font-family: 'Gwen Text';
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
-  src: url('/fonts/gwen/fonts/fonnts.com-gwentext-book.otf') format('opentype');
-}
-@font-face {
-  font-family: 'Gwen Text';
-  font-style: normal;
-  font-weight: 600;
-  font-display: swap;
-  src: url('/fonts/gwen/fonts/fonnts.com-gwentext-semibold.otf') format('opentype');
-}
-@font-face {
-  font-family: 'Gwen Text';
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url('/fonts/gwen/fonts/fonnts.com-gwentext-bold.otf') format('opentype');
-}
-@font-face {
-  font-family: 'Gwen Text';
-  font-style: normal;
-  font-weight: 800;
-  font-display: swap;
-  src: url('/fonts/gwen/fonts/fonnts.com-gwentext-extrabold.otf') format('opentype');
-}
-@font-face {
-  font-family: 'Gwen Text';
-  font-style: normal;
-  font-weight: 900;
-  font-display: swap;
-  src: url('/fonts/gwen/fonts/fonnts.com-gwentext-black.otf') format('opentype');
+  src: url('/fonts/Gwen/Non-commercial/OTF/Gwen-Trial-Regular.otf') format('opentype');
 }
 */

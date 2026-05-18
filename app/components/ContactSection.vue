@@ -1,7 +1,11 @@
 <template>
   <section class="contact" aria-labelledby="contact-heading">
-    <div class="contact__grain" aria-hidden="true" />
-
+    <!--
+      grain layer removed: original SVG noise was authored for the old
+      light-paper backdrop. On the new black curtain, additive white noise
+      at 0.06 opacity lifts the whole section from #000 to ~#0a0a0a, which
+      reads as gray rather than the intended pure black.
+    -->
     <div class="contact__content">
       <div class="contact__left">
         <h2 id="contact-heading" class="contact__title">
@@ -77,53 +81,17 @@
   overflow: hidden;
   width: 100%;
   background: transparent;
+  color: #fff;
   padding: 8rem 2.5rem 6rem;
   /* Spațiu pentru rampa lungă spre footer (conținutul rămâne deasupra, z-index 3) */
   padding-bottom: clamp(9rem, 28vh, 16rem);
 }
 
 /*
- * Rampă cinematică Contact → Footer (#0a0a0a): bandă înaltă, trepte fine,
- * radial jos pentru „falloff” de lumină (fără tăietură dură).
+ * Rampa cinematică Contact → Footer a fost mutată în .page-tail (index.vue):
+ * acum cortina globală face tranziția light → dark înainte de Contact, deci
+ * fundalul e deja #0a0a0a aici. Lăsăm doar grain-ul.
  */
-.contact::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: clamp(220px, 42vh, 520px);
-  pointer-events: none;
-  z-index: 2;
-  background:
-    radial-gradient(
-      ellipse 130% 75% at 50% 115%,
-      rgba(10, 10, 10, 0.55) 0%,
-      rgba(10, 10, 10, 0.18) 42%,
-      transparent 72%
-    ),
-    linear-gradient(
-      180deg,
-      rgba(250, 250, 250, 0) 0%,
-      rgba(250, 250, 250, 0.02) 8%,
-      rgba(120, 118, 115, 0.08) 22%,
-      rgba(45, 44, 43, 0.28) 38%,
-      rgba(22, 22, 22, 0.55) 55%,
-      rgba(14, 14, 14, 0.82) 72%,
-      rgba(10, 10, 10, 0.96) 88%,
-      #0a0a0a 100%
-    );
-}
-
-.contact__grain {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  opacity: 0.06;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-size: 160px 160px;
-}
 
 .contact__content {
   position: relative;
@@ -141,7 +109,7 @@
   font-weight: 400;
   font-size: clamp(3rem, 8vw, 7rem);
   line-height: 0.95;
-  color: var(--color-text);
+  color: #fff;
   margin: 0 0 2rem;
   display: flex;
   flex-direction: column;
@@ -149,14 +117,14 @@
 
 .contact__title--accent {
   font-style: italic;
-  color: var(--color-text);
+  color: #fff;
 }
 
 .contact__sub {
   font-family: var(--font-body);
   font-size: 0.95rem;
   line-height: 1.75;
-  color: var(--color-text-soft);
+  color: rgba(255, 255, 255, 0.6);
   max-width: 400px;
   margin: 0;
 }
@@ -177,18 +145,18 @@
   flex-direction: column;
   gap: 0.35rem;
   padding: 1.5rem 0;
-  border-top: 0.5px solid var(--color-border);
+  border-top: 0.5px solid rgba(255, 255, 255, 0.14);
   text-decoration: none;
   color: inherit;
   transition: background 0.35s var(--ease-2);
 }
 
 .contact__channel:last-of-type {
-  border-bottom: 0.5px solid var(--color-border);
+  border-bottom: 0.5px solid rgba(255, 255, 255, 0.14);
 }
 
 .contact__channel:hover {
-  background: rgba(0, 0, 0, 0.03);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .contact__channel-label {
@@ -196,18 +164,18 @@
   font-size: 0.6rem;
   text-transform: uppercase;
   letter-spacing: 0.16em;
-  color: var(--color-text-faint);
+  color: rgba(255, 255, 255, 0.4);
 }
 
 .contact__channel-value {
   font-family: var(--font-display);
   font-size: clamp(1.15rem, 2vw, 1.5rem);
   font-weight: 400;
-  color: var(--color-text);
+  color: #fff;
 }
 
 .contact__channel:hover .contact__channel-value {
-  color: var(--color-text);
+  color: #fff;
 }
 
 .contact__actions {
@@ -227,9 +195,9 @@
   text-transform: uppercase;
   letter-spacing: 0.14em;
   text-decoration: none;
-  color: #ffffff;
-  background-color: var(--color-text);
-  border: 0.5px solid var(--color-text);
+  color: #060604;
+  background-color: #fff;
+  border: 0.5px solid #fff;
   transition:
     background 0.3s ease,
     color 0.3s ease,
@@ -237,8 +205,8 @@
 }
 
 .contact__btn-primary:hover {
-  background-color: rgba(0, 0, 0, 0.85);
-  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.85);
+  color: #060604;
 }
 
 .contact__btn-secondary {
@@ -252,9 +220,9 @@
   text-transform: uppercase;
   letter-spacing: 0.14em;
   text-decoration: none;
-  color: var(--color-text);
+  color: #fff;
   background: transparent;
-  border: 0.5px solid var(--color-border-medium);
+  border: 0.5px solid rgba(255, 255, 255, 0.3);
   transition:
     border-color 0.3s ease,
     color 0.3s ease,
@@ -262,9 +230,9 @@
 }
 
 .contact__btn-secondary:hover {
-  border-color: var(--color-border-strong);
-  color: var(--color-text);
-  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(255, 255, 255, 0.7);
+  color: #fff;
+  background: rgba(255, 255, 255, 0.05);
 }
 
 @media (max-width: 768px) {

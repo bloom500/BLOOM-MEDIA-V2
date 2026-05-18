@@ -24,6 +24,15 @@ import CustomCursor from '~/components/CustomCursor.vue'
 import FixedServicesCta from '~/components/FixedServicesCta.vue'
 import SiteBackground3d from '~/components/SiteBackground3d.vue'
 import { initStringTune, getStringTune } from '~/lib/stringtune/client'
+import { useViewportHeight } from '~/composables/useViewportHeight'
+
+// Set lang="ro" globally — critical for Romanian SEO and screen readers.
+useHead({ htmlAttrs: { lang: 'ro' } })
+
+// iOS Safari 100vh fix — sets --vh on resize/orientation. Sections that
+// need full-bleed height should use min-height: calc(var(--vh, 1dvh) * 100)
+// so modern browsers stay on native 1dvh while iOS 15 falls back to JS.
+useViewportHeight()
 
 onMounted(async () => {
   await nextTick()
@@ -40,7 +49,9 @@ onMounted(async () => {
 .site-content {
   position: relative;
   z-index: 2;
-  min-height: 100vh;
+  /* Fall back order: 1dvh (modern), then JS-set --vh (iOS 15 / older). */
+  min-height: 100dvh;
+  min-height: calc(var(--vh, 1dvh) * 100);
 }
 
 /* Servicii page — dark html+body so scroll area never shows white */

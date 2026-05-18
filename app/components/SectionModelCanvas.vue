@@ -83,7 +83,9 @@ if (import.meta.client) {
     await loadSectionGltf(props.modelPath)
   }
   catch (e) {
-    console.error('[SectionModelCanvas] Preload failed (will retry on mount)', props.modelPath, e)
+    if (import.meta.dev) {
+      console.error('[SectionModelCanvas] Preload failed (will retry on mount)', props.modelPath, e)
+    }
   }
 }
 
@@ -131,14 +133,18 @@ function countVertices(root: THREE.Object3D) {
 }
 
 let cleanupFn: (() => void) | null = null
+let unmounted = false
 
 onMounted(() => {
   void (async () => {
     await nextTick()
+    if (unmounted) return
     if (!import.meta.client || !canvasRef.value || !rootRef.value) {
-      console.warn('[SectionModelCanvas] Skip init — no canvas or root', {
-        modelPath: props.modelPath,
-      })
+      if (import.meta.dev) {
+        console.warn('[SectionModelCanvas] Skip init — no canvas or root', {
+          modelPath: props.modelPath,
+        })
+      }
       return
     }
 
@@ -147,10 +153,12 @@ onMounted(() => {
     isNarrow.value = window.matchMedia('(max-width: 768px)').matches
 
     if (!props.visibilityDebug && isNarrow.value && isCoarse.value) {
-      console.info(
-        '[SectionModelCanvas] Skipping WebGL on narrow+coarse (set visibilityDebug to force)',
-        props.modelPath,
-      )
+      if (import.meta.dev) {
+        console.info(
+          '[SectionModelCanvas] Skipping WebGL on narrow+coarse (set visibilityDebug to force)',
+          props.modelPath,
+        )
+      }
       rootRef.value.style.display = 'none'
       return
     }
@@ -161,16 +169,20 @@ onMounted(() => {
       gltf = await loadSectionGltf(props.modelPath)
     }
     catch (e) {
-      console.error('[SectionModelCanvas] Failed to load GLB', props.modelPath, e)
+      if (import.meta.dev) {
+        console.error('[SectionModelCanvas] Failed to load GLB', props.modelPath, e)
+      }
       return
     }
 
-    if (cancelled || !canvasRef.value || !rootRef.value) {
+    if (unmounted || cancelled || !canvasRef.value || !rootRef.value) {
       return
     }
 
     const verts = countVertices(gltf.scene)
-    console.log('[SectionModelCanvas] Loaded', props.modelPath, { vertexCountApprox: verts })
+    if (import.meta.dev) {
+      console.log('[SectionModelCanvas] Loaded', props.modelPath, { vertexCountApprox: verts })
+    }
 
     const canvas = canvasRef.value
     const rootEl = rootRef.value
@@ -365,6 +377,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  unmounted = true
   cleanupFn?.()
   cleanupFn = null
 })

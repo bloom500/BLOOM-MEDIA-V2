@@ -39,16 +39,22 @@ export async function loadSectionGltf(modelUrl: string): Promise<GLTF> {
     loader.setDRACOLoader(draco)
 
     try {
-      console.log('[sectionModelLoader] Loading', modelUrl, 'Draco decoder:', decoderPath)
+      if (import.meta.dev) {
+        console.log('[sectionModelLoader] Loading', modelUrl, 'Draco decoder:', decoderPath)
+      }
       const gltf = await loader.loadAsync(modelUrl)
-      console.log('[sectionModelLoader] Parsed', modelUrl, {
-        scenes: gltf.scenes?.length,
-        animations: gltf.animations?.length,
-      })
+      if (import.meta.dev) {
+        console.log('[sectionModelLoader] Parsed', modelUrl, {
+          scenes: gltf.scenes?.length,
+          animations: gltf.animations?.length,
+        })
+      }
       return gltf
     }
     catch (e) {
-      console.error('[sectionModelLoader] Load failed', modelUrl, e)
+      if (import.meta.dev) {
+        console.error('[sectionModelLoader] Load failed', modelUrl, e)
+      }
       gltfCache.delete(modelUrl)
       throw e
     }

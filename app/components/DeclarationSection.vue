@@ -91,7 +91,13 @@
   font-family: var(--font-display);
   font-weight: 400;
   font-size: clamp(3.5rem, 9vw, 11rem);
-  line-height: 0.95;
+  /*
+   * line-height: 0.95 was clipping descenders (g, p, q, ț, y) and top
+   * diacritics (â, î) on the overflow:hidden lines below. 1.05 gives the
+   * minimum clearance for Cormorant Garamond's ascenders/descenders while
+   * keeping the tight editorial feel.
+   */
+  line-height: 1.05;
   color: var(--color-text);
   margin: 0;
   display: flex;
@@ -101,7 +107,13 @@
 .declaration__line {
   display: flex;
   flex-wrap: wrap;
+  /*
+   * overflow:hidden clips descenders on word-reveal. We compensate with
+   * padding/margin so the layout doesn't shift but glyphs have room.
+   */
   overflow: hidden;
+  padding-bottom: 0.14em;
+  margin-bottom: -0.14em;
 }
 
 .declaration__line:nth-child(1) {

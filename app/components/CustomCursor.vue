@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 
 const x = ref(-100)
 const y = ref(-100)
@@ -74,12 +74,13 @@ onMounted(() => {
 
   window.addEventListener('mousemove', move, { passive: true })
   document.addEventListener('mouseover', onOver)
+})
 
-  onUnmounted(() => {
-    window.removeEventListener('mousemove', move)
-    document.removeEventListener('mouseover', onOver)
-    cancelAnimationFrame(raf)
-  })
+onUnmounted(() => {
+  if (!import.meta.client) return
+  window.removeEventListener('mousemove', move)
+  document.removeEventListener('mouseover', onOver)
+  cancelAnimationFrame(raf)
 })
 </script>
 

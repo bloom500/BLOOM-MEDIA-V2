@@ -97,7 +97,15 @@ const items = [
   inset: 0;
   z-index: 1;
   pointer-events: none;
-  opacity: 0.06;
+  /*
+   * Grain authored for the original light backdrop; on the homepage it
+   * sits above the dark curtain (.faq is z=1, curtain z=0), so additive
+   * white noise creates a gray lift relative to the curtain-only sections
+   * below (Contact). We fade the grain out in lockstep with the curtain
+   * via --page-curtain-opacity (set by index.vue's ScrollTrigger). On
+   * pages without a curtain, the var defaults to 0 → opacity stays 0.06.
+   */
+  opacity: calc(0.06 * (1 - var(--page-curtain-opacity, 0)));
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   background-size: 160px 160px;
 }
@@ -112,7 +120,12 @@ const items = [
   font-family: var(--font-display);
   font-weight: 400;
   font-size: clamp(3rem, 8vw, 9rem);
-  line-height: 0.95;
+  /*
+   * line-height: 0.95 was cutting off top diacritics (â, î, ă) and the
+   * top of ascenders in 'î' from „întrebări". 1.0 is the minimum safe
+   * value for Cormorant Garamond at display sizes with Romanian glyphs.
+   */
+  line-height: 1.0;
   color: var(--color-text);
   margin: 0;
   display: flex;

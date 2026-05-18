@@ -7,7 +7,7 @@
     <NuxtLink
       to="/servicii"
       class="fixed-services-cta"
-      :class="{ '-in-footer': inFooter }"
+      :class="{ '-in-footer': inFooter || cursorDark }"
     >
       <span>Vezi serviciile</span>
       <span class="fixed-services-cta__dot">:</span>
@@ -17,18 +17,25 @@
 
 <script setup lang="ts">
 const inFooter = ref(false)
+// Shared signal — same useState used by CustomCursor / Navbar / FooterReveal /
+// the homepage curtain transition. When true, CTA flips to white.
+const cursorDark = useState('cursorDark', () => false)
+let observer: IntersectionObserver | null = null
 
 onMounted(() => {
   const footer = document.querySelector('footer.footer-reveal')
   if (!footer) return
 
-  const observer = new IntersectionObserver(
+  observer = new IntersectionObserver(
     ([entry]) => { inFooter.value = entry.isIntersecting },
     { threshold: 0.05 }
   )
   observer.observe(footer)
+})
 
-  onUnmounted(() => observer.disconnect())
+onUnmounted(() => {
+  observer?.disconnect()
+  observer = null
 })
 </script>
 

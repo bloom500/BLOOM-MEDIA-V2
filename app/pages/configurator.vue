@@ -748,7 +748,12 @@ async function handleSubmit() {
 .cfg-field input,
 .cfg-field textarea {
   font-family: var(--font-body);
-  font-size: 0.9rem;
+  /*
+   * Min 16px on mobile to prevent iOS Safari auto-zoom on focus.
+   * 0.9rem (14.4px) was triggering it before. clamp keeps the desktop
+   * size at 0.9rem on viewports >= 768px.
+   */
+  font-size: clamp(1rem, 0.9rem + 0.5vw, 1rem);
   color: var(--cfg-text);
   background: transparent;
   border: 0.5px solid var(--cfg-border-md);

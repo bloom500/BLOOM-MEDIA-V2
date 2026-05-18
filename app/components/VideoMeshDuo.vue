@@ -6,15 +6,15 @@
       <div class="videoduo__frame videoduo__frame--a" :class="{ 'is-visible': visible }">
         <video
           ref="playerA"
-          autoplay
           muted
           playsinline
-          preload="auto"
+          preload="none"
           class="videoduo__video"
           aria-hidden="true"
           @ended="nextA"
         >
-          <source :src="currentA" type="video/mp4" />
+          <source v-if="visible && currentA.webm" :src="currentA.webm" type="video/webm" />
+          <source v-if="visible" :src="currentA.mp4" type="video/mp4" />
         </video>
       </div>
 
@@ -22,15 +22,15 @@
       <div class="videoduo__frame videoduo__frame--b" :class="{ 'is-visible': visible }">
         <video
           ref="playerB"
-          autoplay
           muted
           playsinline
-          preload="auto"
+          preload="none"
           class="videoduo__video"
           aria-hidden="true"
           @ended="nextB"
         >
-          <source :src="currentB" type="video/mp4" />
+          <source v-if="visible && currentB.webm" :src="currentB.webm" type="video/webm" />
+          <source v-if="visible" :src="currentB.mp4" type="video/mp4" />
         </video>
       </div>
 
@@ -39,10 +39,21 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 
-const playlistA = ['/videos/ad1section2.mp4', '/videos/ad2section2.mp4']
-const playlistB = ['/videos/ad3section2.mp4', '/videos/ad4section2.mp4']
+/*
+ * Each playlist entry has both formats. WebM is omitted (null) where the
+ * VP9 re-encode came out larger than the source — only ad1section2 had a
+ * useful WebM payload after conversion. See scripts/convert-videos-webm.ps1.
+ */
+const playlistA = [
+  { mp4: '/videos/ad1section2.mp4', webm: '/videos/ad1section2.webm' },
+  { mp4: '/videos/ad2section2.mp4', webm: null },
+]
+const playlistB = [
+  { mp4: '/videos/ad3section2.mp4', webm: '/videos/ad3section2.webm' },
+  { mp4: '/videos/ad4section2.mp4', webm: null },
+]
 
 const indexA = ref(0)
 const indexB = ref(0)
@@ -64,6 +75,7 @@ function nextB() {
 watch(currentA, async () => {
   const v = playerA.value
   if (!v) return
+  if (!visible.value) return
   v.load()
   await v.play().catch(() => {})
 })
@@ -71,6 +83,7 @@ watch(currentA, async () => {
 watch(currentB, async () => {
   const v = playerB.value
   if (!v) return
+  if (!visible.value) return
   v.load()
   await v.play().catch(() => {})
 })
@@ -83,6 +96,13 @@ onMounted(() => {
       if (entry.isIntersecting) {
         visible.value = true
         observer?.disconnect()
+        nextTick(() => {
+          for (const v of [playerA.value, playerB.value]) {
+            if (!v) continue
+            v.load()
+            v.play().catch(() => {})
+          }
+        })
       }
     },
     { threshold: 0.15 }
@@ -116,6 +136,8 @@ onUnmounted(() => observer?.disconnect())
   border-radius: 4px;
   overflow: hidden;
   position: relative;
+  /* Allow vertical scroll to pass through on touch — see VideoMeshSection. */
+  touch-action: pan-y;
 
   /* entrance state */
   opacity: 0;

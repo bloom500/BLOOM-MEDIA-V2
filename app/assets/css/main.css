@@ -22,8 +22,9 @@
   --color-border-strong: rgba(0, 0, 0, 0.42);
   /* Outfit: UI (Mont DEMO avea watermark). Încărcat din Fonts Bunny, OFL. */
   --font-ui: Outfit, system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-display: 'Cormorant Garamond', Georgia, serif;
-  --font-editorial: 'Gwen', 'Newsreader', Georgia, serif;
+  /* Gloock: high-contrast display serif, OFL, comercial free. Fallback: Georgia. */
+  --font-display: 'Gloock', Georgia, serif;
+  --font-editorial: 'Gloock', Georgia, serif;
   /* Noto Sans: fallback cu diacritice complete dacă Geist nu acoperă tot (evită serif în paragrafe) */
   --font-body: 'Geist', 'Noto Sans', system-ui, sans-serif;
   --ease-1: cubic-bezier(0.86, 0, 0.31, 1);
@@ -31,7 +32,13 @@
   --ease-timing: 1.2s;
   --g-gap: 0.4rem;
   --g-margin: calc(var(--g-gap) * 2);
-  --vh: 1vh;
+  /*
+   * --vh is set in JS by useViewportHeight() to window.innerHeight*0.01
+   * to fix the classic iOS Safari 100vh-includes-URL-bar layout shift.
+   * Don't preset it here to anything else — consumers use
+   * `var(--vh, 1dvh)` so modern browsers stay on the native dynamic unit
+   * while iOS 15 falls through to the JS-set value once it lands.
+   */
   --vw: 1vw;
 }
 
@@ -57,6 +64,18 @@ html {
   overflow-y: auto;
   height: auto;
   font-feature-settings: 'kern' 1, 'liga' 1;
+  /*
+   * Mobile UX hardening:
+   * - overscroll-behavior: none kills iOS rubber-band that would expose the
+   *   page background and trigger Safari URL-bar resize spam.
+   * - -webkit-tap-highlight-color removes the blue flash on tap on iOS.
+   * - text-size-adjust prevents Safari from auto-bumping text size on
+   *   landscape rotation, which would break our clamp() typography.
+   */
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
@@ -66,6 +85,7 @@ body {
   overflow-y: auto;
   position: relative;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior: none;
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -97,7 +117,9 @@ body {
 
 h1, h2, h3, .font-display, .display, .serif {
   font-family: var(--font-display);
-  font-weight: 600;
+  /* Gloock has only weight 400 — synthetic bold degrades the contrast.
+     Keep it at 400 and rely on size/spacing for hierarchy. */
+  font-weight: 400;
   text-wrap: balance;
   /* Ligaturi fi/fl din trial Gwen = watermark; păstrăm glyph-uri separate */
   font-variant-ligatures: no-common-ligatures;
@@ -215,6 +237,13 @@ html[data-page="servicii"] section.configurator {
   display: inline-flex;
   overflow: hidden;
   vertical-align: bottom;
+  /*
+   * overflow:hidden clips descenders (g, j, p, q, y, ț) at the baseline.
+   * Pad the wrapper vertically so they have room, then pull the wrapper
+   * back with a matching negative margin so layout doesn't shift.
+   */
+  padding-bottom: 0.18em;
+  margin-bottom: -0.18em;
 }
 
 .hero__statement.-splitted .-s-word > * {

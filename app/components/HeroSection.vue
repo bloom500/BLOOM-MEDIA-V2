@@ -17,7 +17,7 @@
           string-split="word[start]"
           string-repeat
         >
-          Creștem afaceri digitale.
+          Rezultate, nu promisiuni.
         </h1>
       </div>
 
@@ -49,7 +49,13 @@
   position: relative;
   overflow: hidden;
   width: 100%;
-  height: 100vh;
+  /*
+   * iOS Safari pre-16: 100vh includes the URL bar height even after it
+   * collapses on scroll, causing layout shift. Order: native dvh first
+   * (correct in modern browsers), then JS-set --vh fallback for old iOS.
+   */
+  height: 100dvh;
+  height: calc(var(--vh, 1dvh) * 100);
   min-height: 100svh;
   background: transparent;
 }
@@ -113,15 +119,6 @@
   display: block;
   width: 100%;
   height: 100%;
-}
-
-@keyframes hero-rotate {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
 }
 
 @media (max-width: 768px) {

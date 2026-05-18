@@ -43,7 +43,13 @@ export function initStringTune(options: InitStringTuneOptions = {}) {
     })
 
     instance.scrollDesktopMode = 'smooth'
-    instance.scrollMobileMode = 'default'
+    /*
+     * Mobile: smooth scrolling matched to desktop. Tradeoff to keep in mind —
+     * StringTune intercepts native scroll, so iOS Safari's URL-bar collapse
+     * is locked at whatever state it had on first interaction. Acceptable
+     * for the editorial vibe; revisit if testers complain.
+     */
+    instance.scrollMobileMode = 'smooth'
     instance.speed = 0.035
     instance.speedAccelerate = 0.09
 

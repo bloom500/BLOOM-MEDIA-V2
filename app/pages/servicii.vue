@@ -6,13 +6,21 @@
       </ClientOnly>
       <div class="cfg-grain"  aria-hidden="true" />
 
+      <!-- Editorial vertical column on the right edge — three small segments,
+           a magazine-style decorative rule. Pure presentation. -->
+      <div class="cfg-rail" aria-hidden="true">
+        <span class="cfg-rail__seg" />
+        <span class="cfg-rail__seg" />
+        <span class="cfg-rail__seg" />
+      </div>
+
       <!-- ── Header ─────────────────────────────────────────────── -->
       <header class="cfg-header">
         <span class="cfg-eyebrow">Calificare / 2026</span>
         <h1 class="cfg-title">Decide.</h1>
         <p class="cfg-subtitle">
           Construim sisteme de marketing care produc rezultate măsurabile.
-          Selectează ce servește obiectivul tău și configurăm împreună.
+          <em>Selectează ce servește obiectivul tău</em> și configurăm împreună.
         </p>
       </header>
 
@@ -34,12 +42,18 @@
                 :aria-expanded="String(openCats[cat.id])"
                 type="button"
               >
+                <!--
+                  Inverted hierarchy: tiny italic number on top,
+                  display-size italic word below. Magazine spread feel.
+                -->
                 <span class="cfg-cat-num">{{ cat.num }}</span>
                 <span class="cfg-cat-name">{{ cat.label }}</span>
-                <span class="cfg-cat-sub" :class="{ 'is-on': catTotal(cat.id) > 0 }" aria-live="polite">
-                  €{{ catTotal(cat.id) }}
+                <span class="cfg-cat-meta">
+                  <span class="cfg-cat-sub" :class="{ 'is-on': catTotal(cat.id) > 0 }" aria-live="polite">
+                    €{{ catTotal(cat.id) }}
+                  </span>
+                  <span class="cfg-cat-rule" :class="{ 'is-open': openCats[cat.id] }" aria-hidden="true" />
                 </span>
-                <span class="cfg-cat-arrow" aria-hidden="true">{{ openCats[cat.id] ? '−' : '+' }}</span>
               </button>
 
               <!-- CSS grid-rows accordion: no height JS, no scroll jump -->
@@ -61,7 +75,7 @@
                     </span>
                     <span class="cfg-item-price">
                       <span class="cfg-item-price-val">€{{ item.price }}</span>
-                      <span class="cfg-item-price-per">{{ item.oneTime ? 'one‑time' : '/ lună' }}</span>
+                      <span class="cfg-item-price-per">{{ item.oneTime ? 'one-time' : '/ lună' }}</span>
                     </span>
                   </button>
                 </div>
@@ -70,10 +84,17 @@
           </div>
         </div>
 
-        <!-- Right: form (sticky) -->
+        <!--
+          Right column: form is now borderless and editorial. No card, no
+          filled inputs, no uppercase labels. Each field is a thin underline
+          with an italic kicker. Submit is a text-link with an animated rule.
+        -->
         <aside class="cfg-right">
           <form class="cfg-form" @submit.prevent="handleSubmit" novalidate>
-            <p class="cfg-form-title">Trimite brieful</p>
+            <header class="cfg-form-head">
+              <span class="cfg-form-kicker">Pasul următor</span>
+              <h2 class="cfg-form-title">Trimite brieful.</h2>
+            </header>
 
             <div class="cfg-form-grid">
               <div class="cfg-field">
@@ -97,7 +118,7 @@
                   placeholder="+40 721 234 567" autocomplete="tel" required />
               </div>
               <div class="cfg-field cfg-field--full">
-                <label for="f-notes">Obiective (opțional)</label>
+                <label for="f-notes">Obiective</label>
                 <textarea id="f-notes" v-model="form.objectives" rows="3"
                   placeholder="Vrem să creștem ROAS de la 1.2x la 3x în 6 luni…" />
               </div>
@@ -105,11 +126,18 @@
 
             <div class="cfg-form-footer">
               <div class="cfg-form-total">
-                <span class="cfg-form-total-label">Total estimat</span>
+                <span class="cfg-form-total-label">Investiție / lună</span>
                 <strong class="cfg-form-total-val">€{{ monthlyTotal }}</strong>
               </div>
-              <button type="submit" class="cfg-form-submit" :disabled="!formValid || isSubmitting">
-                {{ isSubmitting ? 'Se trimite…' : 'Transmite cererea' }}
+              <button
+                type="submit"
+                class="cfg-form-submit"
+                :disabled="!formValid || isSubmitting"
+              >
+                <span class="cfg-form-submit__text">
+                  {{ isSubmitting ? 'Se trimite' : 'Transmite cererea' }}
+                </span>
+                <span class="cfg-form-submit__rule" aria-hidden="true" />
               </button>
             </div>
           </form>
@@ -227,7 +255,8 @@ async function handleSubmit() {
   z-index: 0;
   width: 100%;
   min-height: 100dvh;
-  padding: 7rem 3rem 6rem;
+  /* More breathing top + larger right gutter so the editorial rail has room */
+  padding: 9rem 4rem 7rem;
   overflow: visible;
   overflow-anchor: none;
   background: #060604;
@@ -243,17 +272,48 @@ async function handleSubmit() {
   background-size: 160px 160px;
 }
 
+/* Magazine-style vertical rail on the right edge — three thin segments. */
+.cfg-rail {
+  position: absolute;
+  top: 9rem;
+  bottom: 7rem;
+  right: 1.5rem;
+  width: 1px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.cfg-rail__seg {
+  display: block;
+  width: 1px;
+  flex: 1;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.cfg-rail__seg + .cfg-rail__seg {
+  /* small gap between segments */
+  margin-top: 24px;
+}
+
+@media (max-width: 800px) {
+  .cfg-rail { display: none; }
+}
+
 /* Everything above the 3D canvas */
 .cfg-header,
 .cfg-body { position: relative; z-index: 2; }
 
 /* ─── Header ──────────────────────────────────────────────────── */
 .cfg-header {
-  margin-bottom: 4rem;
+  margin-bottom: 6rem;
   max-width: 760px;
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 1.5rem;
 }
 
 .cfg-eyebrow {
@@ -274,20 +334,36 @@ async function handleSubmit() {
   margin: 0;
 }
 
+/*
+ * Subtitle now switched to the display serif, italic-mixed. Reads as
+ * editorial caption, not utility paragraph. The <em> inside picks up
+ * standalone italic — Gloock italic is dramatic, only used on the
+ * intentional clause to add poetry.
+ */
 .cfg-subtitle {
-  font-family: var(--font-body);
-  font-size: 0.88rem;
-  line-height: 1.65;
-  color: rgba(255, 255, 255, 0.65);
-  max-width: 480px;
+  font-family: var(--font-display);
+  font-size: clamp(1rem, 1.3vw, 1.2rem);
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.55);
+  max-width: 520px;
   margin: 0;
+  font-style: normal;
+}
+
+.cfg-subtitle em {
+  font-style: italic;
+  color: rgba(255, 255, 255, 0.85);
 }
 
 /* ─── Body: two-column grid ───────────────────────────────────── */
 .cfg-body {
   display: grid;
-  grid-template-columns: 1fr 380px;
-  gap: 5rem;
+  /*
+   * Slightly wider gap and a narrower form column so the catalogue can
+   * breathe and the right side reads as marginalia, not as a sidebar.
+   */
+  grid-template-columns: 1fr 340px;
+  gap: 6rem;
   align-items: start;
 }
 
@@ -301,67 +377,100 @@ async function handleSubmit() {
   border-bottom: 0.5px solid rgba(255, 255, 255, 0.14);
 }
 
+/*
+ * Inverted hierarchy:
+ *  - tiny italic number on top, faded
+ *  - large italic display word below
+ *  - meta (price + decorative rule) on the right, baseline-aligned
+ */
 .cfg-cat-head {
   width: 100%;
-  display: flex;
-  align-items: baseline;
-  gap: 1.25rem;
-  padding: 1.6rem 0;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    'num   meta'
+    'name  meta';
+  column-gap: 2rem;
+  row-gap: 0.4rem;
+  padding: 2.2rem 0 2rem;
   background: none;
   border: none;
   color: #fff;
   cursor: pointer;
   text-align: left;
-  transition: opacity 0.15s ease-out;
+  transition: opacity 0.2s ease-out;
 }
-.cfg-cat-head:hover { opacity: 0.6; }
+.cfg-cat-head:hover { opacity: 0.78; }
 
 .cfg-cat-num {
+  grid-area: num;
   font-family: var(--font-display);
-  font-size: 1rem;
+  font-size: 0.85rem;
   font-style: italic;
-  color: rgba(255, 255, 255, 0.3);
-  flex-shrink: 0;
-  width: 1.6rem;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.32);
 }
 
 .cfg-cat-name {
+  grid-area: name;
   font-family: var(--font-display);
+  font-style: italic;
   font-weight: 400;
-  font-size: clamp(1.6rem, 3vw, 2.6rem);
+  font-size: clamp(2rem, 4vw, 3.4rem);
+  line-height: 1.0;
   letter-spacing: -0.01em;
   color: #fff;
-  flex: 1;
+  /* Padding bottom to reserve room for italic descenders */
+  padding-bottom: 0.08em;
+}
+
+/* Right cluster: price + a thin animated rule (replaces the +/− glyph) */
+.cfg-cat-meta {
+  grid-area: meta;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  align-self: end;
 }
 
 .cfg-cat-sub {
-  font-family: var(--font-body);
-  font-size: 0.68rem;
-  letter-spacing: 0.05em;
-  color: rgba(255, 255, 255, 0.45);
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 1rem;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.55);
   opacity: 0;
   transform: translateY(4px);
-  transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+  transition: opacity 0.25s ease-out, transform 0.25s ease-out;
+  white-space: nowrap;
 }
 .cfg-cat-sub.is-on { opacity: 1; transform: translateY(0); }
 
-.cfg-cat-arrow {
-  font-family: var(--font-body);
-  font-size: 1rem;
-  font-weight: 300;
-  color: rgba(255, 255, 255, 0.35);
+/*
+ * Editorial dash that replaces the +/− toggle.
+ * Closed: a short horizontal line.
+ * Open:   the line stretches longer and fades up — visual cue, no glyph.
+ */
+.cfg-cat-rule {
+  display: block;
+  width: 28px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.4);
+  transition: width 0.35s var(--ease-2, cubic-bezier(0.35, 0.35, 0, 1)),
+              background 0.25s ease-out;
   flex-shrink: 0;
-  width: 1.2rem;
-  text-align: right;
-  transition: color 0.15s;
 }
-.cfg-cat.is-open .cfg-cat-arrow { color: #fff; }
+
+.cfg-cat-rule.is-open {
+  width: 56px;
+  background: #fff;
+}
 
 /* CSS grid-template-rows accordion — zero layout reflow, zero scroll jump */
 .cfg-cat-body-wrap {
   display: grid;
   grid-template-rows: 0fr;
-  transition: grid-template-rows 0.38s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: grid-template-rows 0.42s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .cfg-cat.is-open .cfg-cat-body-wrap {
   grid-template-rows: 1fr;
@@ -458,12 +567,12 @@ async function handleSubmit() {
   color: rgba(255, 255, 255, 0.22);
 }
 
-/* ─── Right: form (sticky) ────────────────────────────────────── */
+/* ─── Right: editorial form (no card, no filled inputs) ─────────── */
 .cfg-right {
   position: sticky;
-  top: 6rem;
-  border: 0.5px solid rgba(255, 255, 255, 0.14);
-  padding: 2rem;
+  top: 7rem;
+  /* Card eliminated: no border, no padding container — the form bleeds
+     directly onto the page. Vertical alignment maintained via flex below. */
   display: flex;
   flex-direction: column;
 }
@@ -471,71 +580,102 @@ async function handleSubmit() {
 .cfg-form {
   display: flex;
   flex-direction: column;
-  gap: 1.75rem;
+  gap: 2.5rem;
+}
+
+.cfg-form-head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 0.5px solid rgba(255, 255, 255, 0.14);
+}
+
+.cfg-form-kicker {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 0.04em;
 }
 
 .cfg-form-title {
   font-family: var(--font-display);
-  font-size: 1.4rem;
+  font-style: italic;
   font-weight: 400;
+  font-size: clamp(1.6rem, 2.2vw, 2.1rem);
+  line-height: 1.0;
+  letter-spacing: -0.01em;
   color: #fff;
   margin: 0;
-  padding-bottom: 1.5rem;
-  border-bottom: 0.5px solid rgba(255, 255, 255, 0.14);
 }
 
 .cfg-form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1rem;
+  gap: 1.6rem 1.25rem;
 }
 
 .cfg-field {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.6rem;
 }
 .cfg-field--full { grid-column: 1 / -1; }
 
+/*
+ * Italic small-cap labels feel like print marginalia, not a SaaS form.
+ * No uppercase tracking, no all-caps — tone shifts from "system" to "letter".
+ */
 .cfg-field label {
-  font-family: var(--font-body);
-  font-size: 0.58rem;
-  text-transform: uppercase;
-  letter-spacing: 0.16em;
-  color: rgba(255, 255, 255, 0.4);
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.45);
 }
 
+/*
+ * Inputs are a clean writing line: transparent background, no border-box,
+ * just a thin underline. Focus thickens the line and brightens the text.
+ */
 .cfg-field input,
 .cfg-field textarea {
-  font-family: var(--font-body);
-  font-size: 0.85rem;
+  font-family: var(--font-display);
+  font-size: 1rem;
   color: #fff;
-  background: rgba(255, 255, 255, 0.05);
-  border: 0.5px solid rgba(255, 255, 255, 0.15);
-  border-radius: 1px;
-  padding: 0.65rem 0.85rem;
+  background: transparent;
+  border: none;
+  border-bottom: 0.5px solid rgba(255, 255, 255, 0.18);
+  border-radius: 0;
+  padding: 0.45rem 0;
   outline: none;
-  transition: border-color 0.2s, background 0.2s;
   width: 100%;
+  transition: border-color 0.25s ease, color 0.2s ease;
 }
+
 .cfg-field input::placeholder,
-.cfg-field textarea::placeholder { color: rgba(255, 255, 255, 0.2); }
+.cfg-field textarea::placeholder {
+  color: rgba(255, 255, 255, 0.22);
+  font-style: italic;
+}
+
 .cfg-field input:focus,
 .cfg-field textarea:focus {
-  border-color: rgba(255, 255, 255, 0.5);
-  background: rgba(255, 255, 255, 0.08);
+  border-bottom-color: rgba(255, 255, 255, 0.7);
 }
+
 .cfg-field textarea {
   resize: vertical;
-  min-height: 72px;
-  font-family: var(--font-body);
+  min-height: 60px;
+  line-height: 1.5;
 }
 
 .cfg-form-footer {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  padding-top: 1.5rem;
+  gap: 1.5rem;
+  padding-top: 1.75rem;
   border-top: 0.5px solid rgba(255, 255, 255, 0.14);
 }
 
@@ -543,47 +683,83 @@ async function handleSubmit() {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
+  gap: 1rem;
 }
 
 .cfg-form-total-label {
-  font-family: var(--font-body);
-  font-size: 0.58rem;
-  text-transform: uppercase;
-  letter-spacing: 0.16em;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 0.78rem;
   color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 0.02em;
 }
 
 .cfg-form-total-val {
   font-family: var(--font-display);
   font-weight: 400;
-  font-size: clamp(1.8rem, 3vw, 2.75rem);
+  font-size: clamp(2rem, 3.2vw, 3rem);
   line-height: 1;
   color: #fff;
 }
 
+/*
+ * Submit is now a text-link with an animated underline rule, not a filled
+ * button. Disabled state simply dims; no harsh greyout.
+ */
 .cfg-form-submit {
-  font-family: var(--font-body);
-  font-size: 0.68rem;
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
-  color: #060604;
-  background: #fff;
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0;
+  background: none;
   border: none;
-  border-radius: 1px;
-  padding: 1rem 1.5rem;
+  color: #fff;
   cursor: pointer;
-  width: 100%;
-  transition: opacity 0.2s, transform 0.15s;
+  text-align: left;
+  transition: opacity 0.25s ease;
 }
-.cfg-form-submit:hover:not(:disabled) { opacity: 0.85; }
-.cfg-form-submit:active:not(:disabled) { transform: scale(0.98); }
-.cfg-form-submit:disabled { opacity: 0.28; cursor: not-allowed; }
+
+.cfg-form-submit__text {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 1.25rem;
+  letter-spacing: 0.005em;
+  color: #fff;
+}
+
+.cfg-form-submit__rule {
+  display: block;
+  width: 100%;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.5);
+  transform: scaleX(0.45);
+  transform-origin: left center;
+  transition: transform 0.45s var(--ease-2, cubic-bezier(0.35, 0.35, 0, 1)),
+              background 0.25s ease;
+}
+
+.cfg-form-submit:hover:not(:disabled) .cfg-form-submit__rule {
+  transform: scaleX(1);
+  background: #fff;
+}
+
+.cfg-form-submit:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.cfg-form-submit:disabled .cfg-form-submit__rule {
+  background: rgba(255, 255, 255, 0.2);
+}
 
 /* ─── Responsive ──────────────────────────────────────────────── */
 @media (max-width: 1024px) {
+  .configurator { padding: 7rem 2.5rem 5rem; }
   .cfg-body {
-    grid-template-columns: 1fr 320px;
-    gap: 3rem;
+    grid-template-columns: 1fr 300px;
+    gap: 4rem;
   }
 }
 
@@ -591,19 +767,21 @@ async function handleSubmit() {
   .configurator { padding: 5rem 1.5rem 4rem; }
   .cfg-body {
     grid-template-columns: 1fr;
-    gap: 3rem;
+    gap: 4rem;
   }
-  .cfg-right {
-    position: static;
-  }
-  .cfg-form-grid {
-    grid-template-columns: 1fr;
+  .cfg-right { position: static; top: auto; }
+  .cfg-form-grid { grid-template-columns: 1fr; }
+  .cfg-cat-head {
+    grid-template-columns: 1fr auto;
+    column-gap: 1.25rem;
+    padding: 1.6rem 0 1.4rem;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .cfg-cat-body-wrap,
-  .cfg-item-bar,
-  .cfg-cat-sub { transition: none; }
+  .cfg-cat-rule,
+  .cfg-cat-sub,
+  .cfg-form-submit__rule { transition: none; }
 }
 </style>

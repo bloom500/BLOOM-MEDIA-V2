@@ -22,6 +22,8 @@ let clock: THREE.Clock
 let isHovering = false
 let hoverStrength = 0       // lerps 0→1 on hover enter, 1→0 on leave
 let hoverX = 0              // normalized cursor for subtle parallax
+let hoverDecayTimer: ReturnType<typeof setTimeout> | null = null
+const HOVER_IDLE_MS = 600    // after this many ms without movement, treat as not hovering
 
 // Each mesh gets a stable noise seed based on its index
 const meshSeeds: number[] = []
@@ -29,9 +31,16 @@ const meshSeeds: number[] = []
 function onMouseMove(e: MouseEvent) {
   hoverX = (e.clientX / window.innerWidth) * 2 - 1
   isHovering = true
+  // Cancel any pending decay; arm a new one. After HOVER_IDLE_MS without
+  // a fresh mousemove, isHovering flips back to false so the per-mesh
+  // sway animation drains to zero (otherwise petals jitter forever even
+  // with the cursor parked still inside the page).
+  if (hoverDecayTimer) clearTimeout(hoverDecayTimer)
+  hoverDecayTimer = setTimeout(() => { isHovering = false }, HOVER_IDLE_MS)
 }
 function onMouseLeave() {
   isHovering = false
+  if (hoverDecayTimer) { clearTimeout(hoverDecayTimer); hoverDecayTimer = null }
 }
 
 function onResize() {
@@ -97,30 +106,49 @@ onMounted(() => {
     (gltf) => {
       model = gltf.scene
 
-      // Fit to ~5 units (fills ~70% of viewport height)
+      /*
+       * Slightly larger than viewport height, biased right and up so the
+       * catalogue column on the left stays clean. Bleeds off the right edge
+       * as negative space framing.
+       */
       const box = new THREE.Box3().setFromObject(model)
       const center = new THREE.Vector3()
       const size   = new THREE.Vector3()
       box.getCenter(center)
       box.getSize(size)
 
-      const targetSize = 5.0
+      const targetSize = 2.7
       const scale = targetSize / Math.max(size.x, size.y, size.z)
       model.scale.setScalar(scale)
 
-      // Center exactly on origin
+      // Decorative accent positioned in the only true dead-zone of this
+      // layout: between the headline/subtitle (top-left) and the accordion
+      // list, slightly right of center to avoid the catalogue column on
+      // the left and the form column on the right.
+      // Camera z=5, FOV 45° → vertical frustum ±2.07, horizontal ±3.68 (16:9).
+      const offsetX =  0.4
+      const offsetY =  0.3
       model.position.set(
-        -center.x * scale,
-        -center.y * scale,
+        -center.x * scale + offsetX,
+        -center.y * scale + offsetY,
         -center.z * scale
       )
 
-      // Collect all mesh children for individual petal/leaf animation
+      // Atmospheric opacity — petals become depth/lighting, not foreground.
+      // depthWrite stays TRUE to avoid Z-fighting between overlapping petals.
       model.traverse((child) => {
-        if ((child as THREE.Mesh).isMesh) {
-          meshChildren.push(child as THREE.Mesh)
-          // Stable seed per mesh — drives phase offset so each petal moves differently
-          meshSeeds.push(Math.random() * Math.PI * 2)
+        const mesh = child as THREE.Mesh
+        if (!mesh.isMesh) return
+        meshChildren.push(mesh)
+        meshSeeds.push(Math.random() * Math.PI * 2)
+        const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
+        for (const m of mats) {
+          if (!m) continue
+          const mat = m as THREE.Material & { opacity?: number, transparent?: boolean, depthWrite?: boolean, needsUpdate?: boolean }
+          mat.transparent = true
+          if (typeof mat.opacity === 'number') mat.opacity = 0.55
+          mat.depthWrite = true
+          mat.needsUpdate = true
         }
       })
 
@@ -131,8 +159,6 @@ onMounted(() => {
   )
 
   // ── Events ────────────────────────────────────────────────────
-  canvas.addEventListener('mousemove', onMouseMove, { passive: true })
-  canvas.addEventListener('mouseleave', onMouseLeave, { passive: true })
   window.addEventListener('mousemove', onMouseMove, { passive: true })
   window.addEventListener('mouseleave', onMouseLeave, { passive: true })
   window.addEventListener('resize', onResize, { passive: true })
@@ -172,6 +198,7 @@ onBeforeUnmount(() => {
   window.removeEventListener('mousemove', onMouseMove)
   window.removeEventListener('mouseleave', onMouseLeave)
   window.removeEventListener('resize', onResize)
+  if (hoverDecayTimer) { clearTimeout(hoverDecayTimer); hoverDecayTimer = null }
   meshChildren = []
   renderer?.dispose()
 })

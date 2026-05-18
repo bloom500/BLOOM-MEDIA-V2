@@ -135,8 +135,8 @@ const socialsEl = ref<HTMLElement | null>(null)
 const isDesktop = ref(false)
 let ctx: any = null
 
-// Shared with CustomCursor — turns white when the screen goes black
-const cursorDark = useState('cursorDark', () => false)
+// cursorDark is now driven by the homepage curtain (index.vue). FooterReveal
+// no longer touches it, so we don't need a ref here either.
 
 onMounted(async () => {
   if (!import.meta.client) return
@@ -156,13 +156,10 @@ onMounted(async () => {
     gsap.set(curtainEl.value, { opacity: 0 })
     gsap.set([lines, emailEl.value, metaEl.value, socialsEl.value], { opacity: 0, y: 24 })
 
-    // Switch cursor to white as soon as the curtain starts fading in (top 80%)
-    ScrollTrigger.create({
-      trigger: footerEl.value,
-      start: 'top 80%',
-      onEnter: () => { cursorDark.value = true },
-      onLeaveBack: () => { cursorDark.value = false },
-    })
+    // cursorDark is owned by the homepage curtain transition (index.vue) —
+    // it goes white at the FAQ→Contact crossover and stays white through
+    // page-tail and the footer. We don't manage it here anymore to avoid
+    // a flip-back when scrolling up from the footer toward Contact.
 
     // Phase 1: full-viewport curtain fades in as footer approaches top
     gsap.timeline({
@@ -193,7 +190,7 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   ctx?.revert()
-  cursorDark.value = false
+  // Don't toggle cursorDark here — the homepage curtain owns it on this page.
 })
 </script>
 
@@ -201,7 +198,9 @@ onBeforeUnmount(() => {
 .footer-reveal {
   position: relative;
   background: #000;
-  min-height: 100vh;
+  /* Native dvh first; --vh JS fallback for iOS Safari < 16. */
+  min-height: 100dvh;
+  min-height: calc(var(--vh, 1dvh) * 100);
 }
 
 @media (max-width: 767px) {
@@ -266,6 +265,13 @@ onBeforeUnmount(() => {
 
 .footer-static__statement span {
   display: block;
+  /*
+   * Override main.css rule `footer span { color: var(--color-text) }` —
+   * direct rule on the descendant beats inherited #fff from the parent <p>,
+   * so without this the headline turns black-on-black on the static (mobile)
+   * footer variant.
+   */
+  color: inherit;
 }
 
 .footer-static__email {

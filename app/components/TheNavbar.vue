@@ -22,10 +22,13 @@
 
 <script setup lang="ts">
 const route = useRoute()
+// Shared signal — set by FooterReveal (curtain over footer) and by index.vue
+// (FAQ → Contact dark transition). When true, navbar flips to white.
+const cursorDark = useState('cursorDark', () => false)
 
 // Pages with a dark full-bleed background that need white navbar text
 const darkBgRoutes = ['/servicii']
-const isLightOnDark = computed(() => darkBgRoutes.includes(route.path))
+const isLightOnDark = computed(() => darkBgRoutes.includes(route.path) || cursorDark.value)
 
 const navLinks = [
   { to: '/servicii', label: 'Servicii' },
@@ -50,8 +53,31 @@ const navLinks = [
   mix-blend-mode: normal;
 }
 
-.navbar::before {
-  display: none !important;
+/*
+ * On dark pages with 3D backgrounds (servicii), the transparent navbar
+ * becomes unreadable when the model bleeds into the top zone. A solid
+ * gradient scrim restores legibility without looking like a hard bar.
+ */
+.navbar::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  bottom: -3rem;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(6, 6, 4, 0.95) 0%,
+    rgba(6, 6, 4, 0.8) 40%,
+    rgba(6, 6, 4, 0.4) 70%,
+    transparent 100%
+  );
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.navbar--light::after {
+  opacity: 1;
 }
 
 .navbar__brand {
@@ -61,10 +87,12 @@ const navLinks = [
   color: var(--color-text);
   line-height: 1.1;
   text-decoration: none;
+  transition: color 0.4s ease;
 }
 
 .navbar__dot {
   color: var(--color-text);
+  transition: color 0.4s ease;
 }
 
 .navbar__nav {
