@@ -123,17 +123,29 @@ watch(() => route.fullPath, () => {
   if (isMenuOpen.value) closeMenu()
 })
 
-// Lock body scroll while drawer is open (prevents background StringTune
-// from scrolling under the drawer on touch).
+// Lock body scroll while drawer is open. Using position:fixed on <body>
+// (with saved scroll offset) avoids the layout thrash that overflow:hidden
+// on <html> causes — the reflow was happening right as the clip-path
+// animation started, causing a visible stutter on mobile.
+let savedScrollY = 0
 watch(isMenuOpen, (open) => {
   if (!import.meta.client) return
-  if (open) document.documentElement.classList.add('drawer-open')
-  else document.documentElement.classList.remove('drawer-open')
+  if (open) {
+    savedScrollY = window.scrollY
+    document.body.style.top = `-${savedScrollY}px`
+    document.documentElement.classList.add('drawer-open')
+  }
+  else {
+    document.documentElement.classList.remove('drawer-open')
+    document.body.style.top = ''
+    window.scrollTo({ top: savedScrollY, behavior: 'instant' })
+  }
 })
 
 onBeforeUnmount(() => {
   if (!import.meta.client) return
   document.documentElement.classList.remove('drawer-open')
+  document.body.style.top = ''
 })
 </script>
 
@@ -369,6 +381,12 @@ onBeforeUnmount(() => {
   /* Clip-path drawn from top-right circle (matches burger origin) → full coverage */
   clip-path: circle(0% at calc(100% - 2.5rem) 2.5rem);
   transition: clip-path 0.65s cubic-bezier(0.86, 0, 0.07, 1);
+  /*
+   * Pre-promote to a GPU layer so the clip-path animation begins on an
+   * already-composited surface. Without this the browser upgrades the
+   * layer mid-animation, causing the first few frames to stutter.
+   */
+  will-change: clip-path;
   pointer-events: none;
   display: flex;
   flex-direction: column;
@@ -494,11 +512,14 @@ onBeforeUnmount(() => {
   letter-spacing: 0;
 }
 
-/* While drawer is open, freeze body scroll. Targets <html> via class
-   because Vue scoped styles can't reach the html element. */
-html.drawer-open,
+/* While drawer is open, freeze body scroll.
+   position:fixed (with top set by JS to saved scroll offset) prevents
+   overflow:hidden from triggering a layout on <html>, which was causing
+   a stutter right as the clip-path animation started on mobile. */
 html.drawer-open body {
-  overflow: hidden;
-  touch-action: none;
+  position: fixed;
+  left: 0;
+  right: 0;
+  overflow-y: scroll; /* keep scrollbar gutter stable on desktop */
 }
 </style>
