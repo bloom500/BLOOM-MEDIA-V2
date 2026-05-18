@@ -255,6 +255,15 @@ section,
   z-index: 20;
 }
 
+/* Despre — pagină full-dark; override global light backgrounds */
+html[data-page="despre"],
+html[data-page="despre"] body {
+  background: var(--color-bg-dark) !important;
+}
+html[data-page="despre"] .site-main {
+  background: var(--color-bg-dark) !important;
+}
+
 /* Servicii — pagină full-dark; override global light backgrounds */
 html[data-page="servicii"],
 html[data-page="servicii"] body {
