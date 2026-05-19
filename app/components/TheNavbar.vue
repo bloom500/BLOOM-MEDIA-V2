@@ -95,14 +95,14 @@ const route = useRoute()
 const cursorDark = useState('cursorDark', () => false)
 
 // Pages with a dark full-bleed background that need white navbar text
-const darkBgRoutes = ['/servicii']
+const darkBgRoutes = ['/servicii', '/despre']
 const isLightOnDark = computed(() => darkBgRoutes.includes(route.path) || cursorDark.value)
 
 const navLinks = [
   { to: '/servicii', label: 'Servicii' },
   { to: '/portofoliu', label: 'Portofoliu' },
   { to: '/despre', label: 'Despre' },
-  { to: '/contact', label: 'Contact' },
+  { to: '/#contact', label: 'Contact' },
 ]
 
 // ── Mobile drawer state ───────────────────────────────────────
@@ -353,7 +353,7 @@ onBeforeUnmount(() => {
 
 .navbar--light .navbar__btn:hover {
   background: #fff;
-  color: #060604;
+  color: #000000;
   border-color: #fff;
 }
 
@@ -379,7 +379,7 @@ onBeforeUnmount(() => {
    * the navbar's burger stay clickable on top.
    */
   z-index: 90;
-  background: #060604;
+  background: #000000;
   /* Cover the whole visible viewport including under the iOS bar. */
   min-height: 100lvh;
   /*
@@ -471,7 +471,7 @@ onBeforeUnmount(() => {
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.18em;
-  color: #060604;
+  color: #000000;
   background: #fff;
   border-radius: 999px;
   text-decoration: none;

@@ -1,5 +1,5 @@
 <template>
-  <section class="contact" aria-labelledby="contact-heading">
+  <section id="contact" class="contact" aria-labelledby="contact-heading">
     <!--
       grain layer removed: original SVG noise was authored for the old
       light-paper backdrop. On the new black curtain, additive white noise
