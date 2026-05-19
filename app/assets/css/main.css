@@ -6,7 +6,7 @@
 
 :root {
   --color-bg-light: #EDEBE6;
-  --color-bg-dark: #080806;
+  --color-bg-dark: #000000;
   --color-text-primary: #1A1814;
   --color-text-muted: #9A9590;
   --color-divider: #D0CBC3;
@@ -255,25 +255,51 @@ section,
   z-index: 20;
 }
 
+/* Sections inside .site-main must have z-index: 1 to stay above the footer (z-index: 0) */
+.site-main > section {
+  position: relative;
+  z-index: 1;
+}
+
 /* Despre — pagină full-dark; override global light backgrounds */
 html[data-page="despre"],
 html[data-page="despre"] body {
-  background: var(--color-bg-dark) !important;
+  background: #000000 !important;
 }
 html[data-page="despre"] .site-main {
-  background: var(--color-bg-dark) !important;
+  background: #000000 !important;
+}
+/* Override global text color rule for dark pages */
+html[data-page="despre"] section,
+html[data-page="despre"] section p,
+html[data-page="despre"] section li,
+html[data-page="despre"] section span,
+html[data-page="despre"] section h1,
+html[data-page="despre"] section h2,
+html[data-page="despre"] section h3 {
+  color: #edebe6;
+}
+
+/* Despre — surface-dissolve: start near-black (blends with dark bg) → reveal to light.
+   animations.css starts words at #a8a6a2 which matches the relief mesh on light pages;
+   on the dark page that gray is clearly visible, killing the dissolve illusion. */
+html[data-page="despre"] [data-anim="surface-dissolve"] .-s-word {
+  color: #0a0906;
+}
+html[data-page="despre"] [data-anim="surface-dissolve"].-inview .-s-word {
+  color: #edebe6;
 }
 
 /* Servicii — pagină full-dark; override global light backgrounds */
 html[data-page="servicii"],
 html[data-page="servicii"] body {
-  background: #060604 !important;
+  background: #000000 !important;
 }
 html[data-page="servicii"] .site-main {
-  background: #060604 !important;
+  background: #000000 !important;
 }
 html[data-page="servicii"] section.configurator {
-  background: #060604 !important;
+  background: #000000 !important;
 }
 
 /* Hero — StringTune word reveal (word[start]) */
@@ -303,6 +329,10 @@ html[data-page="servicii"] section.configurator {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  html[data-page="despre"] [data-anim="surface-dissolve"] .-s-word {
+    color: #edebe6 !important;
+  }
+
   .hero__statement.-splitted .-s-word > * {
     transform: none !important;
     transition: none !important;

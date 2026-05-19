@@ -1,8 +1,15 @@
 <template>
+  <!--
+    TheFooter must be a SIBLING of .site-main, not a child.
+    .site-main has z-index: 20 + opaque background so it visually sits
+    above the footer (z-index: 0). The footer's StringTune --progress
+    animation (translate + ::after fade) then slides the footer into view
+    from underneath, exactly as the footer-shifting tutorial requires.
+  -->
   <div class="site-main">
     <AboutSection />
-    <TheFooter />
   </div>
+  <TheFooter />
 </template>
 
 <script setup lang="ts">
@@ -17,7 +24,7 @@ useHead({
       name: 'description',
       content: 'Bloom Media este o agenție de marketing digital din Cluj-Napoca. Construim strategii testate, măsurabile și ajustate până când funcționează cu adevărat.',
     },
-    { property: 'og:title',       content: 'Despre — Bloom Media' },
+    { property: 'og:title',       content: 'Despre Bloom Media' },
     { property: 'og:description', content: 'Strategie, onestitate și rezultate măsurabile. Aflați cum lucrăm și ce ne diferențiază.' },
     { property: 'og:url',         content: 'https://bloommedia.ro/despre' },
     { name: 'robots',             content: 'index, follow' },

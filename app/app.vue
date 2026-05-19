@@ -19,16 +19,31 @@
 </template>
 
 <script setup>
-import { onMounted, nextTick } from 'vue'
+import { onMounted, nextTick, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import CustomCursor from '~/components/CustomCursor.vue'
 import FixedServicesCta from '~/components/FixedServicesCta.vue'
 import SiteBackground3d from '~/components/SiteBackground3d.vue'
-import { initStringTune, getStringTune } from '~/lib/stringtune/client'
+import { initStringTune, getStringTune, refreshStringTune } from '~/lib/stringtune/client'
 // useViewportHeight kept available but currently unused — see note below.
 // import { useViewportHeight } from '~/composables/useViewportHeight'
 
 // Set lang="ro" globally — critical for Romanian SEO and screen readers.
 useHead({ htmlAttrs: { lang: 'ro' } })
+
+const route = useRoute()
+
+/*
+ * Re-scan StringTune on every client-side navigation so that new pages'
+ * string="split" (surface-dissolve) and string="progress" (footer shift)
+ * elements are registered. Without this, navigating from / to /despre left
+ * AboutSection text unsplit and TheFooter's --progress permanently at 0
+ * (footer appeared as a black void).
+ */
+watch(() => route.fullPath, async () => {
+  await nextTick()
+  refreshStringTune()
+})
 
 // useViewportHeight() was wired here for the classic --vh fallback pattern,
 // but the codebase migrated to `100svh` everywhere because `dvh` and the
@@ -67,6 +82,6 @@ onMounted(async () => {
 /* Servicii page — dark html+body so scroll area never shows white */
 html[data-page="servicii"],
 html[data-page="servicii"] body {
-  background: #060604;
+  background: #000000;
 }
 </style>
