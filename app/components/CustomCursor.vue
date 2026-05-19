@@ -32,9 +32,16 @@ function nearestTextEl(el) {
   return null
 }
 
+// Cache caret height per text element so we don't re-run getComputedStyle
+// (forces sync layout) on every hover. WeakMap = entries GC'd when nodes
+// detach from the DOM, so no leak across SPA navigations.
+const caretHeightCache = new WeakMap()
+let lastTarget = null
+
 const onOver = (e) => {
   const target = e.target
-  if (!target) return
+  if (!target || target === lastTarget) return
+  lastTarget = target
 
   if (target.closest('a, button, [role="button"], input, select, textarea')) {
     mode.value = 'link'
@@ -43,11 +50,16 @@ const onOver = (e) => {
 
   const textEl = nearestTextEl(target)
   if (textEl) {
-    const st = window.getComputedStyle(textEl)
-    const fs = parseFloat(st.fontSize)
-    const lhRaw = st.lineHeight
-    const lh = lhRaw === 'normal' ? fs * 1.2 : parseFloat(lhRaw)
-    caretH.value = Math.round(isNaN(lh) ? fs * 1.2 : lh)
+    let h = caretHeightCache.get(textEl)
+    if (h === undefined) {
+      const st = window.getComputedStyle(textEl)
+      const fs = parseFloat(st.fontSize)
+      const lhRaw = st.lineHeight
+      const lh = lhRaw === 'normal' ? fs * 1.2 : parseFloat(lhRaw)
+      h = Math.round(isNaN(lh) ? fs * 1.2 : lh)
+      caretHeightCache.set(textEl, h)
+    }
+    caretH.value = h
     mode.value = 'caret'
     return
   }

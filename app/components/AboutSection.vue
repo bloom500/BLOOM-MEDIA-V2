@@ -13,34 +13,16 @@
         <p class="about__eyebrow" id="about-heading">Bloom Media — Cluj-Napoca</p>
 
         <h1 class="about__headline">
-          <span
-            class="about__hl-line"
-            string="split"
-            string-split="word"
-            data-anim="surface-dissolve"
-          >Livrăm creștere</span>
-          <span
-            class="about__hl-line about__hl-line--indent"
-            string="split"
-            string-split="word"
-            data-anim="surface-dissolve"
-          >măsurabilă.</span>
+          <span class="about__hl-line">Livrăm creștere</span>
+          <span class="about__hl-line about__hl-line--indent">măsurabilă.</span>
         </h1>
 
         <div class="about__hero-cols">
           <p class="about__intro">
-            <span
-              string="split"
-              string-split="word"
-              data-anim="surface-dissolve"
-            >Suntem o agenție de marketing digital construită în jurul unui singur principiu: testăm înainte să promitem și măsurăm tot ce facem.</span>
+            Suntem o agenție de marketing digital construită în jurul unui singur principiu: testăm înainte să promitem și măsurăm tot ce facem.
           </p>
           <p class="about__intro">
-            <span
-              string="split"
-              string-split="word"
-              data-anim="surface-dissolve"
-            >Nu lucrăm cu oricine. Lucrăm cu business-uri care știu ce vor și sunt pregătite să crească — și construim strategii care funcționează în realitate, nu în slide-uri.</span>
+            Nu lucrăm cu oricine. Lucrăm cu business-uri care știu ce vor și sunt pregătite să crească și construim strategii care funcționează în realitate, nu în slide-uri.
           </p>
         </div>
       </div>
@@ -60,18 +42,12 @@
             <span class="about__item-num" aria-hidden="true">0{{ i + 1 }}</span>
 
             <div class="about__item-body">
-              <h2
-                class="about__item-title"
-                string="split"
-                string-split="word"
-                data-anim="surface-dissolve"
-              >{{ item.title }}</h2>
-              <p
-                class="about__item-desc"
-                string="split"
-                string-split="word"
-                data-anim="surface-dissolve"
-              >{{ item.desc }}</p>
+              <h2 class="about__item-title">
+                <span string="split" string-split="word" data-anim="surface-dissolve">{{ item.title }}</span>
+              </h2>
+              <p class="about__item-desc">
+                <span string="split" string-split="word" data-anim="surface-dissolve">{{ item.desc }}</span>
+              </p>
             </div>
           </li>
         </ul>
@@ -110,7 +86,7 @@ const philosophy = [
 .about {
   position: relative;
   width: 100%;
-  background: var(--color-bg-dark);
+  background: var(--color-bg-dark) !important;
   color: #edebe6;
   overflow: hidden;
 }

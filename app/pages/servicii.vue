@@ -165,7 +165,7 @@ useHead({
     { property: 'og:description', content: 'Configurează-ți pachetul de marketing digital.' },
   ],
   htmlAttrs: { 'data-page': 'servicii' },
-  bodyAttrs: { style: 'background: #060604 !important;' },
+  bodyAttrs: { style: 'background: #000000 !important;' },
 })
 
 const categories = [
@@ -247,7 +247,7 @@ async function handleSubmit() {
 
 <style scoped>
 /* ─── Reset ───────────────────────────────────────────────────── */
-.site-main { background: #060604; }
+.site-main { background: #000000; }
 
 /* ─── Section ─────────────────────────────────────────────────── */
 .configurator {
@@ -260,7 +260,7 @@ async function handleSubmit() {
   padding: 9rem 4rem 7rem;
   overflow: visible;
   overflow-anchor: none;
-  background: #060604;
+  background: #000000;
 }
 
 .cfg-grain {

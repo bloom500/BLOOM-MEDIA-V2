@@ -25,8 +25,9 @@
   /* Gloock: high-contrast display serif, OFL, comercial free. Fallback: Georgia. */
   --font-display: 'Gloock', Georgia, serif;
   --font-editorial: 'Gloock', Georgia, serif;
-  /* Noto Sans: fallback cu diacritice complete dacă Geist nu acoperă tot (evită serif în paragrafe) */
-  --font-body: 'Geist', 'Noto Sans', system-ui, sans-serif;
+  /* Geist covers Romanian diacritics; Noto Sans was dropped from the
+     font request because it was rarely needed and added ~80KB. */
+  --font-body: 'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --ease-1: cubic-bezier(0.86, 0, 0.31, 1);
   --ease-2: cubic-bezier(0.35, 0.35, 0, 1);
   --ease-timing: 1.2s;

@@ -56,16 +56,23 @@ onMounted(async () => {
     const THREE = await import('three')
     const canvas = canvasRef.value
     const isMobile = window.innerWidth < 768
-
+    // Hi-DPI mobile (iPhone Pro DPR=3) renders ~5MP per frame at 1.5;
+    // capped to 1 there because the vertex shader is FBM-3 octave noise
+    // running per-vertex at 140×140 = 20k vertices. Identical visual.
+    const dprCap = isMobile
+      ? (window.devicePixelRatio >= 2.5 ? 1 : 1.5)
+      : 1.75
+    // Antialias off on mobile — MSAA is a major fill-rate cost; the
+    // smooth shaded surface masks aliasing well enough at retina DPR.
     const renderer = new THREE.WebGLRenderer({
       canvas,
-      antialias: true,
+      antialias: !isMobile,
       alpha: false,
       powerPreference: 'high-performance',
     })
     renderer.outputColorSpace = THREE.SRGBColorSpace
     renderer.setClearColor(new THREE.Color(0.929, 0.910, 0.890), 1)
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5))
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, dprCap))
 
     const scene = new THREE.Scene()
     const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, -10, 10)
@@ -107,7 +114,11 @@ onMounted(async () => {
 
     material.needsUpdate = true
 
-    const segments = isMobile ? 140 : 280
+    // 280→220 on desktop (still smooth, ~40% fewer vertex shader calls).
+    // 140→96 on mobile (vertex shader runs FBM-3 noise per vertex, expensive on
+    // integrated GPUs — the visible relief is dominated by lighting+normals,
+    // not geometry density).
+    const segments = isMobile ? 96 : 220
     const geometry = new THREE.PlaneGeometry(3.0, 3.0, segments, segments)
     const mesh = new THREE.Mesh(geometry, material)
     scene.add(mesh)
@@ -122,9 +133,17 @@ onMounted(async () => {
 
     scene.add(new THREE.AmbientLight(0xfff8f0, 0.22))
 
+    // iOS bar-collapse fires resize at every scroll-direction change. We
+    // freeze width on mount and ignore resizes where the width hasn't
+    // changed — orientationchange handles real rotation separately.
+    let frozenW = window.innerWidth
+    let frozenH = window.innerHeight
     const resize = () => {
       const w = window.innerWidth
+      if (isMobile && w === frozenW) return
       const h = window.innerHeight
+      frozenW = w
+      frozenH = h
       const aspect = w / h
       camera.left = -aspect
       camera.right = aspect
@@ -133,14 +152,45 @@ onMounted(async () => {
       camera.updateProjectionMatrix()
       renderer.setSize(w, h, false)
     }
-    resize()
+    const onOrientation = () => {
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        frozenW = window.innerWidth
+        frozenH = window.innerHeight
+        const aspect = frozenW / frozenH
+        camera.left = -aspect
+        camera.right = aspect
+        camera.top = 1
+        camera.bottom = -1
+        camera.updateProjectionMatrix()
+        renderer.setSize(frozenW, frozenH, false)
+      }))
+    }
+    // Initial size from the frozen values captured above.
+    {
+      const aspect = frozenW / frozenH
+      camera.left = -aspect
+      camera.right = aspect
+      camera.top = 1
+      camera.bottom = -1
+      camera.updateProjectionMatrix()
+      renderer.setSize(frozenW, frozenH, false)
+    }
     window.addEventListener('resize', resize, { passive: true })
+    window.addEventListener('orientationchange', onOrientation, { passive: true })
 
     let raf = 0
+    // Mobile: render every other frame (~30fps). Morph is slow (uMorphSpeed=
+    // 0.062), so half-rate is imperceptible but halves GPU pressure during
+    // touch-scroll where the page is competing for the same render thread.
+    let frameSkip = 0
     const tick = () => {
       raf = requestAnimationFrame(tick)
       // Background-tab idle: skip work
       if (typeof document !== 'undefined' && document.hidden) return
+      if (isMobile) {
+        frameSkip = (frameSkip + 1) % 2
+        if (frameSkip !== 0) return
+      }
       if (compiledShader) {
         compiledShader.uniforms.uMorphTime.value = performance.now() * 0.001
       }
@@ -151,6 +201,7 @@ onMounted(async () => {
     _cleanup = () => {
       cancelAnimationFrame(raf)
       window.removeEventListener('resize', resize)
+      window.removeEventListener('orientationchange', onOrientation)
       geometry.dispose()
       material.dispose()
       renderer.dispose()

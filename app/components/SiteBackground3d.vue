@@ -6,7 +6,7 @@
   -->
   <Teleport to="body">
     <div class="site-bg-3d" aria-hidden="true">
-      <MorphingReliefBackground v-if="!isHome && !isServicii" />
+      <MorphingReliefBackground v-if="!isHome && !isServicii && !isDespre" />
       <ReliefSlab v-if="isHome" />
     </div>
   </Teleport>
@@ -32,6 +32,7 @@ const ReliefSlab = defineAsyncComponent(() =>
 const route = useRoute()
 const isHome     = computed(() => route.path === '/' || route.name === 'index')
 const isServicii = computed(() => route.path === '/servicii' || route.name === 'servicii')
+const isDespre   = computed(() => route.path === '/despre' || route.name === 'despre')
 </script>
 
 <style scoped>

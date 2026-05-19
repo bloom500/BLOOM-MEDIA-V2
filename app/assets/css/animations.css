@@ -156,7 +156,7 @@
 
 [data-anim="surface-dissolve"] .-s-word {
   color: #a8a6a2;
-  filter: blur(4px) brightness(1.1);
+  filter: none;
   display: inline-block;
   /*
    * No will-change: applying it to every animated word created an
@@ -173,7 +173,7 @@
 
 [data-anim="surface-dissolve"].-inview .-s-word {
   color: var(--color-text-primary);
-  filter: blur(0px) brightness(1);
+  filter: none;
   /* Enter (scroll down): primele cuvinte apar primele */
   transition:
     color 1.1s cubic-bezier(0.4, 0, 0.2, 1),

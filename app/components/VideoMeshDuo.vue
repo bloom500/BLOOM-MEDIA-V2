@@ -3,29 +3,35 @@
     <div ref="sectionEl" class="videoduo__inner">
       <div class="videoduo__frame videoduo__frame--a" :class="{ 'is-visible': visible }">
         <video
+          :key="`a-${indexA}`"
           ref="playerA"
           autoplay
           muted
           loop
           playsinline
-          preload="metadata"
+          :preload="visible ? 'auto' : 'none'"
           class="videoduo__video"
-          :src="currentA"
           @ended="nextA"
-        />
+        >
+          <source v-if="currentA.webm" :src="currentA.webm" type="video/webm" />
+          <source :src="currentA.mp4" type="video/mp4" />
+        </video>
       </div>
       <div class="videoduo__frame videoduo__frame--b" :class="{ 'is-visible': visible }">
         <video
+          :key="`b-${indexB}`"
           ref="playerB"
           autoplay
           muted
           loop
           playsinline
-          preload="metadata"
+          :preload="visible ? 'auto' : 'none'"
           class="videoduo__video"
-          :src="currentB"
           @ended="nextB"
-        />
+        >
+          <source v-if="currentB.webm" :src="currentB.webm" type="video/webm" />
+          <source :src="currentB.mp4" type="video/mp4" />
+        </video>
       </div>
     </div>
   </section>
@@ -34,8 +40,20 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 
-const playlistA = ['/videos/ad1section2.mp4', '/videos/ad2section2.mp4']
-const playlistB = ['/videos/ad3section2.mp4', '/videos/ad4section2.mp4']
+/*
+ * WebM-first with MP4 fallback. ad2section2 and ad4section2 don't have
+ * WebM encodes — webm:null tells the template to skip the WebM <source>
+ * tag so the browser doesn't waste a request on a missing file.
+ */
+type VideoEntry = { webm: string | null; mp4: string }
+const playlistA: VideoEntry[] = [
+  { webm: '/videos/ad1section2.webm', mp4: '/videos/ad1section2.mp4' },
+  { webm: null,                       mp4: '/videos/ad2section2.mp4' },
+]
+const playlistB: VideoEntry[] = [
+  { webm: '/videos/ad3section2.webm', mp4: '/videos/ad3section2.mp4' },
+  { webm: null,                       mp4: '/videos/ad4section2.mp4' },
+]
 
 const indexA = ref(0)
 const indexB = ref(0)
@@ -44,8 +62,8 @@ const playerB = ref<HTMLVideoElement | null>(null)
 const sectionEl = ref<HTMLElement | null>(null)
 const visible = ref(false)
 
-const currentA = computed(() => playlistA[indexA.value])
-const currentB = computed(() => playlistB[indexB.value])
+const currentA = computed(() => playlistA[indexA.value] ?? playlistA[0])
+const currentB = computed(() => playlistB[indexB.value] ?? playlistB[0])
 
 function nextA() {
   indexA.value = (indexA.value + 1) % playlistA.length

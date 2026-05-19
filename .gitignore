@@ -23,6 +23,10 @@ _tmp-home.html
 /bloom-*.png
 qa-screenshots/
 
+# Archived unused assets — large GLBs/ZIPs moved out of public/ to keep
+# deploys lean. Kept locally for recovery; never committed.
+_archive/
+
 # Local font trials / vendor drops (production uses Bunny; see app/assets/css/fonts.css)
 public/fonts/gwen/
 public/fonts/mont/

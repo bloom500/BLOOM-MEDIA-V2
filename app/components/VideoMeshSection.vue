@@ -3,21 +3,26 @@
     <div ref="frame" class="videomesh__frame" :class="{ 'is-visible': visible }">
       <!--
         autoplay + muted + playsinline = the only conditions Safari/iOS
-        Chrome require for inline muted-autoplay. We bind src directly
-        so the element is fully formed at parse time. preload=metadata
-        loads enough to start playing without buffering the whole file.
+        Chrome require for inline muted-autoplay. Source order: WebM first
+        (much smaller — saves ~10MB on the heavy ads) with MP4 fallback
+        for Safari < 14. preload="none" until in-viewport; switched to
+        "auto" by IntersectionObserver to avoid burning bandwidth on 4
+        videos at parse time.
       -->
       <video
+        :key="index"
         ref="player"
         autoplay
         muted
         loop
         playsinline
-        preload="metadata"
+        :preload="visible ? 'auto' : 'none'"
         class="videomesh__video"
-        :src="currentSrc"
         @ended="nextVideo"
-      />
+      >
+        <source v-if="currentWebm" :src="currentWebm" type="video/webm" />
+        <source :src="currentMp4" type="video/mp4" />
+      </video>
     </div>
   </section>
 </template>
@@ -25,11 +30,16 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 
-const playlist = [
-  '/videos/ad1demo.mp4',
-  '/videos/ad2demo.mp4',
-  '/videos/ad3demo.mp4',
-  '/videos/ad4demo.mp4',
+/*
+ * Each entry: webm (preferred, smaller) + mp4 (fallback). Missing webm =
+ * skip the WebM source tag so the browser goes straight to MP4 instead
+ * of throwing a decode error and retrying.
+ */
+const playlist: Array<{ webm: string | null; mp4: string }> = [
+  { webm: '/videos/ad1demo.webm', mp4: '/videos/ad1demo.mp4' },
+  { webm: '/videos/ad2demo.webm', mp4: '/videos/ad2demo.mp4' },
+  { webm: null,                   mp4: '/videos/ad3demo.mp4' },
+  { webm: '/videos/ad4demo.webm', mp4: '/videos/ad4demo.mp4' },
 ]
 
 const index = ref(0)
@@ -37,7 +47,8 @@ const player = ref<HTMLVideoElement | null>(null)
 const frame = ref<HTMLElement | null>(null)
 const visible = ref(false)
 
-const currentSrc = computed(() => playlist[index.value])
+const currentWebm = computed(() => playlist[index.value]?.webm ?? null)
+const currentMp4 = computed(() => playlist[index.value]?.mp4 ?? '')
 
 function nextVideo() {
   index.value = (index.value + 1) % playlist.length

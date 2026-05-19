@@ -146,9 +146,9 @@ onMounted(async () => {
   isDesktop.value = true
   await nextTick()
 
-  const { gsap } = await import('gsap')
-  const { ScrollTrigger } = await import('gsap/ScrollTrigger')
-  gsap.registerPlugin(ScrollTrigger)
+  // Reuse the bundled gsap singleton instead of pulling a duplicate chunk.
+  const { setupGsap } = await import('~/lib/animations/gsap')
+  const { gsap, ScrollTrigger } = setupGsap()
 
   ctx = gsap.context(() => {
     const lines = statementEl.value!.querySelectorAll('.footer-stage__line')

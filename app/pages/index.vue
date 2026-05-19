@@ -158,9 +158,13 @@ onMounted(async () => {
     return
   }
 
-  const { gsap } = await import('gsap')
-  const { ScrollTrigger } = await import('gsap/ScrollTrigger')
-  gsap.registerPlugin(ScrollTrigger)
+  // setupGsap() reuses the already-bundled gsap/ScrollTrigger (used by
+  // StringTune + several composables at static-import time). The old
+  // dynamic import('gsap') here forced Vite to ship a duplicate async
+  // chunk that the browser fetched after main was already parsed —
+  // pure overhead since gsap is in main anyway.
+  const { setupGsap } = await import('~/lib/animations/gsap')
+  const { gsap, ScrollTrigger } = setupGsap()
 
   curtainCtx = gsap.context(() => {
     /*

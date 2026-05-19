@@ -86,7 +86,7 @@
 .footer {
   position: relative;
   z-index: 0;
-  background-color: #0a0a0a;
+  background-color: #000000;
   color: #fafafa;
 }
 
@@ -104,7 +104,7 @@
     180deg,
     rgba(255, 255, 255, 0.04) 0%,
     rgba(40, 40, 40, 0.35) 45%,
-    rgba(10, 10, 10, 0) 100%
+    rgba(0, 0, 0, 0) 100%
   );
 }
 
@@ -121,10 +121,10 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: #0a0a0a;
+  background-color: #000000;
   opacity: calc(1 - var(--progress));
   pointer-events: none;
-  z-index: 0;
+  z-index: 2;
 }
 
 .footer__inner {
