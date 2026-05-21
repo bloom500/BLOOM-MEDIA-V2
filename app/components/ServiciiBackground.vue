@@ -100,7 +100,10 @@ onMounted(() => {
   renderer.toneMappingExposure = 1.35
 
   scene = new THREE.Scene()
-  scene.background = new THREE.Color(0x060604)
+  // Match the CSS #000000 used by .configurator and html[data-page="servicii"]
+  // so the WebGL canvas and the page background are the same black.
+  scene.background = new THREE.Color(0x000000)
+  renderer.setClearColor(0x000000, 1)
 
   camera = new THREE.PerspectiveCamera(45, frozenWidth / frozenHeight, 0.1, 100)
   camera.position.set(0, 0, 5)

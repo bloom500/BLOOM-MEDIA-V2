@@ -7,17 +7,11 @@ const mode = ref('dot') // 'dot' | 'caret' | 'link'
 const caretH = ref(20)
 const isDesktop = ref(false)
 
-// Written by FooterReveal when the black curtain covers the screen
 const cursorDark = useState('cursorDark', () => false)
 
-let raf
-
 const move = (e) => {
-  cancelAnimationFrame(raf)
-  raf = requestAnimationFrame(() => {
-    x.value = e.clientX
-    y.value = e.clientY
-  })
+  x.value = e.clientX
+  y.value = e.clientY
 }
 
 const TEXT_TAGS = new Set(['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6',
@@ -32,9 +26,6 @@ function nearestTextEl(el) {
   return null
 }
 
-// Cache caret height per text element so we don't re-run getComputedStyle
-// (forces sync layout) on every hover. WeakMap = entries GC'd when nodes
-// detach from the DOM, so no leak across SPA navigations.
 const caretHeightCache = new WeakMap()
 let lastTarget = null
 
@@ -92,7 +83,6 @@ onUnmounted(() => {
   if (!import.meta.client) return
   window.removeEventListener('mousemove', move)
   document.removeEventListener('mouseover', onOver)
-  cancelAnimationFrame(raf)
 })
 </script>
 
@@ -117,7 +107,7 @@ onUnmounted(() => {
   left: 0;
   pointer-events: none;
   z-index: 99999;
-  will-change: transform, width, height;
+  will-change: transform;
   transition:
     width 0.14s ease,
     height 0.14s ease,

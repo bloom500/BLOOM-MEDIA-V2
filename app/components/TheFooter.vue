@@ -31,19 +31,16 @@
             <NuxtLink to="/despre">
               Despre
             </NuxtLink>
-            <NuxtLink to="/echipa">
-              Echipă
-            </NuxtLink>
           </div>
           <div class="footer__nav-col">
             <span class="footer__nav-title">Acțiuni</span>
             <NuxtLink to="/audit">
               Audit Gratuit
             </NuxtLink>
-            <NuxtLink to="/configurator">
+            <NuxtLink to="/servicii">
               Configurator
             </NuxtLink>
-            <NuxtLink to="/contact">
+            <NuxtLink to="/#contact">
               Contact
             </NuxtLink>
           </div>
@@ -61,10 +58,10 @@
 
       <div class="footer__bottom">
         <span class="footer__copy">
-          © 2026 Bloom Media — Bloom Ventures SRL
+          © 2026 Bloom Media — BLOOM VENTURES S.R.L.
         </span>
         <span class="footer__vat">
-          CIF: RO54500579
+          CUI: 50654818
         </span>
         <span class="footer__location">
           Cluj-Napoca, România

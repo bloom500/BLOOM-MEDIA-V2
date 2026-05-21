@@ -71,7 +71,9 @@ onMounted(async () => {
       powerPreference: 'high-performance',
     })
     renderer.outputColorSpace = THREE.SRGBColorSpace
-    renderer.setClearColor(new THREE.Color(0.929, 0.910, 0.890), 1)
+    // Match clearColor to the plane material base color so any uncovered
+    // pixel (e.g. extreme ultrawide > 2.5 aspect) blends seamlessly.
+    renderer.setClearColor(new THREE.Color(0xeae5de), 1)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, dprCap))
 
     const scene = new THREE.Scene()
@@ -119,7 +121,12 @@ onMounted(async () => {
     // integrated GPUs — the visible relief is dominated by lighting+normals,
     // not geometry density).
     const segments = isMobile ? 96 : 220
-    const geometry = new THREE.PlaneGeometry(3.0, 3.0, segments, segments)
+    // Width 5.0 covers the OrthographicCamera frustum at any aspect ratio up
+    // to 21:9 (≈2.33 → frustum width 4.66). The old 3.0 left ~0.28 units
+    // uncovered on each side at 16:9, showing clearColor as a visible strip.
+    // PlaneGeometry(5.0, 3.0, 220, 220) has the same vertex count as
+    // (3.0, 3.0, 220, 220) — no perf cost, just wider coverage.
+    const geometry = new THREE.PlaneGeometry(5.0, 3.0, segments, segments)
     const mesh = new THREE.Mesh(geometry, material)
     scene.add(mesh)
 

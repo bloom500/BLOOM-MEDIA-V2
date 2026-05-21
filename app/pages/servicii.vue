@@ -90,7 +90,15 @@
           with an italic kicker. Submit is a text-link with an animated rule.
         -->
         <aside class="cfg-right">
-          <form class="cfg-form" @submit.prevent="handleSubmit" novalidate>
+
+          <!-- Success state -->
+          <div v-if="submitted" class="cfg-success">
+            <span class="cfg-success__mark" aria-hidden="true">✓</span>
+            <h2 class="cfg-success__title">Am primit brieful.</h2>
+            <p class="cfg-success__body">Te contactăm în maxim 24h cu o propunere personalizată.<br>Până atunci — <a href="mailto:hello@bloommedia.ro">hello@bloommedia.ro</a></p>
+          </div>
+
+          <form v-else class="cfg-form" @submit.prevent="handleSubmit" novalidate>
             <header class="cfg-form-head">
               <span class="cfg-form-kicker">Pasul următor</span>
               <h2 class="cfg-form-title">Trimite brieful.</h2>
@@ -124,6 +132,8 @@
               </div>
             </div>
 
+            <p v-if="submitError" class="cfg-form-error" role="alert">{{ submitError }}</p>
+
             <div class="cfg-form-footer">
               <div class="cfg-form-total">
                 <span class="cfg-form-total-label">Investiție / lună</span>
@@ -135,7 +145,7 @@
                 :disabled="!formValid || isSubmitting"
               >
                 <span class="cfg-form-submit__text">
-                  {{ isSubmitting ? 'Se trimite' : 'Transmite cererea' }}
+                  {{ isSubmitting ? 'Se trimite…' : 'Transmite cererea' }}
                 </span>
                 <span class="cfg-form-submit__rule" aria-hidden="true" />
               </button>
@@ -201,6 +211,8 @@ const selIds   = reactive(new Set<string>())
 const openCats = reactive<Record<string, boolean>>({ capturare: false, conversie: false, infrastructura: false })
 const form     = reactive({ businessName: '', yourName: '', email: '', phone: '', objectives: '' })
 const isSubmitting = ref(false)
+const submitted    = ref(false)
+const submitError  = ref('')
 
 function toggle(id: string)    { selIds.has(id) ? selIds.delete(id) : selIds.add(id) }
 function toggleCat(id: string) { openCats[id] = !openCats[id] }
@@ -231,14 +243,33 @@ watch(openCats, (val) => {
   })
 }, { deep: true })
 
+function getSelectedServiceNames(): string[] {
+  return categories.flatMap(c => c.items).filter(i => selIds.has(i.id)).map(i => i.name)
+}
+
 async function handleSubmit() {
   if (!formValid.value || isSubmitting.value) return
   isSubmitting.value = true
+  submitError.value = ''
+
   try {
-    await new Promise(r => setTimeout(r, 1200))
-    alert(`Cerere transmisă! Total: €${monthlyTotal.value}`)
+    const res = await fetch('/api/leads', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        businessName:     form.businessName.trim(),
+        yourName:         form.yourName.trim(),
+        email:            form.email.trim(),
+        phone:            form.phone.trim(),
+        objectives:       form.objectives.trim() || null,
+        selectedServices: getSelectedServiceNames(),
+        monthlyTotal:     monthlyTotal.value,
+      }),
+    })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    submitted.value = true
   } catch {
-    alert('Eroare la trimitere. Încearcă din nou.')
+    submitError.value = 'Nu am putut trimite cererea. Încearcă din nou sau scrie la hello@bloommedia.ro.'
   } finally {
     isSubmitting.value = false
   }
@@ -753,6 +784,49 @@ async function handleSubmit() {
 
 .cfg-form-submit:disabled .cfg-form-submit__rule {
   background: rgba(255, 255, 255, 0.2);
+}
+
+.cfg-form-error {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  color: #e07070;
+  line-height: 1.5;
+}
+
+.cfg-success {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding-top: 1rem;
+}
+
+.cfg-success__mark {
+  font-size: 1.5rem;
+  color: rgba(255,255,255,0.55);
+}
+
+.cfg-success__title {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(1.6rem, 2.8vw, 2.6rem);
+  letter-spacing: -0.02em;
+  color: #ffffff;
+  margin: 0;
+  font-variant-ligatures: no-common-ligatures;
+  font-feature-settings: 'liga' 0, 'clig' 0;
+}
+
+.cfg-success__body {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  line-height: 1.7;
+  color: rgba(255,255,255,0.65);
+}
+
+.cfg-success__body a {
+  color: rgba(255,255,255,0.9);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 /* ─── Responsive ──────────────────────────────────────────────── */
