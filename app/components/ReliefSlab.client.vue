@@ -50,7 +50,13 @@ const RELIEF_GLB_CANDIDATES = [
   '/models/optimized/bloom-optimized.glb',
   '/models/optimized/fishpond_baked.glb',
 ]
-const DRACO_DECODER = 'https://www.gstatic.com/draco/versioned/decoders/1.5.6/'
+/*
+ * Self-hosted (copiat din three/examples/jsm/libs/draco la public/draco/) —
+ * decoderul de pe www.gstatic.com era blocat de browserele cu content
+ * blocking (Zen/Firefox strict), deci modelul nu se mai încărca deloc.
+ * Același motiv pentru care fonturile sunt self-hosted, fără CDN Google.
+ */
+const DRACO_DECODER = '/draco/'
 
 /** Ultimul URL GLB încărcat cu succes (log / mesaje). */
 let reliefGltfSourceUrl = ''

@@ -34,6 +34,37 @@
         </div>
       </div>
 
+      <!--
+        ── Pachete preset ──────────────────────────────────────────
+        Ancore de decizie pentru vizitatorii care nu vor să configureze.
+        Un click pre-selectează itemii pachetului în configuratorul de
+        mai jos (rămâne editabil). Prețurile sunt calculate din itemi —
+        aceeași sursă ca acordeonul, nu pot diverge.
+      -->
+      <div class="cfg-presets" aria-label="Pachete recomandate">
+        <button
+          v-for="p in presetCards"
+          :key="p.id"
+          class="cfg-preset"
+          :class="{ 'is-featured': p.featured, 'is-active': activePresetId === p.id }"
+          type="button"
+          @click="applyPreset(p.id)"
+        >
+          <span v-if="p.featured" class="cfg-preset__badge">Recomandat</span>
+          <span class="cfg-preset__name">{{ p.name }}</span>
+          <span class="cfg-preset__price">
+            €{{ p.monthly }}<em>/lună</em>
+          </span>
+          <span v-if="p.oneTime" class="cfg-preset__setup">+ €{{ p.oneTime }} setup one-time</span>
+          <span class="cfg-preset__desc">{{ p.desc }}</span>
+          <span class="cfg-preset__items">{{ p.itemNames.join(' · ') }}</span>
+          <span class="cfg-preset__cta">{{ activePresetId === p.id ? 'Selectat ✓' : 'Aplică pachetul' }}</span>
+        </button>
+      </div>
+      <p class="cfg-presets-note">
+        Sau compune-ți sistemul bucată cu bucată, mai jos. Orice pachet rămâne editabil.
+      </p>
+
       <!-- ── Body: accordion LEFT · form RIGHT ─────────────────── -->
       <div class="cfg-body">
 
@@ -176,9 +207,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
+import { ref, reactive, computed, nextTick, onMounted, onUnmounted } from 'vue'
 import { gsap } from 'gsap'
-import { categories } from '~/lib/pricing'
+import { categories, presets } from '~/lib/pricing'
 
 // Force white cursor on dark background
 const cursorDark = useState('cursorDark', () => false)
@@ -207,7 +238,59 @@ const submitted    = ref(false)
 const submitError  = ref('')
 
 function toggle(id: string)    { selIds.has(id) ? selIds.delete(id) : selIds.add(id) }
-function toggleCat(id: string) { openCats[id] = !openCats[id] }
+
+/* ── Pachete preset ─────────────────────────────────────────────── */
+
+// Prețuri calculate din itemi — aceeași sursă ca totalurile configuratorului.
+// (categories direct, nu allItems — ăla e declarat mai jos în fișier.)
+const presetCards = presets.map((p) => {
+  const its = categories.flatMap(c => c.items).filter(i => p.itemIds.includes(i.id))
+  return {
+    ...p,
+    monthly:   its.filter(i => !i.oneTime).reduce((s, i) => s + i.price, 0),
+    oneTime:   its.filter(i =>  i.oneTime).reduce((s, i) => s + i.price, 0),
+    itemNames: its.map(i => i.name),
+  }
+})
+
+// Activ doar dacă selecția curentă e EXACT setul pachetului (editarea îl stinge).
+const activePresetId = computed(() => {
+  const p = presets.find(p =>
+    p.itemIds.length === selIds.size && p.itemIds.every(id => selIds.has(id))
+  )
+  return p?.id ?? null
+})
+
+function applyPreset(id: string) {
+  const p = presets.find(p => p.id === id)
+  if (!p) return
+  selIds.clear()
+  for (const itemId of p.itemIds) selIds.add(itemId)
+  // Deschide categoriile care conțin itemi din pachet, ca selecția să fie vizibilă.
+  for (const cat of categories) {
+    if (cat.items.some(i => p.itemIds.includes(i.id))) openCats[cat.id] = true
+  }
+}
+
+/*
+ * Stagger-ul GSAP rulează DOAR pe categoria proaspăt deschisă. Vechiul
+ * watch(openCats) itera toate categoriile deschise la orice toggle, deci
+ * itemii din categoriile deja deschise clipeau (opacity 0→1) de fiecare
+ * dată când deschideai/închideai alta.
+ */
+function toggleCat(id: string) {
+  openCats[id] = !openCats[id]
+  if (!openCats[id]) return
+  nextTick(() => {
+    const body = document.querySelector<HTMLElement>(`[data-cat-id="${id}"]`)
+    if (!body) return
+    gsap.fromTo(
+      body.querySelectorAll('.cfg-item'),
+      { opacity: 0, y: 10 },
+      { opacity: 1, y: 0, duration: 0.2, stagger: 0.05, ease: 'power2.out', delay: 0.05 }
+    )
+  })
+}
 
 function catTotal(catId: string): number {
   const cat = categories.find(c => c.id === catId)
@@ -222,24 +305,6 @@ const oneTimeTotal = computed(() =>
   allItems.reduce((s, i) => selIds.has(i.id) && i.oneTime ? s + i.price : s, 0)
 )
 const formValid    = computed(() => form.businessName.trim() && form.yourName.trim() && form.email.trim() && form.phone.trim())
-
-// Stagger items with GSAP when a category opens (no height animation = no scroll jump)
-watch(openCats, (val) => {
-  nextTick(() => {
-    for (const catId of Object.keys(val)) {
-      if (val[catId]) {
-        const body = document.querySelector<HTMLElement>(`[data-cat-id="${catId}"]`)
-        if (body) {
-          gsap.fromTo(
-            body.querySelectorAll('.cfg-item'),
-            { opacity: 0, y: 10 },
-            { opacity: 1, y: 0, duration: 0.2, stagger: 0.05, ease: 'power2.out', delay: 0.05 }
-          )
-        }
-      }
-    }
-  })
-}, { deep: true })
 
 function getSelectedServiceNames(): string[] {
   return categories.flatMap(c => c.items).filter(i => selIds.has(i.id)).map(i => i.name)
@@ -450,6 +515,140 @@ async function handleSubmit() {
     border-left: none;
     border-top: 0.5px solid rgba(255, 255, 255, 0.1);
     padding-left: 0;
+  }
+}
+
+/* ─── Pachete preset ──────────────────────────────────────────── */
+.cfg-presets {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.cfg-preset {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 2rem 1.75rem 1.75rem;
+  background: none;
+  border: 0.5px solid rgba(255, 255, 255, 0.14);
+  color: #fff;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.25s ease, background-color 0.25s ease;
+}
+
+.cfg-preset:hover {
+  background-color: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.32);
+}
+
+.cfg-preset.is-featured {
+  border-color: rgba(255, 255, 255, 0.45);
+}
+
+.cfg-preset.is-active {
+  border-color: #fff;
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.cfg-preset__badge {
+  position: absolute;
+  top: -0.55rem;
+  left: 1.75rem;
+  padding: 0 0.6rem;
+  background: #000;
+  font-family: var(--font-body);
+  font-size: 0.58rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.cfg-preset__name {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: clamp(1.4rem, 2vw, 1.9rem);
+  line-height: 1;
+}
+
+.cfg-preset__price {
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 2.4vw, 2.2rem);
+  line-height: 1;
+}
+
+.cfg-preset__price em {
+  font-family: var(--font-body);
+  font-style: normal;
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.5);
+  margin-left: 0.3rem;
+}
+
+.cfg-preset__setup {
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.cfg-preset__desc {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.cfg-preset__items {
+  font-family: var(--font-body);
+  font-size: 0.66rem;
+  line-height: 1.7;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.38);
+}
+
+.cfg-preset__cta {
+  margin-top: auto;
+  padding-top: 0.75rem;
+  font-family: var(--font-body);
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.75);
+  border-bottom: 0.5px solid rgba(255, 255, 255, 0.3);
+  transition: color 0.25s ease, border-color 0.25s ease;
+}
+
+.cfg-preset:hover .cfg-preset__cta,
+.cfg-preset.is-active .cfg-preset__cta {
+  color: #fff;
+  border-bottom-color: rgba(255, 255, 255, 0.8);
+}
+
+.cfg-presets-note {
+  position: relative;
+  z-index: 2;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.42);
+  margin: 0 0 5rem;
+}
+
+@media (max-width: 800px) {
+  .cfg-presets {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+
+  .cfg-presets-note {
+    margin-bottom: 3.5rem;
   }
 }
 

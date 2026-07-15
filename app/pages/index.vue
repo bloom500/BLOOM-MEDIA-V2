@@ -211,6 +211,14 @@ onBeforeUnmount(() => {
     <SignalsSection />
     <FaqSection />
 
+    <!--
+      Pistă de scroll între FAQ și ancora cortinei: cortina pornește când
+      ancora intră în viewport, deci fără spațiul ăsta întunecarea cădea
+      peste ultimele întrebări din FAQ înainte să apuci să le citești.
+      Tranziția light→dark se consumă acum peste zona goală.
+    -->
+    <div class="curtain-runway" aria-hidden="true" />
+
     <!-- Anchor at the FAQ→Contact boundary; ScrollTrigger uses this. -->
     <div ref="faqEndAnchor" class="curtain-anchor" aria-hidden="true" />
 
@@ -261,6 +269,18 @@ onBeforeUnmount(() => {
   /* Opacitatea e scrisă inline de ScrollTrigger (vezi onUpdate). */
   opacity: 0;
   will-change: opacity;
+}
+
+.curtain-runway {
+  position: relative;
+  height: 70svh;
+  pointer-events: none;
+}
+
+@media (max-width: 768px) {
+  .curtain-runway {
+    height: 55svh;
+  }
 }
 
 .curtain-anchor {

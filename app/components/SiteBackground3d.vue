@@ -7,7 +7,15 @@
   <Teleport to="body">
     <div class="site-bg-3d" aria-hidden="true">
       <MorphingReliefBackground v-if="!isHome && !isServicii && !isDespre" />
-      <ReliefSlab v-if="isHome" />
+      <!--
+        Gate WebGPU: ReliefSlab e scris pe WebGPURenderer + TSL; fallback-ul
+        WebGL2 al lui three e inutilizabil de lent pe browserele fără WebGPU
+        (Firefox non-Windows, forkuri gen Zen) — lag care blochează pagina.
+        Fără navigator.gpu nu montăm deloc: rămâne fundalul static
+        --relief-scene-bg din main.css, iar bundle-ul three/webgpu nici nu
+        se mai descarcă.
+      -->
+      <ReliefSlab v-if="isHome && hasWebGPU" />
     </div>
   </Teleport>
 </template>
@@ -28,6 +36,9 @@ const MorphingReliefBackground = defineAsyncComponent(() =>
 const ReliefSlab = defineAsyncComponent(() =>
   import('~/components/ReliefSlab.client.vue')
 )
+
+// SiteBackground3d e montat sub <ClientOnly>, deci navigator există la setup.
+const hasWebGPU = typeof navigator !== 'undefined' && !!navigator.gpu
 
 const route = useRoute()
 const isHome     = computed(() => route.path === '/' || route.name === 'index')

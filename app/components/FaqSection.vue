@@ -4,17 +4,20 @@
 
     <div class="faq__header">
       <h2 id="faq-heading" class="faq__title">
+        <!--
+          Fără string-repeat: starea de bază char-reveal n-are transition,
+          deci la exit-ul din viewport literele săreau instant sub clip —
+          titlul „dispărea brusc" când treceai de el. Reveal o dată, rămâne.
+        -->
         <span
           string="split"
           string-split="char"
-          string-repeat
           data-anim="char-reveal"
         >Ai</span>
         <span
           class="faq__title--accent"
           string="split"
           string-split="char"
-          string-repeat
           data-anim="char-reveal"
         >întrebări?</span>
       </h2>
@@ -48,8 +51,22 @@ import { faqItems } from '~/lib/pricing'
 
 const openIndex = ref<number | null>(null)
 
+/*
+ * Deschiderea/închiderea unui item schimbă înălțimea documentului, dar
+ * ScrollTrigger-ele de pe pagină (cortina din index.vue, pin-ul din
+ * FooterReveal) au pozițiile calculate pe layoutul vechi — fără refresh,
+ * cortina cădea decalat după ce interacționai cu acordeonul. Debounced
+ * după tranziția de 450ms a grid-ului.
+ */
+let refreshTimer: ReturnType<typeof setTimeout> | undefined
+
 function toggle(i: number) {
   openIndex.value = openIndex.value === i ? null : i
+  clearTimeout(refreshTimer)
+  refreshTimer = setTimeout(async () => {
+    const { setupGsap } = await import('~/lib/animations/gsap')
+    setupGsap().ScrollTrigger.refresh()
+  }, 500)
 }
 
 const items = faqItems
@@ -102,6 +119,17 @@ const items = faqItems
   margin: 0;
   display: flex;
   flex-direction: column;
+}
+
+/*
+ * char-reveal pune overflow:hidden pe span (clip pentru reveal-ul de jos
+ * în sus), dar asta taie și depășirea italică/serifele ultimelor glife
+ * („întrebări?" era cropat la final pe mobil). Padding-ul lărgește cutia
+ * de clip, marginile negative anulează efectul în layout.
+ */
+.faq__title > span {
+  padding: 0.1em 0.16em 0.12em 0.04em;
+  margin: -0.1em -0.16em -0.12em -0.04em;
 }
 
 .faq__title--accent {
@@ -173,6 +201,10 @@ const items = faqItems
 
 .faq__body {
   overflow: hidden;
+  /* Obligatoriu pentru acordeonul 0fr→1fr: grid items au min-height:auto
+     implicit, care ține rândul la înălțimea conținutului în unele browsere
+     chiar cu 0fr — itemul nu se mai închide. */
+  min-height: 0;
 }
 
 .faq__answer {

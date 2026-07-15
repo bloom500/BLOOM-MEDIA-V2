@@ -85,6 +85,44 @@ export const categories: ServiceCategory[] = [
   },
 ]
 
+export interface PresetPackage {
+  id: string
+  name: string
+  /** Pentru cine e pachetul — o frază, nu marketing vag */
+  desc: string
+  /** ID-uri din categories[].items — prețul pachetului se CALCULEAZĂ din ele */
+  itemIds: string[]
+  featured?: boolean
+}
+
+/*
+ * Pachete preset pentru /servicii: ancore de decizie deasupra
+ * configuratorului. Un preset doar pre-selectează itemi în configurator —
+ * rămâne totul editabil, nu e un SKU separat. Prețurile nu apar aici:
+ * se calculează din items, ca orice selecție manuală.
+ */
+export const presets: PresetPackage[] = [
+  {
+    id: 'start',
+    name: 'Start',
+    desc: 'Primul canal de achiziție plus pagina care convertește. Pentru validarea sistemului cu buget controlat.',
+    itemIds: ['atrage-meta', 'conv-landing', 'auto-raport'],
+  },
+  {
+    id: 'growth',
+    name: 'Growth',
+    desc: 'Sistemul complet: două canale de ads, site nou și agent AI care preia fiecare lead.',
+    itemIds: ['atrage-meta', 'atrage-google', 'atrage-creatives', 'conv-site', 'auto-agent', 'auto-raport'],
+    featured: true,
+  },
+  {
+    id: 'scale',
+    name: 'Scale',
+    desc: 'Acoperire totală: trei canale, producție video lunară, SEO și automatizare completă a follow-up-ului.',
+    itemIds: ['atrage-meta', 'atrage-google', 'atrage-tiktok', 'atrage-video', 'conv-seo', 'auto-agent', 'auto-followup', 'auto-raport'],
+  },
+]
+
 /** Q&A folosit și de FaqSection și de JSON-LD-ul FAQPage din index.vue. */
 export const faqItems = [
   {
