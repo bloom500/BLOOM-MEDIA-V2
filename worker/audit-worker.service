@@ -1,0 +1,22 @@
+[Unit]
+Description=Bloom audit worker (FERAL bridge)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=feral
+WorkingDirectory=/home/feral/audit-worker
+EnvironmentFile=/home/feral/audit-worker/worker.env
+ExecStart=/usr/bin/node /home/feral/audit-worker/audit-worker.mjs
+Restart=on-failure
+RestartSec=5
+# Hardening minim
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/feral/audit-worker
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import { defineEventHandler, readBody, createError } from 'h3'
 import { sendMetaLeadEvent } from '../utils/meta-capi'
 import { createHubSpotContact } from '../utils/hubspot'
@@ -5,6 +6,34 @@ import { insertLead } from '../utils/supabase'
 import { rateLimit, clean, escapeHtml, requireContact, sendEmail } from '../utils/lead-guard'
 
 const AGENCY_EMAIL = 'bloommediacorporation@gmail.com'
+
+/**
+ * Anunță audit-worker-ul de pe VPS (bridge spre FERAL). Worker-ul răspunde
+ * 202 imediat și rulează auditul în fundal, deci apelul e ieftin. Fără
+ * env-uri setate e un no-op — hook-ul poate sta în cod înainte ca worker-ul
+ * să existe în producție.
+ */
+async function notifyAuditWorker(lead: {
+  leadId: string; name: string; email: string; phone: string
+  website: string; social: string; message: string
+}) {
+  const url = process.env.AUDIT_WORKER_URL
+  const secret = process.env.AUDIT_WORKER_SECRET
+  if (!url || !secret) return
+  try {
+    const res = await fetch(`${url.replace(/\/$/, '')}/audit`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-audit-secret': secret },
+      body: JSON.stringify(lead),
+      signal: AbortSignal.timeout(5000),
+    })
+    if (!res.ok && res.status !== 204) {
+      console.error('[audit-worker] notify failed:', res.status)
+    }
+  } catch (err) {
+    console.error('[audit-worker] notify error:', err)
+  }
+}
 
 export default defineEventHandler(async (event) => {
   rateLimit(event)
@@ -23,7 +52,12 @@ export default defineEventHandler(async (event) => {
   }
   requireContact(email, phone)
 
+  const leadId = randomUUID()
+
   await Promise.allSettled([
+    // ── VPS audit worker: FERAL preliminary report (202 = handshake) ─────
+    notifyAuditWorker({ leadId, name, email, phone, website, social, message }),
+
     // ── Resend: agency notification ──────────────────────────────────────
     sendEmail({
       to:      AGENCY_EMAIL,
