@@ -106,16 +106,13 @@ ${body}
 }
 
 function header({ label, badgeUrl }) {
-  return `<tr><td class="px" style="padding:8px 8px 20px;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
-    <td style="font-family:${T.display};font-size:24px;color:${T.text};letter-spacing:-0.02em;">Bloom&nbsp;Media.</td>
-    <td align="right" style="font-family:${T.sans};font-size:11px;color:${T.muted};letter-spacing:0.08em;">
-      <img src="${esc(badgeUrl)}" width="22" height="15" alt="" style="vertical-align:middle;border:0;">
-      &nbsp;POWERED BY FERAL
-    </td>
+  return `<tr><td class="px" align="center" style="padding:8px 8px 20px;">
+  <img src="${esc(badgeUrl)}" width="84" alt="Bloom Media" style="display:block;border:0;margin:0 auto;">
+  <div style="font-family:${T.display};font-size:26px;color:${T.text};letter-spacing:-0.02em;padding-top:12px;">Bloom&nbsp;Media.</div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:18px;border-top:1px solid ${T.divider};"><tr>
+    <td style="font-family:${T.sans};font-size:11px;letter-spacing:0.18em;color:${T.muted};padding-top:12px;text-transform:uppercase;">${esc(label)}</td>
+    <td align="right" style="font-family:${T.sans};font-size:10px;color:${T.muted};letter-spacing:0.12em;padding-top:12px;white-space:nowrap;">POWERED&nbsp;BY&nbsp;FERAL</td>
   </tr></table>
-  <div style="border-top:1px solid ${T.divider};margin-top:14px;"></div>
-  <div style="font-family:${T.sans};font-size:11px;letter-spacing:0.18em;color:${T.muted};padding-top:12px;text-transform:uppercase;">${esc(label)}</div>
 </td></tr>`
 }
 
@@ -127,18 +124,36 @@ function hero({ title, subtitle, url }) {
 </td></tr>`
 }
 
-function scoreCard({ score, comment }) {
+function ratingDots(rating) {
+  if (!Number.isFinite(rating)) return `<span style="color:${T.muted};">N/A</span>`
+  let dots = ''
+  for (let i = 1; i <= 5; i++) {
+    dots += `<span style="color:${i <= rating ? T.text : T.divider};">●</span>${i < 5 ? '&nbsp;' : ''}`
+  }
+  return dots
+}
+
+function scoreCard({ score, comment, categories = [] }) {
+  const breakdown = categories.length ? `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:18px;border-top:1px solid rgba(0,0,0,0.07);">
+      ${categories.map((c) => `<tr>
+        <td style="font-family:${T.sans};font-size:13px;color:${T.text};padding:7px 0 0;">${esc(c.name)}</td>
+        <td align="right" style="font-family:${T.sans};font-size:11px;letter-spacing:2px;padding:7px 0 0;">${ratingDots(c.rating)}</td>
+      </tr>`).join('')}
+    </table>` : ''
+
   if (score == null) {
     return card(`<div style="font-family:${T.sans};font-size:14px;line-height:1.6;color:${T.muted};text-align:center;">
-      Site-ul nu a putut fi evaluat complet, așa că nu afișăm un scor. Detaliile sunt mai jos.</div>`)
+      Site-ul nu a putut fi evaluat complet, așa că nu afișăm un scor. Detaliile sunt mai jos.</div>${breakdown}`)
   }
   const c = scoreColor(score)
   return `<tr><td class="px" style="padding:0 8px 16px;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${c.bg};border-radius:${T.radius};">
-    <tr><td align="center" style="padding:30px 24px;">
-      <div class="score-num" style="font-family:${T.display};font-size:54px;color:${c.fg};line-height:1;">${score}<span style="font-size:22px;color:${T.muted};">&nbsp;/&nbsp;100</span></div>
+    <tr><td align="center" style="padding:32px 32px 8px;">
+      <div class="score-num" style="font-family:${T.display};font-size:56px;color:${c.fg};line-height:1;">${score}<span style="font-size:22px;color:${T.muted};">&nbsp;/&nbsp;100</span></div>
       <div style="font-family:${T.sans};font-size:13px;line-height:1.6;color:${T.text};padding-top:10px;max-width:420px;">${esc(comment)}</div>
     </td></tr>
+    <tr><td style="padding:0 32px 26px;">${breakdown}</td></tr>
   </table>
 </td></tr>`
 }
@@ -262,7 +277,7 @@ export function renderAuditEmail(data, { badgeUrl = BADGE_URL_DEFAULT, internal 
       subtitle: 'Generat de FERAL AI și verificat prin framework-ul de audit Bloom Media.',
       url,
     }),
-    scoreCard({ score, comment: scoreComment }),
+    scoreCard({ score, comment: scoreComment, categories: audit.categories }),
     audit.summary ? summary(audit.summary) : '',
     audit.strengths?.length ? strengths(audit.strengths.slice(0, 3)) : '',
     audit.opportunities?.length ? opportunities(audit.opportunities.slice(0, 3)) : '',
