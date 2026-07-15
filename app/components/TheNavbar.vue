@@ -98,9 +98,10 @@ const cursorDark = useState('cursorDark', () => false)
 const darkBgRoutes = ['/servicii', '/despre']
 const isLightOnDark = computed(() => darkBgRoutes.includes(route.path) || cursorDark.value)
 
+// Portofoliu scos intenționat — lansăm fără portofoliu, fără link mort în nav.
 const navLinks = [
   { to: '/servicii', label: 'Servicii' },
-  { to: '/portofoliu', label: 'Portofoliu' },
+  { to: '/proces', label: 'Proces' },
   { to: '/despre', label: 'Despre' },
   { to: '/#contact', label: 'Contact' },
 ]

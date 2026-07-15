@@ -11,36 +11,14 @@ export default defineNuxtConfig({
   app: {
     head: {
       link: [
-        // Preconnect to both font hosts so the TLS handshake is done by the
-        // time the stylesheets resolve their @font-face URLs. bunny.net
-        // was missing before — added because Outfit ships from there.
-        { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
-        { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
-        { rel: 'preconnect', href: 'https://fonts.bunny.net', crossorigin: '' },
-        // Critical fonts (above-the-fold hero + body). Single combined
-        // request to Google Fonts — fewer round trips than 2 separate ones.
-        // Dropped Noto Sans: Geist already covers Romanian diacritics, so
-        // the second family was dead weight (~80KB across weights).
-        {
-          rel: 'stylesheet',
-          href: 'https://fonts.googleapis.com/css2?family=Gloock:ital@0;1&family=Geist:wght@300;400;500&display=swap'
-        },
-        // Outfit (UI/nav/CTA buttons): non-critical for LCP. Loaded
-        // async via the print-media swap trick — browser fetches it
-        // without blocking render. Body text uses Geist; Outfit only
-        // styles small UI surfaces that can swap in a frame later.
-        {
-          rel: 'stylesheet',
-          href: 'https://fonts.bunny.net/css2?family=Outfit:wght@300;400;500;600;700&display=swap',
-          media: 'print',
-          onload: "this.media='all'"
-        },
-        // No-JS fallback for the deferred Outfit stylesheet.
-      ],
-      noscript: [
-        {
-          children: '<link rel="stylesheet" href="https://fonts.bunny.net/css2?family=Outfit:wght@300;400;500;600;700&display=swap">'
-        }
+        // Fonturile sunt self-hosted (@font-face în assets/css/fonts.css,
+        // fișiere în /public/fonts/self) — fără CDN-uri Google/Bunny (GDPR).
+        // Preload doar fonturile critice above-the-fold (hero + body, latin +
+        // latin-ext pentru diacritice RO); restul se încarcă via unicode-range.
+        { rel: 'preload', as: 'font', type: 'font/woff2', href: '/fonts/self/gloock-400-normal-latin.woff2', crossorigin: '' },
+        { rel: 'preload', as: 'font', type: 'font/woff2', href: '/fonts/self/gloock-400-normal-latin-ext.woff2', crossorigin: '' },
+        { rel: 'preload', as: 'font', type: 'font/woff2', href: '/fonts/self/geist-400-normal-latin.woff2', crossorigin: '' },
+        { rel: 'preload', as: 'font', type: 'font/woff2', href: '/fonts/self/geist-400-normal-latin-ext.woff2', crossorigin: '' },
       ]
     }
   },

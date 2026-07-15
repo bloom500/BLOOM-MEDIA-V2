@@ -1,24 +1,25 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { faqItems } from '~/lib/pricing'
 
 useHead({
-  title: 'Bloom Media — Agenție de Marketing Digital în Cluj-Napoca',
+  title: 'Bloom Media — AI Growth Systems | Ads, Site-uri și Agenți AI',
   meta: [
     {
       name: 'description',
-      content: 'Bloom Media este o agenție de marketing digital din Cluj-Napoca. Meta Ads, Google Ads, Web Design și Automatizări AI pentru business-uri care vor creștere reală și rezultate măsurabile.'
+      content: 'Bloom Media construiește sisteme de creștere cu AI: Meta & Google Ads, site-uri de conversie și agenți AI care califică și urmăresc fiecare lead. Din Cluj-Napoca, pentru business-uri care măsoară în vânzări.'
     },
     // Open Graph
     { property: 'og:type',        content: 'website' },
     { property: 'og:url',         content: 'https://bloommedia.ro/' },
-    { property: 'og:title',       content: 'Bloom Media — Agenție de Marketing Digital în Cluj-Napoca' },
-    { property: 'og:description', content: 'Meta Ads, Google Ads, Web Design și Automatizări AI pentru business-uri care vor creștere reală și rezultate măsurabile.' },
+    { property: 'og:title',       content: 'Bloom Media — AI Growth Systems' },
+    { property: 'og:description', content: 'Ads, site-uri de conversie și agenți AI pentru business-uri care măsoară în vânzări, nu în like-uri.' },
     { property: 'og:image',       content: 'https://bloommedia.ro/og-image.jpg' },
     { property: 'og:locale',      content: 'ro_RO' },
     // Twitter / X Cards
     { name: 'twitter:card',        content: 'summary_large_image' },
-    { name: 'twitter:title',       content: 'Bloom Media — Agenție de Marketing Digital în Cluj-Napoca' },
-    { name: 'twitter:description', content: 'Meta Ads, Google Ads, Web Design și AI pentru business-uri care vor creștere reală.' },
+    { name: 'twitter:title',       content: 'Bloom Media — AI Growth Systems' },
+    { name: 'twitter:description', content: 'Ads, site-uri de conversie și agenți AI pentru business-uri care măsoară în vânzări.' },
     { name: 'twitter:image',       content: 'https://bloommedia.ro/og-image.jpg' },
     // Crawl
     { name: 'robots', content: 'index, follow' },
@@ -42,7 +43,9 @@ useHead({
         legalName: 'Bloom Ventures SRL',
         url: 'https://bloommedia.ro',
         logo: 'https://bloommedia.ro/og-image.jpg',
-        description: 'Agenție de marketing digital din Cluj-Napoca. Meta Ads, Google Ads, Web Design și Automatizări AI.',
+        description: 'AI Growth Systems din Cluj-Napoca: Meta & Google Ads, site-uri de conversie și agenți AI.',
+        // CUI firmă (taxID) și cod TVA intracomunitar (vatID) — ambele valide.
+        taxID: '50654818',
         vatID: 'RO54500579',
         address: {
           '@type': 'PostalAddress',
@@ -68,67 +71,16 @@ useHead({
     },
     {
       type: 'application/ld+json',
+      // FAQ generat din lib/pricing.ts — aceeași sursă ca FaqSection, deci
+      // rich-result-ul din SERP nu poate diverge de pagina reală.
       innerHTML: JSON.stringify({
         '@context': 'https://schema.org',
         '@type': 'FAQPage',
-        mainEntity: [
-          {
-            '@type': 'Question',
-            name: 'Cât costă serviciile Bloom Media?',
-            acceptedAnswer: {
-              '@type': 'Answer',
-              text: 'Site-urile custom încep de la 2.200€. Marketing-ul pornește de la 800€/lună. Primești ofertă fixă în 24h. Fără taxe ascunse.',
-            },
-          },
-          {
-            '@type': 'Question',
-            name: 'Există contract pe termen lung?',
-            acceptedAnswer: {
-              '@type': 'Answer',
-              text: 'Nu. Lucrăm lunar, cu o lună preaviz. Dacă nu livrăm, pleci. Ne ține atenți.',
-            },
-          },
-          {
-            '@type': 'Question',
-            name: 'Cât durează până văd rezultate?',
-            acceptedAnswer: {
-              '@type': 'Answer',
-              text: 'Site: 10–14 zile. Ads: primele semnale în 2–3 săptămâni, rezultate consistente după 60–90 de zile.',
-            },
-          },
-          {
-            '@type': 'Question',
-            name: 'Cu ce tipuri de business lucrați?',
-            acceptedAnswer: {
-              '@type': 'Answer',
-              text: 'Cu afaceri care au deja tracțiune: clinici, e-commerce, servicii locale, B2B. Nu luăm proiecte la nivel de idee.',
-            },
-          },
-          {
-            '@type': 'Question',
-            name: 'Oferiți rapoarte și transparență?',
-            acceptedAnswer: {
-              '@type': 'Answer',
-              text: 'Da. Ai acces direct în conturile tale de Google și Meta. Noi trimitem un raport scurt săptămânal. Fără dashboard-uri inventate.',
-            },
-          },
-          {
-            '@type': 'Question',
-            name: 'Pot lua un singur serviciu?',
-            acceptedAnswer: {
-              '@type': 'Answer',
-              text: 'Da. Doar site, doar ads sau doar consultanță. Nu forțăm pachete.',
-            },
-          },
-          {
-            '@type': 'Question',
-            name: 'Cum încep colaborarea cu Bloom Media?',
-            acceptedAnswer: {
-              '@type': 'Answer',
-              text: 'Completezi auditul gratuit. Facem un call de 20 de minute. În 24h ai propunerea pe masă.',
-            },
-          },
-        ],
+        mainEntity: faqItems.map(item => ({
+          '@type': 'Question',
+          name: item.q,
+          acceptedAnswer: { '@type': 'Answer', text: item.a },
+        })),
       }),
     },
   ],
@@ -238,6 +190,7 @@ onBeforeUnmount(() => {
     <ProcessSection />
     <VideoMeshDuo />
     <WhyBloomSection />
+    <SignalsSection />
     <FaqSection />
 
     <!-- Anchor at the FAQ→Contact boundary; ScrollTrigger uses this. -->

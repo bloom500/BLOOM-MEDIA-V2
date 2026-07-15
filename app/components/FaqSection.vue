@@ -44,6 +44,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { faqItems } from '~/lib/pricing'
 
 const openIndex = ref<number | null>(null)
 
@@ -51,36 +52,7 @@ function toggle(i: number) {
   openIndex.value = openIndex.value === i ? null : i
 }
 
-const items = [
-  {
-    q: 'Cât costă serviciile Bloom Media?',
-    a: 'Site-urile custom încep de la 2.200€. Marketing-ul pornește de la 800€/lună. Primești ofertă fixă în 24h. Fără taxe ascunse.',
-  },
-  {
-    q: 'Există contract pe termen lung?',
-    a: 'Nu. Lucrăm lunar, cu o lună preaviz. Dacă nu livrăm, pleci. Ne ține atenți.',
-  },
-  {
-    q: 'Cât durează până văd rezultate?',
-    a: 'Site: 10–14 zile. Ads: primele semnale în 2–3 săptămâni, rezultate consistente după 60–90 de zile.',
-  },
-  {
-    q: 'Cu ce tipuri de business lucrați?',
-    a: 'Cu afaceri care au deja tracțiune: clinici, e-commerce, servicii locale, B2B. Nu luăm proiecte la nivel de idee.',
-  },
-  {
-    q: 'Oferiți rapoarte și transparență?',
-    a: 'Da. Ai acces direct în conturile tale de Google și Meta. Noi trimitem un raport scurt săptămânal. Fără dashboard-uri inventate.',
-  },
-  {
-    q: 'Pot lua un singur serviciu?',
-    a: 'Da. Doar site, doar ads sau doar consultanță. Nu forțăm pachete.',
-  },
-  {
-    q: 'Cum încep colaborarea?',
-    a: 'Completezi auditul gratuit. Facem un call de 20 de minute. În 24h ai propunerea pe masă.',
-  },
-]
+const items = faqItems
 </script>
 
 <style scoped>

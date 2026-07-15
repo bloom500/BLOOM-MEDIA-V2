@@ -4,21 +4,35 @@
       <div class="hero__top">
         <div class="hero__top-left">
           <span class="hero__label">
-            Agenție de Marketing Digital
+            AI Growth Systems — Cluj / Remote
           </span>
         </div>
         <div class="hero__top-right" aria-hidden="true" />
       </div>
 
       <div class="hero__center">
-        <h1
-          class="hero__statement -splitted"
-          string="split"
-          string-split="word[start]"
-          string-repeat
-        >
-          Rezultate, nu promisiuni.
-        </h1>
+        <div class="hero__stack">
+          <h1
+            class="hero__statement -splitted"
+            string="split"
+            string-split="word[start]"
+            string-repeat
+          >
+            Marketingul tău, transformat în sistem.
+          </h1>
+          <p class="hero__sub">
+            Ads, site-uri și agenți AI pentru business-uri care măsoară
+            în vânzări, nu în like-uri.
+          </p>
+          <div class="hero__actions">
+            <NuxtLink to="/audit" class="hero__cta">
+              Audit gratuit
+            </NuxtLink>
+            <NuxtLink to="/servicii" class="hero__ghost">
+              Vezi sistemele →
+            </NuxtLink>
+          </div>
+        </div>
       </div>
 
       <div class="hero__bottom">
@@ -146,6 +160,12 @@ onBeforeUnmount(() => {
   padding-left: 2vw;
 }
 
+.hero__stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
 .hero__statement {
   font-family: var(--font-display);
   font-weight: 400;
@@ -154,6 +174,58 @@ onBeforeUnmount(() => {
   color: var(--color-text);
   max-width: 60vw;
   margin: 0;
+}
+
+.hero__sub {
+  font-family: var(--font-body);
+  font-size: clamp(0.9rem, 1.15vw, 1.05rem);
+  line-height: 1.65;
+  color: var(--color-text-soft);
+  max-width: 44ch;
+  margin: 1.75rem 0 0;
+}
+
+.hero__actions {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  margin-top: 2.25rem;
+}
+
+.hero__cta {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--color-bg);
+  background: var(--color-text);
+  border: 0.5px solid var(--color-text);
+  padding: 0.9rem 2rem;
+  border-radius: 999px;
+  text-decoration: none;
+  transition: opacity 0.3s ease;
+}
+
+.hero__cta:hover {
+  opacity: 0.82;
+}
+
+.hero__ghost {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--color-text-soft);
+  text-decoration: none;
+  border-bottom: 0.5px solid var(--color-border-strong);
+  padding-bottom: 0.35rem;
+  transition: color 0.3s ease, border-color 0.3s ease;
+}
+
+.hero__ghost:hover {
+  color: var(--color-text);
+  border-bottom-color: var(--color-text);
 }
 
 .hero__bottom {
@@ -183,6 +255,18 @@ onBeforeUnmount(() => {
   .hero__statement {
     font-size: clamp(1.8rem, 8vw, 3rem);
     max-width: 90vw;
+  }
+
+  .hero__sub {
+    font-size: 0.9rem;
+    margin-top: 1.25rem;
+  }
+
+  .hero__actions {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.25rem;
+    margin-top: 1.75rem;
   }
 }
 

@@ -2,36 +2,33 @@ import { defineEventHandler, readBody, createError } from 'h3'
 import { sendMetaLeadEvent } from '../utils/meta-capi'
 import { createHubSpotContact } from '../utils/hubspot'
 import { insertLead } from '../utils/supabase'
+import { rateLimit, clean, escapeHtml, requireContact, sendEmail } from '../utils/lead-guard'
 
 const AGENCY_EMAIL = 'bloommediacorporation@gmail.com'
-const FROM_EMAIL   = 'Bloom Media <contact@bloommedia.ro>'
-
-interface AuditBody {
-  name: string
-  email: string
-  phone: string
-  website?: string | null
-  social?: string | null
-  message?: string | null
-}
 
 export default defineEventHandler(async (event) => {
-  const body = await readBody<AuditBody>(event)
+  rateLimit(event)
 
-  const name  = body?.name?.trim()  ?? ''
-  const email = body?.email?.trim() ?? ''
-  const phone = body?.phone?.trim() ?? ''
+  const body = await readBody(event)
+
+  const name    = clean(body?.name,    120)
+  const email   = clean(body?.email,   254)
+  const phone   = clean(body?.phone,    40)
+  const website = clean(body?.website, 300)
+  const social  = clean(body?.social,  300)
+  const message = clean(body?.message, 4000)
 
   if (!name || !email || !phone) {
     throw createError({ statusCode: 400, message: 'Câmpurile obligatorii lipsesc.' })
   }
+  requireContact(email, phone)
 
   await Promise.allSettled([
     // ── Resend: agency notification ──────────────────────────────────────
     sendEmail({
       to:      AGENCY_EMAIL,
       subject: `[Audit] Cerere nouă de la ${name}`,
-      html:    buildAgencyEmail({ name, email, phone, website: body.website, social: body.social, message: body.message }),
+      html:    buildAgencyEmail({ name, email, phone, website, social, message }),
     }),
 
     // ── Resend: client confirmation ──────────────────────────────────────
@@ -46,7 +43,7 @@ export default defineEventHandler(async (event) => {
       name,
       email,
       phone,
-      website: body.website,
+      website: website || null,
       source:  'audit-page',
     }),
 
@@ -64,37 +61,19 @@ export default defineEventHandler(async (event) => {
       name,
       email,
       phone,
-      website: body.website || null,
-      social:  body.social  || null,
-      message: body.message || null,
+      website: website || null,
+      social:  social  || null,
+      message: message || null,
     }),
   ])
 
   return { ok: true }
 })
 
-// ── Resend ──────────────────────────────────────────────────────────────────
-async function sendEmail(mail: { to: string; subject: string; html: string }) {
-  const apiKey = process.env.RESEND_API_KEY
-  if (!apiKey) {
-    console.warn('[resend] RESEND_API_KEY not set — skipping')
-    return
-  }
-  const res = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      'Content-Type':  'application/json',
-      'Authorization': `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({ from: FROM_EMAIL, ...mail }),
-  })
-  if (!res.ok) console.error('[resend] Error:', res.status, await res.text())
-}
-
 // ── Email templates ──────────────────────────────────────────────────────────
 function buildAgencyEmail(d: {
   name: string; email: string; phone: string
-  website?: string | null; social?: string | null; message?: string | null
+  website: string; social: string; message: string
 }) {
   const rows = [
     ['Nume',    d.name],
@@ -105,7 +84,7 @@ function buildAgencyEmail(d: {
     ['Mesaj',   d.message || '—'],
   ]
   const trs = rows.map(([k, v]) =>
-    `<tr><td style="padding:6px 12px;color:#9A9590;width:100px">${k}</td><td style="padding:6px 12px;color:#1A1814">${v}</td></tr>`
+    `<tr><td style="padding:6px 12px;color:#9A9590;width:100px">${k}</td><td style="padding:6px 12px;color:#1A1814">${escapeHtml(v)}</td></tr>`
   ).join('')
   return `<div style="font-family:sans-serif;max-width:520px">
     <h2 style="color:#1A1814;margin-bottom:16px">Cerere audit gratuit</h2>
@@ -115,7 +94,7 @@ function buildAgencyEmail(d: {
 }
 
 function buildClientEmail(name: string) {
-  const firstName = name.split(' ')[0]
+  const firstName = escapeHtml(name.split(' ')[0])
   return `<div style="font-family:sans-serif;max-width:520px">
     <h2 style="color:#1A1814">Salut, ${firstName}!</h2>
     <p style="color:#1A1814;line-height:1.7">Am primit cererea ta de audit și o să te contactăm în maxim <strong>24 de ore</strong> cu o analiză inițială.</p>

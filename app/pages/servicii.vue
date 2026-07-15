@@ -16,13 +16,23 @@
 
       <!-- ── Header ─────────────────────────────────────────────── -->
       <header class="cfg-header">
-        <span class="cfg-eyebrow">Calificare / 2026</span>
-        <h1 class="cfg-title">Decide.</h1>
+        <span class="cfg-eyebrow">Servicii — AI Growth Systems</span>
+        <h1 class="cfg-title">Sisteme, nu servicii.</h1>
         <p class="cfg-subtitle">
-          Construim sisteme de marketing care produc rezultate măsurabile.
-          <em>Selectează ce servește obiectivul tău</em> și configurăm împreună.
+          Trei componente care lucrează împreună: campanii care atrag,
+          pagini care convertesc, agenți AI care nu uită niciun lead.
+          <em>Estimează investiția</em> și primești ofertă fixă în 24h.
         </p>
       </header>
+
+      <!-- ── Strat explicativ: triada, înainte de calculator ─────── -->
+      <div class="cfg-systems" aria-label="Cele trei sisteme">
+        <div v-for="cat in categories" :key="`sys-${cat.id}`" class="cfg-system">
+          <span class="cfg-system__num">{{ cat.num }}</span>
+          <h2 class="cfg-system__name">{{ cat.label }}</h2>
+          <p class="cfg-system__tag">{{ cat.tagline }}</p>
+        </div>
+      </div>
 
       <!-- ── Body: accordion LEFT · form RIGHT ─────────────────── -->
       <div class="cfg-body">
@@ -139,6 +149,13 @@
                 <span class="cfg-form-total-label">Investiție / lună</span>
                 <strong class="cfg-form-total-val">€{{ monthlyTotal }}</strong>
               </div>
+              <div v-if="oneTimeTotal > 0" class="cfg-form-total cfg-form-total--onetime">
+                <span class="cfg-form-total-label">Setup one-time</span>
+                <strong class="cfg-form-total-val cfg-form-total-val--sm">€{{ oneTimeTotal }}</strong>
+              </div>
+              <p class="cfg-form-note">
+                Bugetul de ads e separat, plătit direct către platforme, în conturile tale.
+              </p>
               <button
                 type="submit"
                 class="cfg-form-submit"
@@ -161,6 +178,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { gsap } from 'gsap'
+import { categories } from '~/lib/pricing'
 
 // Force white cursor on dark background
 const cursorDark = useState('cursorDark', () => false)
@@ -168,47 +186,21 @@ onMounted(() => { cursorDark.value = true })
 onUnmounted(() => { cursorDark.value = false })
 
 useHead({
-  title: 'Servicii — Bloom Media',
+  title: 'Servicii — Sisteme de Creștere cu AI | Bloom Media',
   meta: [
-    { name: 'description', content: 'Configurează-ți pachetul de marketing digital. Meta Ads, Google Ads, Web Design, AI Automatizări — prețuri transparente, zero surprize.' },
-    { property: 'og:title', content: 'Servicii — Bloom Media' },
-    { property: 'og:description', content: 'Configurează-ți pachetul de marketing digital.' },
+    { name: 'description', content: 'Meta & Google Ads, site-uri de conversie și agenți AI — prețuri transparente, ofertă fixă în 24h, fără contract pe termen lung.' },
+    { property: 'og:title', content: 'Servicii — Sisteme de Creștere cu AI | Bloom Media' },
+    { property: 'og:description', content: 'Ads, site-uri de conversie și agenți AI. Prețuri transparente, zero surprize.' },
   ],
   htmlAttrs: { 'data-page': 'servicii' },
   bodyAttrs: { style: 'background: #000000 !important;' },
 })
 
-const categories = [
-  {
-    id: 'capturare', num: '01', label: 'Capturare',
-    items: [
-      { id: 'capturare-content',   name: 'Management Conținut',    desc: 'Sistem consistent de creație conținut care capturează atenție și generează interacțiuni măsurabile pe canale sociale.', price: 150, oneTime: false },
-      { id: 'capturare-video',     name: 'Pachet 4× Video Reels',  desc: '4 clipuri/lună (1 pe săptămână). Scripting, editare dinamică și optimizare pentru Ads. Stop-scroll garantat.', price: 250, oneTime: false },
-      { id: 'capturare-creatives', name: 'Creatives Static (Ads)', desc: 'Set de bannere performante pentru campanii. Focus pe CTR (Click-Through-Rate).', price: 50, oneTime: false },
-      { id: 'capturare-community', name: 'Community Management',   desc: 'Moderare comentarii și mesaje cu focus pe direcționare către conversie. Engagement = mijloc, nu scop.', price: 50, oneTime: false },
-    ],
-  },
-  {
-    id: 'conversie', num: '02', label: 'Conversie',
-    items: [
-      { id: 'conversie-meta',   name: 'Meta Ads',                     desc: 'Include strategie completă de Retargeting și optimizare cost/lead. Campanii de achiziție pe Facebook & Instagram.', price: 250, oneTime: false },
-      { id: 'conversie-google', name: 'Google Ads (Search & YouTube)', desc: 'Targetare intenție de căutare pentru capturare lead direct din nevoie exprimată.', price: 150, oneTime: false },
-      { id: 'conversie-tiktok', name: 'TikTok Ads',                   desc: 'Scalare achiziție prin platforme video unde audiența ta consumă conținut.', price: 150, oneTime: false },
-    ],
-  },
-  {
-    id: 'infrastructura', num: '03', label: 'Infrastructură',
-    items: [
-      { id: 'infra-landing',   name: 'Landing Page Conversie',     desc: 'Landing page de viteză maximă, construită exclusiv pentru conversie. Zero distracții.', price: 300, oneTime: true },
-      { id: 'infra-ecommerce', name: 'E-commerce Development',     desc: 'Platformă e-commerce scalabilă cu checkout optimizat pentru finalizare tranzacție.', price: 300, oneTime: true },
-      { id: 'infra-seo',       name: 'SEO Tehnic',                 desc: 'Viteză site, indexare, tehnică pură pentru reducere fricțiune conversie.', price: 100, oneTime: false },
-      { id: 'infra-ai',        name: 'Automatizări AI & Chatboți', desc: 'Chatboți și automatizări workflow pentru calificare lead și reducere timp răspuns.', price: 150, oneTime: true },
-    ],
-  },
-]
-
 const selIds   = reactive(new Set<string>())
-const openCats = reactive<Record<string, boolean>>({ capturare: false, conversie: false, infrastructura: false })
+// Prima categorie deschisă by default — vizitatorul vede catalogul fără click.
+const openCats = reactive<Record<string, boolean>>(
+  Object.fromEntries(categories.map((c, i) => [c.id, i === 0]))
+)
 const form     = reactive({ businessName: '', yourName: '', email: '', phone: '', objectives: '' })
 const isSubmitting = ref(false)
 const submitted    = ref(false)
@@ -222,7 +214,13 @@ function catTotal(catId: string): number {
   return cat ? cat.items.reduce((s, i) => selIds.has(i.id) ? s + i.price : s, 0) : 0
 }
 
-const monthlyTotal = computed(() => categories.reduce((s, c) => s + catTotal(c.id), 0))
+const allItems = categories.flatMap(c => c.items)
+const monthlyTotal = computed(() =>
+  allItems.reduce((s, i) => selIds.has(i.id) && !i.oneTime ? s + i.price : s, 0)
+)
+const oneTimeTotal = computed(() =>
+  allItems.reduce((s, i) => selIds.has(i.id) && i.oneTime ? s + i.price : s, 0)
+)
 const formValid    = computed(() => form.businessName.trim() && form.yourName.trim() && form.email.trim() && form.phone.trim())
 
 // Stagger items with GSAP when a category opens (no height animation = no scroll jump)
@@ -264,6 +262,7 @@ async function handleSubmit() {
         objectives:       form.objectives.trim() || null,
         selectedServices: getSelectedServiceNames(),
         monthlyTotal:     monthlyTotal.value,
+        oneTimeTotal:     oneTimeTotal.value,
       }),
     })
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
@@ -385,6 +384,73 @@ async function handleSubmit() {
 .cfg-subtitle em {
   font-style: italic;
   color: rgba(255, 255, 255, 0.85);
+}
+
+/* ─── Strat explicativ: triada de sisteme ─────────────────────── */
+.cfg-systems {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin-bottom: 6rem;
+  border-top: 0.5px solid rgba(255, 255, 255, 0.14);
+  border-bottom: 0.5px solid rgba(255, 255, 255, 0.14);
+}
+
+.cfg-system {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  padding: 2.5rem 2rem 2.5rem 0;
+}
+
+.cfg-system + .cfg-system {
+  border-left: 0.5px solid rgba(255, 255, 255, 0.1);
+  padding-left: 2rem;
+}
+
+.cfg-system__num {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.32);
+}
+
+.cfg-system__name {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(1.5rem, 2.4vw, 2.2rem);
+  line-height: 1;
+  letter-spacing: -0.01em;
+  color: #fff;
+  margin: 0;
+}
+
+.cfg-system__tag {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0;
+}
+
+@media (max-width: 800px) {
+  .cfg-systems {
+    grid-template-columns: 1fr;
+    margin-bottom: 4rem;
+  }
+
+  .cfg-system {
+    padding: 1.75rem 0;
+  }
+
+  .cfg-system + .cfg-system {
+    border-left: none;
+    border-top: 0.5px solid rgba(255, 255, 255, 0.1);
+    padding-left: 0;
+  }
 }
 
 /* ─── Body: two-column grid ───────────────────────────────────── */
@@ -732,6 +798,23 @@ async function handleSubmit() {
   font-size: clamp(2rem, 3.2vw, 3rem);
   line-height: 1;
   color: #fff;
+}
+
+.cfg-form-total--onetime {
+  margin-top: -0.5rem;
+}
+
+.cfg-form-total-val--sm {
+  font-size: clamp(1.2rem, 1.8vw, 1.6rem);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.cfg-form-note {
+  font-family: var(--font-body);
+  font-size: 0.68rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.35);
+  margin: -0.5rem 0 0;
 }
 
 /*

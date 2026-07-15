@@ -12,7 +12,7 @@
         <div class="footer__brand">
           <span class="footer__logo">Bloom<span class="footer__dot">.</span></span>
           <span class="footer__tagline">
-            Marketing Digital
+            AI Growth Systems
           </span>
         </div>
 
@@ -25,8 +25,8 @@
             <NuxtLink to="/servicii">
               Servicii
             </NuxtLink>
-            <NuxtLink to="/portofoliu">
-              Portofoliu
+            <NuxtLink to="/proces">
+              Proces
             </NuxtLink>
             <NuxtLink to="/despre">
               Despre
@@ -38,7 +38,7 @@
               Audit Gratuit
             </NuxtLink>
             <NuxtLink to="/servicii">
-              Configurator
+              Estimează investiția
             </NuxtLink>
             <NuxtLink to="/#contact">
               Contact
@@ -61,7 +61,7 @@
           © 2026 Bloom Media — BLOOM VENTURES S.R.L.
         </span>
         <span class="footer__vat">
-          CUI: 50654818
+          CUI: 50654818 · TVA: RO54500579
         </span>
         <span class="footer__location">
           Cluj-Napoca, România

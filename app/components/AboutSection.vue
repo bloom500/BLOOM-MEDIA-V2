@@ -53,10 +53,85 @@
         </ul>
       </div>
     </div>
+
+    <!-- ── De ce batem agențiile mari ────────────────────────── -->
+    <div class="about__edge">
+      <div class="about__edge-inner">
+        <p class="about__philo-label">De ce Bloom, nu o agenție de 40 de oameni</p>
+
+        <div class="about__edge-grid">
+          <div v-for="e in edges" :key="e.title" class="about__edge-item">
+            <h2 class="about__edge-title">{{ e.title }}</h2>
+            <p class="about__edge-desc">{{ e.desc }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Fondatorii ────────────────────────────────────────── -->
+    <div class="about__founders">
+      <div class="about__founders-inner">
+        <p class="about__philo-label">Cine răspunde la telefon</p>
+
+        <div class="about__founders-grid">
+          <div class="about__founder">
+            <h2 class="about__founder-name">Darius</h2>
+            <p class="about__founder-role">
+              Co-fondator — inginerie & AI. Construiește FERAL, platforma
+              noastră open-source de agenți AI: aceeași infrastructură care
+              rulează și în sistemele clienților.
+            </p>
+            <a href="tel:+40763281168" class="about__founder-phone">0763 281 168</a>
+          </div>
+          <div class="about__founder">
+            <h2 class="about__founder-name">Iancu</h2>
+            <p class="about__founder-role">
+              Co-fondator — strategie & campanii. Ține legătura directă cu
+              fiecare client: fără account manageri, fără telefon fără răspuns.
+            </p>
+            <a href="tel:+40734270188" class="about__founder-phone">0734 270 188</a>
+          </div>
+        </div>
+
+        <p class="about__feral-note">
+          Suntem creatorii
+          <a
+            href="https://github.com/bloom500/feral"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="about__feral-link"
+          ><strong>FERAL</strong></a>
+          — o platformă open-source de agenți AI, publică și funcțională.
+          Nu vindem „AI" din prezentări: construim infrastructura cu mâinile
+          noastre, la vedere, pe GitHub.
+        </p>
+
+        <div class="about__cta">
+          <NuxtLink to="/audit" class="about__cta-link">
+            Începe cu un audit gratuit →
+          </NuxtLink>
+        </div>
+      </div>
+    </div>
   </section>
 </template>
 
 <script setup lang="ts">
+const edges = [
+  {
+    title: 'Vorbești cu cei care execută.',
+    desc: 'Nicio agenție mare nu-ți dă asta: zero layere de account management între tine și oamenii care îți construiesc sistemul.',
+  },
+  {
+    title: 'Agenții AI fac munca repetitivă.',
+    desc: 'Raportare, follow-up, calificare lead-uri — automatizate pe infrastructura noastră. Timpul nostru se duce în strategie, nu în copy-paste.',
+  },
+  {
+    title: 'Overhead mic, preț corect.',
+    desc: 'Nu plătești birourile, șefii de departament și ședințele interne ale unei agenții de 40 de oameni. Plătești sistemul care îți aduce clienți.',
+  },
+]
+
 const philosophy = [
   {
     title: 'Testăm înainte să promitem.',
@@ -244,6 +319,150 @@ const philosophy = [
   margin: 0;
 }
 
+/* ── Edge (de ce Bloom) ───────────────────────────────────────── */
+.about__edge {
+  position: relative;
+  z-index: 1;
+  padding: 0 2.5rem 8rem;
+}
+
+.about__edge-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  border-top: 0.5px solid rgba(255, 255, 255, 0.1);
+  padding-top: 5rem;
+}
+
+.about__edge-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3rem;
+}
+
+.about__edge-title {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-style: italic;
+  font-size: clamp(1.25rem, 1.9vw, 1.8rem);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: #edebe6;
+  margin: 0 0 1rem;
+}
+
+.about__edge-desc {
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  line-height: 1.75;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+/* ── Founders ─────────────────────────────────────────────────── */
+.about__founders {
+  position: relative;
+  z-index: 1;
+  padding: 0 2.5rem 10rem;
+}
+
+.about__founders-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  border-top: 0.5px solid rgba(255, 255, 255, 0.1);
+  padding-top: 5rem;
+}
+
+.about__founders-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  margin-bottom: 4rem;
+}
+
+.about__founder-name {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(1.8rem, 3vw, 2.8rem);
+  letter-spacing: -0.01em;
+  color: #edebe6;
+  margin: 0 0 1rem;
+}
+
+.about__founder-role {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  line-height: 1.75;
+  color: var(--color-text-muted);
+  max-width: 46ch;
+  margin: 0 0 1.25rem;
+}
+
+.about__founder-phone {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 1.15rem;
+  color: rgba(237, 235, 230, 0.85);
+  text-decoration: none;
+  border-bottom: 0.5px solid rgba(255, 255, 255, 0.25);
+  padding-bottom: 0.2rem;
+  transition: color 0.3s ease, border-color 0.3s ease;
+}
+
+.about__founder-phone:hover {
+  color: #fff;
+  border-bottom-color: rgba(255, 255, 255, 0.7);
+}
+
+.about__feral-note {
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: clamp(1.2rem, 2vw, 1.9rem);
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  color: #edebe6;
+  max-width: 720px;
+  margin: 0 0 4rem;
+  padding-top: 3rem;
+  border-top: 0.5px solid rgba(255, 255, 255, 0.07);
+}
+
+.about__feral-note strong {
+  font-weight: 400;
+  font-style: italic;
+}
+
+.about__feral-link {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 0.5px solid rgba(255, 255, 255, 0.35);
+  transition: border-color 0.3s ease;
+}
+
+.about__feral-link:hover {
+  border-bottom-color: rgba(255, 255, 255, 0.85);
+}
+
+.about__cta {
+  padding-top: 1rem;
+}
+
+.about__cta-link {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--color-text-muted);
+  text-decoration: none;
+  padding-bottom: 0.5rem;
+  border-bottom: 0.5px solid rgba(255, 255, 255, 0.3);
+  transition: color 0.3s ease, border-color 0.3s ease;
+}
+
+.about__cta-link:hover {
+  color: #fff;
+  border-bottom-color: rgba(255, 255, 255, 0.8);
+}
+
 /* ── Mobile ───────────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .about__hero {
@@ -282,6 +501,33 @@ const philosophy = [
 
   .about__item-num {
     font-size: clamp(1.5rem, 5vw, 2rem);
+  }
+
+  .about__edge {
+    padding: 0 1.25rem 5rem;
+  }
+
+  .about__edge-inner {
+    padding-top: 3.5rem;
+  }
+
+  .about__edge-grid {
+    grid-template-columns: 1fr;
+    gap: 2.25rem;
+  }
+
+  .about__founders {
+    padding: 0 1.25rem 6rem;
+  }
+
+  .about__founders-inner {
+    padding-top: 3.5rem;
+  }
+
+  .about__founders-grid {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+    margin-bottom: 3rem;
   }
 }
 

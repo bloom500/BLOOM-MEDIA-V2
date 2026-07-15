@@ -59,11 +59,8 @@
           <NuxtLink to="/audit" class="contact__btn-primary">
             Audit Gratuit
           </NuxtLink>
-          <NuxtLink
-            to="/configurator"
-            class="contact__btn-secondary"
-          >
-            Configurează pachetul
+          <NuxtLink to="/servicii" class="contact__link-secondary">
+            sau estimează investiția →
           </NuxtLink>
         </div>
       </div>
@@ -209,30 +206,23 @@
   color: #060604;
 }
 
-.contact__btn-secondary {
+.contact__link-secondary {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  padding: 0.95rem 1.75rem;
   font-family: var(--font-body);
-  font-size: 0.68rem;
-  font-weight: 500;
+  font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.14em;
   text-decoration: none;
-  color: #fff;
-  background: transparent;
-  border: 0.5px solid rgba(255, 255, 255, 0.3);
-  transition:
-    border-color 0.3s ease,
-    color 0.3s ease,
-    background 0.3s ease;
+  color: rgba(255, 255, 255, 0.55);
+  padding: 0.95rem 0;
+  border-bottom: 0.5px solid rgba(255, 255, 255, 0.25);
+  transition: color 0.3s ease, border-color 0.3s ease;
 }
 
-.contact__btn-secondary:hover {
-  border-color: rgba(255, 255, 255, 0.7);
+.contact__link-secondary:hover {
   color: #fff;
-  background: rgba(255, 255, 255, 0.05);
+  border-bottom-color: rgba(255, 255, 255, 0.7);
 }
 
 @media (max-width: 768px) {
@@ -258,10 +248,13 @@
     align-items: stretch;
   }
 
-  .contact__btn-primary,
-  .contact__btn-secondary {
+  .contact__btn-primary {
     width: 100%;
     text-align: center;
+  }
+
+  .contact__link-secondary {
+    align-self: center;
   }
 }
 </style>

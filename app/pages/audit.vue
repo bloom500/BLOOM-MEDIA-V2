@@ -26,18 +26,42 @@ const form = reactive({
   website: '',
   social:  '',
   message: '',
+  consent: false,
 })
 
 const isSubmitting = ref(false)
 const submitted    = ref(false)
 const error        = ref('')
 
-const formValid = computed(
-  () => form.name.trim() && form.email.trim() && form.phone.trim()
+// Per-field format errors, shown after blur sau la submit.
+const fieldErrors = reactive<{ email: string; phone: string }>({ email: '', phone: '' })
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
+// Minim 8 cifre după eliminarea separatoarelor — acoperă formate RO cu/fără prefix.
+const PHONE_RE = /^[+\d][\d\s().-]{7,}$/
+
+function validateEmail() {
+  fieldErrors.email = form.email.trim() && !EMAIL_RE.test(form.email.trim())
+    ? 'Emailul nu pare valid — verifică-l.'
+    : ''
+}
+function validatePhone() {
+  fieldErrors.phone = form.phone.trim() && !PHONE_RE.test(form.phone.trim())
+    ? 'Numărul de telefon nu pare valid.'
+    : ''
+}
+
+const formValid = computed(() =>
+  form.name.trim()
+  && EMAIL_RE.test(form.email.trim())
+  && PHONE_RE.test(form.phone.trim())
+  && form.consent
 )
 
 // ── Submit ──────────────────────────────────────────────────────────────────
 async function handleSubmit() {
+  validateEmail()
+  validatePhone()
   if (!formValid.value || isSubmitting.value) return
   isSubmitting.value = true
   error.value = ''
@@ -100,8 +124,16 @@ async function handleSubmit() {
           <span class="audit__success-mark" aria-hidden="true">✓</span>
           <h2 class="audit__success-title">Am primit cererea.</h2>
           <p class="audit__success-body">
-            Te contactăm în maxim 24h cu analiza inițială.<br>
-            Până atunci — <a href="mailto:hello@bloommedia.ro">hello@bloommedia.ro</a>
+            Sistemul a înregistrat-o deja și ai primit o confirmare pe email.
+          </p>
+          <ul class="audit__success-steps">
+            <li>În maxim 24h primești analiza inițială, în scris.</li>
+            <li>Apoi stabilim un call de 20 de minute — fără pitch de vânzare.</li>
+            <li>Dacă are sens, în 24h după call ai propunerea cu preț fix.</li>
+          </ul>
+          <p class="audit__success-body">
+            Grabă? Sună direct: <a href="tel:+40763281168">0763 281 168</a> sau
+            scrie la <a href="mailto:hello@bloommedia.ro">hello@bloommedia.ro</a>
           </p>
         </div>
       </Transition>
@@ -136,7 +168,12 @@ async function handleSubmit() {
                 placeholder="07xx xxx xxx"
                 autocomplete="tel"
                 required
+                :aria-invalid="!!fieldErrors.phone"
+                @blur="validatePhone"
               />
+              <p v-if="fieldErrors.phone" class="audit__field-error" role="alert">
+                {{ fieldErrors.phone }}
+              </p>
             </div>
           </div>
 
@@ -150,7 +187,12 @@ async function handleSubmit() {
               placeholder="ion@companie.ro"
               autocomplete="email"
               required
+              :aria-invalid="!!fieldErrors.email"
+              @blur="validateEmail"
             />
+            <p v-if="fieldErrors.email" class="audit__field-error" role="alert">
+              {{ fieldErrors.email }}
+            </p>
           </div>
 
           <!-- Row 3: Website + Social (opțional) -->
@@ -195,6 +237,16 @@ async function handleSubmit() {
               placeholder="Ex: Cheltuim pe Meta Ads dar conversiile nu vin. Vrem să înțelegem de ce."
             />
           </div>
+
+          <!-- GDPR consent -->
+          <label class="audit__consent">
+            <input v-model="form.consent" type="checkbox" required />
+            <span>
+              Sunt de acord ca datele mele să fie folosite pentru pregătirea
+              auditului, conform
+              <NuxtLink to="/privacy-policy">politicii de confidențialitate</NuxtLink>.
+            </span>
+          </label>
 
           <!-- Error -->
           <p v-if="error" class="audit__error" role="alert">{{ error }}</p>
@@ -402,6 +454,63 @@ async function handleSubmit() {
   font-size: 0.65rem;
   color: var(--color-divider);
   line-height: 1.5;
+}
+
+/* ── Consent ───────────────────────────────────────────────────────────── */
+.audit__consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  line-height: 1.6;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.audit__consent input {
+  margin-top: 0.15rem;
+  accent-color: var(--color-text-primary);
+  cursor: pointer;
+}
+
+.audit__consent a {
+  color: var(--color-text-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* ── Field errors ──────────────────────────────────────────────────────── */
+.audit__field-error {
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  color: #b03a2e;
+  margin: 0.3rem 0 0;
+}
+
+.audit__success-steps {
+  list-style: none;
+  margin: 0.5rem 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.audit__success-steps li {
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: var(--color-text-muted);
+  padding-left: 1.1rem;
+  position: relative;
+}
+
+.audit__success-steps li::before {
+  content: '—';
+  position: absolute;
+  left: 0;
+  color: var(--color-divider);
 }
 
 /* ── Error ─────────────────────────────────────────────────────────────── */
