@@ -35,7 +35,7 @@
       </div>
     </div>
     <p class="videoduo__caption">
-      Din campaniile clienților noștri — scripting, editare și optimizare, in-house.
+      Din campaniile clienților noștri, scripting, editare și optimizare, in-house.
     </p>
   </section>
 </template>

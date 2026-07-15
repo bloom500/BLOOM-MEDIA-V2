@@ -10,7 +10,7 @@
     <!-- ── Hero ──────────────────────────────────────────────── -->
     <div class="about__hero">
       <div class="about__hero-inner">
-        <p class="about__eyebrow" id="about-heading">Bloom Media — Cluj-Napoca</p>
+        <p class="about__eyebrow" id="about-heading">Bloom Media, Cluj-Napoca</p>
 
         <h1 class="about__headline">
           <span class="about__hl-line">Livrăm creștere</span>
@@ -77,7 +77,7 @@
           <div class="about__founder">
             <h2 class="about__founder-name">Darius</h2>
             <p class="about__founder-role">
-              Co-fondator — inginerie & AI. Construiește FERAL, platforma
+              Co-fondator, inginerie & AI. Construiește FERAL, platforma
               noastră open-source de agenți AI: aceeași infrastructură care
               rulează și în sistemele clienților.
             </p>
@@ -86,7 +86,7 @@
           <div class="about__founder">
             <h2 class="about__founder-name">Iancu</h2>
             <p class="about__founder-role">
-              Co-fondator — strategie & campanii. Ține legătura directă cu
+              Co-fondator, strategie & campanii. Ține legătura directă cu
               fiecare client: fără account manageri, fără telefon fără răspuns.
             </p>
             <a href="tel:+40734270188" class="about__founder-phone">0734 270 188</a>
@@ -100,8 +100,8 @@
             target="_blank"
             rel="noopener noreferrer"
             class="about__feral-link"
-          ><strong>FERAL</strong></a>
-          — o platformă open-source de agenți AI, publică și funcțională.
+          ><strong>FERAL</strong></a>,
+          o platformă open-source de agenți AI, publică și funcțională.
           Nu vindem „AI" din prezentări: construim infrastructura cu mâinile
           noastre, la vedere, pe GitHub.
         </p>
@@ -124,7 +124,7 @@ const edges = [
   },
   {
     title: 'Agenții AI fac munca repetitivă.',
-    desc: 'Raportare, follow-up, calificare lead-uri — automatizate pe infrastructura noastră. Timpul nostru se duce în strategie, nu în copy-paste.',
+    desc: 'Raportare, follow-up, calificare lead-uri, automatizate pe infrastructura noastră. Timpul nostru se duce în strategie, nu în copy-paste.',
   },
   {
     title: 'Overhead mic, preț corect.',

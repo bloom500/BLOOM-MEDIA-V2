@@ -19,11 +19,11 @@ const signals = [
   },
   {
     big: 'zero lock-in',
-    small: 'lucrăm lunar, cu o lună preaviz — dacă nu livrăm, pleci',
+    small: 'lucrăm lunar, cu o lună preaviz, dacă nu livrăm, pleci',
   },
   {
     big: 'conturile tale',
-    small: 'acces total la Meta și Google — datele rămân ale tale',
+    small: 'acces total la Meta și Google, datele rămân ale tale',
   },
 ]
 </script>

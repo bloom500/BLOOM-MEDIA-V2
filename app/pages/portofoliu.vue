@@ -1,6 +1,6 @@
 <script setup lang="ts">
 useHead({
-  title: 'Portofoliu — Bloom Media',
+  title: 'Portofoliu | Bloom Media',
   meta: [
     { name: 'description', content: 'Proiectele noastre sunt în curs de pregătire. Revin în curând cu studii de caz și rezultate.' },
     { name: 'robots', content: 'noindex, follow' },
@@ -24,7 +24,7 @@ useHead({
 
         <div class="port__right">
           <p class="port__desc">
-            Pregătim studii de caz cu rezultate reale — ROAS, cost/lead, creșteri
+            Pregătim studii de caz cu rezultate reale, ROAS, cost/lead, creșteri
             de trafic organic. Fără cifre umflate, fără proiecte fictive.
           </p>
           <p class="port__desc">

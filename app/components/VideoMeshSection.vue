@@ -25,7 +25,7 @@
       </video>
     </div>
     <p class="videomesh__caption">
-      Creative din campanii active — produse intern, de la script la editare.
+      Creative din campanii active, produse intern, de la script la editare.
     </p>
   </section>
 </template>

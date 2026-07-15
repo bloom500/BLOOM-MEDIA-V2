@@ -58,7 +58,7 @@
 
       <div class="footer__bottom">
         <span class="footer__copy">
-          © 2026 Bloom Media — BLOOM VENTURES S.R.L.
+          © 2026 Bloom Media, BLOOM VENTURES S.R.L.
         </span>
         <span class="footer__vat">
           CUI: 50654818 · TVA: RO54500579

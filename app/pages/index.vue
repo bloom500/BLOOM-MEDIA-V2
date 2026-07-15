@@ -3,7 +3,7 @@ import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { faqItems } from '~/lib/pricing'
 
 useHead({
-  title: 'Bloom Media — AI Growth Systems | Ads, Site-uri și Agenți AI',
+  title: 'Bloom Media, AI Growth Systems | Ads, Site-uri și Agenți AI',
   meta: [
     {
       name: 'description',
@@ -12,13 +12,13 @@ useHead({
     // Open Graph
     { property: 'og:type',        content: 'website' },
     { property: 'og:url',         content: 'https://bloommedia.ro/' },
-    { property: 'og:title',       content: 'Bloom Media — AI Growth Systems' },
+    { property: 'og:title',       content: 'Bloom Media, AI Growth Systems' },
     { property: 'og:description', content: 'Ads, site-uri de conversie și agenți AI pentru business-uri care măsoară în vânzări, nu în like-uri.' },
     { property: 'og:image',       content: 'https://bloommedia.ro/og-image.jpg' },
     { property: 'og:locale',      content: 'ro_RO' },
     // Twitter / X Cards
     { name: 'twitter:card',        content: 'summary_large_image' },
-    { name: 'twitter:title',       content: 'Bloom Media — AI Growth Systems' },
+    { name: 'twitter:title',       content: 'Bloom Media, AI Growth Systems' },
     { name: 'twitter:description', content: 'Ads, site-uri de conversie și agenți AI pentru business-uri care măsoară în vânzări.' },
     { name: 'twitter:image',       content: 'https://bloommedia.ro/og-image.jpg' },
     // Crawl

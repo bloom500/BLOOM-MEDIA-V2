@@ -7,7 +7,7 @@
   -->
   <Teleport to="body">
     <header class="navbar" :class="{ 'navbar--light': isLightOnDark, 'is-menu-open': isMenuOpen }">
-    <NuxtLink to="/" class="navbar__brand" aria-label="Bloom Media — acasă">
+    <NuxtLink to="/" class="navbar__brand" aria-label="Bloom Media, acasă">
       Bloom Media<span class="navbar__dot">.</span>
     </NuxtLink>
 

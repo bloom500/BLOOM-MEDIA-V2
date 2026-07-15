@@ -8,15 +8,17 @@
   --color-bg-light: #EDEBE6;
   --color-bg-dark: #000000;
   --color-text-primary: #1A1814;
-  --color-text-muted: #9A9590;
+  /* Token-urile de text secundar sunt calibrate la ≥4.5:1 (WCAG AA) pe
+     fundalul cel mai deschis (--color-bg-light #EDEBE6) — nu le deschide. */
+  --color-text-muted: #625D56;
   --color-divider: #D0CBC3;
   --color-bg: #fafafa;
   --color-text: #000000;
   --color-accent: #000000;
-  --color-muted: rgba(0, 0, 0, 0.55);
-  --color-text-soft: rgba(0, 0, 0, 0.5);
-  --color-text-faint: rgba(0, 0, 0, 0.42);
-  --color-text-ghost: rgba(0, 0, 0, 0.35);
+  --color-muted: rgba(0, 0, 0, 0.68);
+  --color-text-soft: rgba(0, 0, 0, 0.65);
+  --color-text-faint: rgba(0, 0, 0, 0.6);
+  --color-text-ghost: rgba(0, 0, 0, 0.55);
   --color-border: rgba(0, 0, 0, 0.08);
   --color-border-medium: rgba(0, 0, 0, 0.15);
   --color-border-strong: rgba(0, 0, 0, 0.42);

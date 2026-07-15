@@ -2,14 +2,14 @@
   <main class="proces">
     <!-- ── Hero ──────────────────────────────────────────────── -->
     <header class="proces__hero">
-      <span class="proces__eyebrow">Procesul — de la audit la sistem live</span>
+      <span class="proces__eyebrow">Procesul, de la audit la sistem live</span>
       <h1 class="proces__title">
         Fiecare pas are<br>
         <em>o dată și un livrabil.</em>
       </h1>
       <p class="proces__sub">
         Fără ședințe interminabile, fără rapoarte de 40 de pagini.
-        Așa arată prima lună de colaborare — pas cu pas, cu termene pe care
+        Așa arată prima lună de colaborare, pas cu pas, cu termene pe care
         ni le asumăm public.
       </p>
     </header>
@@ -60,13 +60,13 @@
 
 <script setup lang="ts">
 useHead({
-  title: 'Proces — Cum lucrăm | Bloom Media',
+  title: 'Proces: Cum lucrăm | Bloom Media',
   meta: [
     {
       name: 'description',
       content: 'Procesul Bloom Media, pas cu pas: audit gratuit în ziua 0, call de 20 de minute în ziua 2, propunere cu preț fix în ziua 3, primul sistem live în săptămâna 2.',
     },
-    { property: 'og:title',       content: 'Proces — Cum lucrăm | Bloom Media' },
+    { property: 'og:title',       content: 'Proces: Cum lucrăm | Bloom Media' },
     { property: 'og:description', content: 'De la audit gratuit la primul sistem live, în două săptămâni. Fiecare pas are o dată și un livrabil.' },
     { property: 'og:url',         content: 'https://bloommedia.ro/proces' },
   ],
@@ -77,25 +77,25 @@ const timeline = [
   {
     when: 'Ziua 0',
     title: 'Audit gratuit',
-    desc: 'Completezi formularul cu site-ul și canalele tale. Analizăm ce funcționează, ce nu, și ce am face diferit — 20 de minute de lucru real, nu un pretext de vânzare.',
+    desc: 'Completezi formularul cu site-ul și canalele tale. Analizăm ce funcționează, ce nu, și ce am face diferit, 20 de minute de lucru real, nu un pretext de vânzare.',
     deliverable: 'analiza inițială, în scris, în 24h',
   },
   {
     when: 'Ziua 2',
     title: 'Call de 20 de minute',
-    desc: 'Parcurgem împreună concluziile. Îți spunem direct ce e de corectat — chiar dacă e incomod, chiar dacă decizi să lucrezi cu altcineva.',
+    desc: 'Parcurgem împreună concluziile. Îți spunem direct ce e de corectat, chiar dacă e incomod, chiar dacă decizi să lucrezi cu altcineva.',
     deliverable: 'lista de priorități, cu impact estimat',
   },
   {
     when: 'Ziua 3',
     title: 'Propunere cu preț fix',
-    desc: 'Scope clar, preț fix, termene asumate. Fără taxe ascunse, fără contract pe termen lung — lucrăm lunar, cu o lună preaviz.',
+    desc: 'Scope clar, preț fix, termene asumate. Fără taxe ascunse, fără contract pe termen lung, lucrăm lunar, cu o lună preaviz.',
     deliverable: 'oferta finală, pe o pagină, nu pe patruzeci',
   },
   {
     when: 'Săptămâna 2',
     title: 'Primul sistem live',
-    desc: 'Landing-ul, campania sau agentul AI — primul livrabil e ceva funcțional, care lucrează pentru tine, nu un slide deck.',
+    desc: 'Landing-ul, campania sau agentul AI, primul livrabil e ceva funcțional, care lucrează pentru tine, nu un slide deck.',
     deliverable: 'sistemul live + acces total în conturile tale',
   },
 ]
@@ -111,14 +111,14 @@ const rhythm = [
   },
   {
     title: 'Acces direct',
-    desc: 'Vorbești cu cei care execută, nu cu un account manager. Telefon, WhatsApp, email — răspundem în aceeași zi.',
+    desc: 'Vorbești cu cei care execută, nu cu un account manager. Telefon, WhatsApp, email, răspundem în aceeași zi.',
   },
 ]
 
 const slas = [
   'Răspuns la audit: maxim 24h',
   'Propunere după call: maxim 24h',
-  'Site sau landing live: 10–14 zile',
+  'Site sau landing live: 10-14 zile',
   'Conturile de ads rămân ale tale, cu acces total',
   'Ieșire oricând, cu o lună preaviz',
 ]

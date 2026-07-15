@@ -48,7 +48,7 @@ const systems = [
   },
   {
     label: 'Automatizează',
-    desc: 'Agenți AI care răspund, califică și urmăresc fiecare lead — non-stop, fără pauze, fără uitări.',
+    desc: 'Agenți AI care răspund, califică și urmăresc fiecare lead, non-stop, fără pauze, fără uitări.',
     example: 'Agenți AI · Follow-up · Raportare',
   },
 ]

@@ -37,7 +37,7 @@ const steps = [
   {
     when: 'Ziua 0',
     title: 'Audit gratuit',
-    desc: 'Completezi formularul. Analizăm site-ul, ads-urile și prezența ta — 20 de minute de lucru real, nu un pretext de vânzare.',
+    desc: 'Completezi formularul. Analizăm site-ul, ads-urile și prezența ta, 20 de minute de lucru real, nu un pretext de vânzare.',
   },
   {
     when: 'Ziua 2',
@@ -47,12 +47,12 @@ const steps = [
   {
     when: 'Ziua 3',
     title: 'Propunere cu preț fix',
-    desc: 'Scope clar, preț fix, fără taxe ascunse. Semnezi doar dacă are sens — lucrăm lunar, cu o lună preaviz.',
+    desc: 'Scope clar, preț fix, fără taxe ascunse. Semnezi doar dacă are sens, lucrăm lunar, cu o lună preaviz.',
   },
   {
     when: 'Săptămâna 2',
     title: 'Primul sistem live',
-    desc: 'Site-ul, campania sau agentul AI — primul livrabil funcțional, nu un slide deck.',
+    desc: 'Site-ul, campania sau agentul AI, primul livrabil funcțional, nu un slide deck.',
   },
 ]
 </script>

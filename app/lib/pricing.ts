@@ -52,11 +52,11 @@ export const categories: ServiceCategory[] = [
     label: 'Atrage',
     tagline: 'Campanii plătite care aduc oameni cu intenție reală, nu trafic de vanitate.',
     items: [
-      { id: 'atrage-meta',      name: 'Meta Ads',                      desc: 'Campanii de achiziție pe Facebook & Instagram, cu strategie completă de retargeting și optimizare cost/lead. Fee de management — bugetul de ads e separat, în contul tău.', price: 400, oneTime: false },
+      { id: 'atrage-meta',      name: 'Meta Ads',                      desc: 'Campanii de achiziție pe Facebook & Instagram, cu strategie completă de retargeting și optimizare cost/lead. Fee de management, bugetul de ads e separat, în contul tău.', price: 400, oneTime: false },
       { id: 'atrage-google',    name: 'Google Ads (Search & YouTube)', desc: 'Targetare pe intenție de căutare: capturăm cererea existentă, direct din nevoia exprimată.', price: 350, oneTime: false },
       { id: 'atrage-tiktok',    name: 'TikTok Ads',                    desc: 'Scalare pe achiziție prin video scurt, acolo unde audiența ta consumă conținut.', price: 350, oneTime: false },
       { id: 'atrage-content',   name: 'Management Conținut',           desc: 'Sistem consistent de creație: calendar, producție și publicare pe canalele sociale, aliniate cu campaniile.', price: 350, oneTime: false },
-      { id: 'atrage-video',     name: 'Pachet 4× Video Reels',         desc: '4 clipuri/lună — scripting, editare dinamică și optimizare pentru Ads.', price: 400, oneTime: false },
+      { id: 'atrage-video',     name: 'Pachet 4× Video Reels',         desc: '4 clipuri/lună, scripting, editare dinamică și optimizare pentru Ads.', price: 400, oneTime: false },
       { id: 'atrage-creatives', name: 'Creatives Static (Ads)',        desc: 'Set lunar de bannere performante pentru campanii, cu focus pe CTR.', price: 200, oneTime: false },
     ],
   },
@@ -67,19 +67,19 @@ export const categories: ServiceCategory[] = [
     tagline: 'Infrastructura care transformă clickul în client: pagini rapide, fără fricțiune.',
     items: [
       { id: 'conv-landing',   name: 'Landing Page Conversie', desc: 'Pagină de viteză maximă, construită exclusiv pentru conversie. Zero distracții.', price: PRICING.landingFrom, oneTime: true },
-      { id: 'conv-site',      name: 'Site de Prezentare',     desc: 'Site complet, custom, optimizat pentru încredere și lead-uri. Livrat în 10–14 zile.', price: PRICING.siteFrom, oneTime: true },
+      { id: 'conv-site',      name: 'Site de Prezentare',     desc: 'Site complet, custom, optimizat pentru încredere și lead-uri. Livrat în 10-14 zile.', price: PRICING.siteFrom, oneTime: true },
       { id: 'conv-ecommerce', name: 'E-commerce Development', desc: 'Platformă scalabilă cu checkout optimizat pentru finalizarea tranzacției.', price: PRICING.ecommerceFrom, oneTime: true },
-      { id: 'conv-seo',       name: 'SEO Tehnic',             desc: 'Viteză, indexare, structură — fricțiune tehnică redusă la zero, lunar.', price: 250, oneTime: false },
+      { id: 'conv-seo',       name: 'SEO Tehnic',             desc: 'Viteză, indexare, structură, fricțiune tehnică redusă la zero, lunar.', price: 250, oneTime: false },
     ],
   },
   {
     id: 'automatizeaza',
     num: '03',
     label: 'Automatizează',
-    tagline: 'Agenți AI care răspund, califică și urmăresc fiecare lead — non-stop, fără pauze.',
+    tagline: 'Agenți AI care răspund, califică și urmăresc fiecare lead, non-stop, fără pauze.',
     items: [
       { id: 'auto-agent',    name: 'Agent AI de Calificare',      desc: 'Răspunde instant lead-urilor, pune întrebările de calificare și programează call-ul. Construit pe infrastructura noastră, inclusiv FERAL.', price: PRICING.aiSetupFrom, oneTime: true },
-      { id: 'auto-followup', name: 'Automatizări Follow-up',      desc: 'Secvențe care nu uită pe nimeni: email, WhatsApp, SMS — fiecare lead primește următorul pas la timp.', price: 400, oneTime: true },
+      { id: 'auto-followup', name: 'Automatizări Follow-up',      desc: 'Secvențe care nu uită pe nimeni: email, WhatsApp, SMS, fiecare lead primește următorul pas la timp.', price: 400, oneTime: true },
       { id: 'auto-raport',   name: 'Raportare Automată',          desc: 'Raport săptămânal generat din datele reale ale conturilor tale. Fără dashboard-uri inventate.', price: 150, oneTime: false },
     ],
   },
@@ -89,7 +89,7 @@ export const categories: ServiceCategory[] = [
 export const faqItems = [
   {
     q: 'Cât costă serviciile Bloom Media?',
-    a: `Fee-urile de management pornesc de la ${PRICING.marketingFeeFrom}€/lună per canal — separat de bugetul tău de ads (minim recomandat ${PRICING.minAdBudget}€/lună, plătit direct către Meta sau Google, în contul tău). Site-uri: landing de la ${PRICING.landingFrom}€, site complet de la ${PRICING.siteFrom.toLocaleString('ro-RO')}€, e-commerce de la ${PRICING.ecommerceFrom.toLocaleString('ro-RO')}€. Primești ofertă fixă în 24h. Fără taxe ascunse.`,
+    a: `Fee-urile de management pornesc de la ${PRICING.marketingFeeFrom}€/lună per canal, separat de bugetul tău de ads (minim recomandat ${PRICING.minAdBudget}€/lună, plătit direct către Meta sau Google, în contul tău). Site-uri: landing de la ${PRICING.landingFrom}€, site complet de la ${PRICING.siteFrom.toLocaleString('ro-RO')}€, e-commerce de la ${PRICING.ecommerceFrom.toLocaleString('ro-RO')}€. Primești ofertă fixă în 24h. Fără taxe ascunse.`,
   },
   {
     q: 'Există contract pe termen lung?',
@@ -97,11 +97,11 @@ export const faqItems = [
   },
   {
     q: 'Cât durează până văd rezultate?',
-    a: 'Site: 10–14 zile. Ads: primele semnale în 2–3 săptămâni, rezultate consistente după 60–90 de zile. Agenții AI: activi din prima săptămână.',
+    a: 'Site: 10-14 zile. Ads: primele semnale în 2-3 săptămâni, rezultate consistente după 60-90 de zile. Agenții AI: activi din prima săptămână.',
   },
   {
     q: 'De ce Bloom și nu o agenție de 40 de oameni?',
-    a: 'O agenție mare îți dă un account manager și un raport lunar. La noi vorbești direct cu cei care execută, iar partea repetitivă o fac agenții AI pe care îi construim intern — inclusiv FERAL, platforma noastră open-source. Overhead mic, viteză mare, niciun telefon fără răspuns.',
+    a: 'O agenție mare îți dă un account manager și un raport lunar. La noi vorbești direct cu cei care execută, iar partea repetitivă o fac agenții AI pe care îi construim intern, inclusiv FERAL, platforma noastră open-source. Overhead mic, viteză mare, niciun telefon fără răspuns.',
   },
   {
     q: 'Cu ce tipuri de business lucrați?',
@@ -109,7 +109,7 @@ export const faqItems = [
   },
   {
     q: 'Oferiți rapoarte și transparență?',
-    a: 'Da. Ai acces direct în conturile tale de Google și Meta — sunt ale tale, nu ale noastre. Primești un raport scurt săptămânal, generat automat din date reale.',
+    a: 'Da. Ai acces direct în conturile tale de Google și Meta, sunt ale tale, nu ale noastre. Primești un raport scurt săptămânal, generat automat din date reale.',
   },
   {
     q: 'Pot lua un singur serviciu?',

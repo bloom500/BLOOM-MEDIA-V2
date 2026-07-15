@@ -1,6 +1,6 @@
 <script setup lang="ts">
 useHead({
-  title: 'Termeni și Condiții — Bloom Media',
+  title: 'Termeni și Condiții | Bloom Media',
   meta: [
     { name: 'description', content: 'Termenii și condițiile de utilizare a site-ului bloommedia.ro și a serviciilor oferite de Bloom Media.' },
     { name: 'robots', content: 'noindex, follow' },
@@ -145,8 +145,8 @@ useHead({
         <section class="legal-section">
           <h2>7. Proprietate intelectuală</h2>
           <p>
-            Toate conținuturile site-ului <strong>bloommedia.ro</strong> — texte, grafice,
-            logo-uri, design-ul interfeței, cod sursă — sunt proprietatea BLOOM VENTURES S.R.L.
+            Toate conținuturile site-ului <strong>bloommedia.ro</strong>, texte, grafice,
+            logo-uri, design-ul interfeței, cod sursă, sunt proprietatea BLOOM VENTURES S.R.L.
             sau sunt utilizate cu acordul titularilor și sunt protejate de legislația privind
             drepturile de autor.
           </p>

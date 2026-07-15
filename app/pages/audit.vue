@@ -2,13 +2,13 @@
 import { ref, reactive, computed } from 'vue'
 
 useHead({
-  title: 'Audit Gratuit — Bloom Media',
+  title: 'Audit Gratuit | Bloom Media',
   meta: [
     {
       name: 'description',
       content: 'Primești o analiză gratuită a prezenței tale digitale. Îți spunem ce funcționează, ce nu, și ce am face diferit. Fără obligații.'
     },
-    { property: 'og:title',       content: 'Audit Gratuit — Bloom Media' },
+    { property: 'og:title',       content: 'Audit Gratuit | Bloom Media' },
     { property: 'og:description', content: 'Analiză gratuită a prezenței tale digitale. Fără obligații.' },
     { property: 'og:url',         content: 'https://bloommedia.ro/audit' },
     { rel: 'canonical',           href: 'https://bloommedia.ro/audit' },
@@ -42,7 +42,7 @@ const PHONE_RE = /^[+\d][\d\s().-]{7,}$/
 
 function validateEmail() {
   fieldErrors.email = form.email.trim() && !EMAIL_RE.test(form.email.trim())
-    ? 'Emailul nu pare valid — verifică-l.'
+    ? 'Emailul nu pare valid, verifică-l.'
     : ''
 }
 function validatePhone() {
@@ -105,7 +105,7 @@ async function handleSubmit() {
 
       <p class="audit__sub">
         O analiză de 20 de minute pe site, ads și social.
-        Îți spunem concret ce e de corectat — ai sau n-ai cu noi.
+        Îți spunem concret ce e de corectat, ai sau n-ai cu noi.
       </p>
 
       <ul class="audit__promises">
@@ -128,7 +128,7 @@ async function handleSubmit() {
           </p>
           <ul class="audit__success-steps">
             <li>În maxim 24h primești analiza inițială, în scris.</li>
-            <li>Apoi stabilim un call de 20 de minute — fără pitch de vânzare.</li>
+            <li>Apoi stabilim un call de 20 de minute, fără pitch de vânzare.</li>
             <li>Dacă are sens, în 24h după call ai propunerea cu preț fix.</li>
           </ul>
           <p class="audit__success-body">

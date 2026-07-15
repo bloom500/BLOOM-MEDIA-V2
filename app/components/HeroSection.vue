@@ -4,7 +4,7 @@
       <div class="hero__top">
         <div class="hero__top-left">
           <span class="hero__label">
-            AI Growth Systems — Cluj / Remote
+            AI Growth Systems, Cluj / Remote
           </span>
         </div>
         <div class="hero__top-right" aria-hidden="true" />

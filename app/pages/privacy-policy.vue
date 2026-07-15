@@ -1,8 +1,8 @@
 <script setup lang="ts">
 useHead({
-  title: 'Politica de Confidențialitate — Bloom Media',
+  title: 'Politica de Confidențialitate | Bloom Media',
   meta: [
-    { name: 'description', content: 'Politica de confidențialitate Bloom Media — cum colectăm, folosim și protejăm datele tale personale.' },
+    { name: 'description', content: 'Politica de confidențialitate Bloom Media, cum colectăm, folosim și protejăm datele tale personale.' },
     { name: 'robots', content: 'noindex, follow' },
   ],
 })
@@ -53,9 +53,9 @@ useHead({
             <li>Mesajul transmis / obiectivul menționat</li>
           </ul>
           <p>
-            <strong>Temeiul legal:</strong> Art. 6 alin. (1) lit. (b) GDPR — executarea unui
+            <strong>Temeiul legal:</strong> Art. 6 alin. (1) lit. (b) GDPR, executarea unui
             contract sau luarea de măsuri precontractuale la cererea persoanei vizate; și/sau
-            art. 6 alin. (1) lit. (f) GDPR — interesul legitim al operatorului de a răspunde
+            art. 6 alin. (1) lit. (f) GDPR, interesul legitim al operatorului de a răspunde
             solicitărilor primite.
           </p>
           <p>
@@ -75,7 +75,7 @@ useHead({
             <li>Sursa de trafic (direct, organic, referral)</li>
           </ul>
           <p>
-            <strong>Temeiul legal:</strong> Art. 6 alin. (1) lit. (f) GDPR — interesul legitim
+            <strong>Temeiul legal:</strong> Art. 6 alin. (1) lit. (f) GDPR, interesul legitim
             de a asigura funcționarea tehnică a site-ului și de a analiza performanța acestuia.
           </p>
 
@@ -88,7 +88,7 @@ useHead({
           </p>
           <p>
             <strong>Temeiul legal pentru cookie-urile de analiză și marketing:</strong>
-            Art. 6 alin. (1) lit. (a) GDPR — consimțământul persoanei vizate.
+            Art. 6 alin. (1) lit. (a) GDPR, consimțământul persoanei vizate.
           </p>
         </section>
 
@@ -110,7 +110,7 @@ useHead({
             </li>
             <li>
               <strong>Cookie-uri de marketing:</strong> conform perioadei fiecărui furnizor
-              (de regulă 30–180 de zile).
+              (de regulă 30-180 de zile).
             </li>
           </ul>
         </section>
@@ -122,11 +122,11 @@ useHead({
           <ul>
             <li>
               <strong>Furnizori de servicii tehnice</strong> (hosting, CRM, automatizări):
-              ex. Make (Celonis SE), Google LLC, Meta Platforms Ireland Ltd — cu care avem
+              ex. Make (Celonis SE), Google LLC, Meta Platforms Ireland Ltd, cu care avem
               contracte de prelucrare a datelor (DPA) în conformitate cu GDPR.
             </li>
             <li>
-              <strong>Autorități publice</strong> — exclusiv când suntem obligați prin lege.
+              <strong>Autorități publice</strong>, exclusiv când suntem obligați prin lege.
             </li>
           </ul>
           <p>
@@ -144,26 +144,26 @@ useHead({
             datele tale personale:
           </p>
           <ul>
-            <li><strong>Dreptul de acces</strong> — să știi ce date deținem despre tine.</li>
-            <li><strong>Dreptul la rectificare</strong> — să corectezi datele inexacte.</li>
+            <li><strong>Dreptul de acces</strong>, să știi ce date deținem despre tine.</li>
+            <li><strong>Dreptul la rectificare</strong>, să corectezi datele inexacte.</li>
             <li>
-              <strong>Dreptul la ștergere</strong> — să soliciți ștergerea datelor în condițiile
+              <strong>Dreptul la ștergere</strong>, să soliciți ștergerea datelor în condițiile
               prevăzute de lege.
             </li>
             <li>
-              <strong>Dreptul la restricționarea prelucrării</strong> — în situații prevăzute
+              <strong>Dreptul la restricționarea prelucrării</strong>, în situații prevăzute
               de GDPR.
             </li>
             <li>
-              <strong>Dreptul la portabilitatea datelor</strong> — să primești datele
+              <strong>Dreptul la portabilitatea datelor</strong>, să primești datele
               într-un format structurat, dacă prelucrarea se bazează pe consimțământ sau contract.
             </li>
             <li>
-              <strong>Dreptul la opoziție</strong> — față de prelucrarea bazată pe interes
+              <strong>Dreptul la opoziție</strong>, față de prelucrarea bazată pe interes
               legitim sau în scop de marketing direct.
             </li>
             <li>
-              <strong>Dreptul de a retrage consimțământul</strong> — oricând, fără a afecta
+              <strong>Dreptul de a retrage consimțământul</strong>, oricând, fără a afecta
               legalitatea prelucrării anterioare.
             </li>
           </ul>

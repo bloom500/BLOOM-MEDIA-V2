@@ -16,7 +16,7 @@
 
       <!-- ── Header ─────────────────────────────────────────────── -->
       <header class="cfg-header">
-        <span class="cfg-eyebrow">Servicii — AI Growth Systems</span>
+        <span class="cfg-eyebrow">Servicii, AI Growth Systems</span>
         <h1 class="cfg-title">Sisteme, nu servicii.</h1>
         <p class="cfg-subtitle">
           Trei componente care lucrează împreună: campanii care atrag,
@@ -105,7 +105,7 @@
           <div v-if="submitted" class="cfg-success">
             <span class="cfg-success__mark" aria-hidden="true">✓</span>
             <h2 class="cfg-success__title">Am primit brieful.</h2>
-            <p class="cfg-success__body">Te contactăm în maxim 24h cu o propunere personalizată.<br>Până atunci — <a href="mailto:hello@bloommedia.ro">hello@bloommedia.ro</a></p>
+            <p class="cfg-success__body">Te contactăm în maxim 24h cu o propunere personalizată.<br>Până atunci, <a href="mailto:hello@bloommedia.ro">hello@bloommedia.ro</a></p>
           </div>
 
           <form v-else class="cfg-form" @submit.prevent="handleSubmit" novalidate>
@@ -186,10 +186,10 @@ onMounted(() => { cursorDark.value = true })
 onUnmounted(() => { cursorDark.value = false })
 
 useHead({
-  title: 'Servicii — Sisteme de Creștere cu AI | Bloom Media',
+  title: 'Servicii: Sisteme de Creștere cu AI | Bloom Media',
   meta: [
-    { name: 'description', content: 'Meta & Google Ads, site-uri de conversie și agenți AI — prețuri transparente, ofertă fixă în 24h, fără contract pe termen lung.' },
-    { property: 'og:title', content: 'Servicii — Sisteme de Creștere cu AI | Bloom Media' },
+    { name: 'description', content: 'Meta & Google Ads, site-uri de conversie și agenți AI, prețuri transparente, ofertă fixă în 24h, fără contract pe termen lung.' },
+    { property: 'og:title', content: 'Servicii: Sisteme de Creștere cu AI | Bloom Media' },
     { property: 'og:description', content: 'Ads, site-uri de conversie și agenți AI. Prețuri transparente, zero surprize.' },
   ],
   htmlAttrs: { 'data-page': 'servicii' },
