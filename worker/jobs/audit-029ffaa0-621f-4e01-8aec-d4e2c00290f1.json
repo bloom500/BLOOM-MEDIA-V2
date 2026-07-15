@@ -1,0 +1,16 @@
+{
+  "sessionId": "audit-029ffaa0-621f-4e01-8aec-d4e2c00290f1",
+  "lead": {
+    "name": "T",
+    "email": "spam@x.ro",
+    "phone": "07",
+    "website": "https://example-spam.ro"
+  },
+  "target": "https://example-spam.ro",
+  "startedAt": "2026-07-15T14:21:08.383Z",
+  "status": "failed",
+  "report": null,
+  "emailStatus": "logged",
+  "error": "fetch failed",
+  "durationMs": 8
+}

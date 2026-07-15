@@ -29,6 +29,7 @@ import { homedir } from 'node:os'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { timingSafeEqual, randomUUID } from 'node:crypto'
+import { renderAuditEmail, renderInternalEmail, computeScore } from './email-system.mjs'
 
 const PORT          = Number(process.env.PORT || 8787)
 const SECRET        = process.env.AUDIT_WORKER_SECRET || ''
@@ -92,60 +93,6 @@ function secretOk(header) {
   return a.length === b.length && timingSafeEqual(a, b)
 }
 
-function esc(s) {
-  return String(s ?? '')
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;').replace(/'/g, '&#39;')
-}
-
-/**
- * Markdown minimal → HTML pentru rapoartele FERAL: titluri, bold/italic,
- * liste (-, *, 1.), citate, ---. Input-ul e escapat ÎNTÂI, deci nimic din
- * raport nu poate injecta HTML în email.
- * ponytail: acoperă doar ce produce FERAL în rapoarte; un parser complet
- * (tabele, code blocks, nested lists) abia dacă apare nevoia.
- */
-function mdToHtml(md) {
-  const lines = esc(md).split(/\r?\n/)
-  const out = []
-  let list = null // 'ul' | 'ol' | null
-
-  const closeList = () => { if (list) { out.push(`</${list}>`); list = null } }
-  const inline = (s) => s
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>')
-    .replace(/`([^`]+)`/g, '<code>$1</code>')
-
-  for (const raw of lines) {
-    const line = raw.trimEnd()
-    const t = line.trim()
-    if (!t) { closeList(); continue }
-    let m
-    if ((m = t.match(/^(#{1,4})\s+(.*)/))) {
-      closeList()
-      const level = Math.min(m[1].length + 1, 4) // # → h2, ## → h3, ### → h4
-      out.push(`<h${level} style="margin:20px 0 8px;color:#1A1814">${inline(m[2])}</h${level}>`)
-    } else if (/^(-{3,}|_{3,}|\*{3,})$/.test(t)) {
-      closeList()
-      out.push('<hr style="border:none;border-top:1px solid #e5e0d8;margin:16px 0">')
-    } else if ((m = t.match(/^[-*]\s+(.*)/))) {
-      if (list !== 'ul') { closeList(); out.push('<ul style="margin:6px 0;padding-left:22px">'); list = 'ul' }
-      out.push(`<li style="margin:4px 0">${inline(m[1])}</li>`)
-    } else if ((m = t.match(/^\d+[.)]\s+(.*)/))) {
-      if (list !== 'ol') { closeList(); out.push('<ol style="margin:6px 0;padding-left:22px">'); list = 'ol' }
-      out.push(`<li style="margin:4px 0">${inline(m[1])}</li>`)
-    } else if ((m = t.match(/^&gt;\s?(.*)/))) {
-      closeList()
-      out.push(`<p style="margin:8px 0;padding:6px 12px;border-left:3px solid #d0cbc3;color:#6b6660">${inline(m[1])}</p>`)
-    } else {
-      closeList()
-      out.push(`<p style="margin:8px 0">${inline(t)}</p>`)
-    }
-  }
-  closeList()
-  return out.join('\n')
-}
-
 function buildPrompt(lead) {
   const target = lead.website || lead.social
   return [
@@ -157,16 +104,50 @@ function buildPrompt(lead) {
     '',
     'REGULI STRICTE:',
     '- Folosește DOAR read_webpage pe URL-urile date mai sus. NU folosi web_search.',
-    '- Dacă un URL nu poate fi citit, redirecționează, are certificat invalid sau e prea lent, spune explicit asta. NU inventa constatări.',
-    '- Răspunde în română, maxim 600 de cuvinte.',
+    '- Dacă un URL nu poate fi citit, redirecționează, are certificat invalid sau e prea lent, NU inventa constatări: pune rating null la categoriile pe care nu le poți evalua și explică în summary.',
+    '- Tot textul în română.',
     '',
-    'STRUCTURA RAPORTULUI (exact aceste secțiuni):',
-    '1. PRIMA IMPRESIE — ce comunică pagina în primele 5 secunde',
-    '2. PROPUNERE DE VALOARE — clară sau nu, ce lipsește',
-    '3. CONVERSIE — CTA-uri, formulare, fricțiuni evidente',
-    '4. ÎNCREDERE — dovezi sociale, date de contact, elemente legale',
-    '5. TOP 3 ACȚIUNI — cele mai importante corecturi, concrete',
+    'RĂSPUNDE EXCLUSIV CU UN OBIECT JSON VALID — fără text înainte sau după, fără markdown, fără code fences. Schema exactă:',
+    '{',
+    '  "summary": "3-4 propoziții, esența auditului",',
+    '  "categories": [',
+    '    {"name": "Prima impresie", "rating": 1-5 sau null, "note": "o propoziție"},',
+    '    {"name": "Propunere de valoare", "rating": 1-5 sau null, "note": "o propoziție"},',
+    '    {"name": "Conversie", "rating": 1-5 sau null, "note": "o propoziție"},',
+    '    {"name": "Încredere", "rating": 1-5 sau null, "note": "o propoziție"}',
+    '  ],',
+    '  "strengths": [{"title": "titlu scurt", "note": "o propoziție"}] — exact ce face bine, maxim 3,',
+    '  "opportunities": [{"title": "titlu scurt", "note": "o propoziție"}] — cele mai valoroase îmbunătățiri, maxim 3,',
+    '  "quick_win": {"title": "titlu scurt", "note": "o acțiune concretă implementabilă săptămâna asta"}',
+    '}',
+    '',
+    'Rating: 5 = excelent, 1 = critic. Fii exigent dar corect — notele trebuie să fie apărabile în fața clientului.',
   ].filter(Boolean).join('\n')
+}
+
+/** Extrage și validează JSON-ul de audit din răspunsul FERAL. Aruncă dacă nu e utilizabil. */
+function parseAudit(raw) {
+  // Acceptă și răspunsuri împachetate în code fences sau cu text în jur.
+  const m = String(raw).match(/\{[\s\S]*\}/)
+  if (!m) throw new Error('no JSON object in response')
+  const a = JSON.parse(m[0])
+  if (typeof a.summary !== 'string' || !Array.isArray(a.categories)) {
+    throw new Error('missing summary/categories')
+  }
+  a.categories = a.categories.slice(0, 4).map((c) => ({
+    name: String(c?.name ?? ''),
+    rating: Number.isFinite(c?.rating) ? Math.min(5, Math.max(1, Math.round(c.rating))) : null,
+    note: String(c?.note ?? ''),
+  }))
+  const items = (xs) => (Array.isArray(xs) ? xs : []).slice(0, 3)
+    .map((x) => ({ title: String(x?.title ?? ''), note: String(x?.note ?? '') }))
+    .filter((x) => x.title)
+  a.strengths = items(a.strengths)
+  a.opportunities = items(a.opportunities)
+  a.quick_win = a.quick_win?.title
+    ? { title: String(a.quick_win.title), note: String(a.quick_win.note ?? '') }
+    : null
+  return a
 }
 
 async function callFeral(content, sessionId, signal) {
@@ -188,32 +169,12 @@ async function callFeral(content, sessionId, signal) {
   return String(json.content ?? '').slice(0, MAX_REPORT_CHARS)
 }
 
-async function emailReport(lead, report, failed) {
-  const rows = [
-    ['Nume', lead.name], ['Email', lead.email], ['Telefon', lead.phone],
-    ['Website', lead.website || '—'], ['Social', lead.social || '—'],
-    ['Mesaj', lead.message || '—'],
-  ].map(([k, v]) =>
-    `<tr><td style="padding:4px 10px;color:#9A9590">${k}</td><td style="padding:4px 10px">${esc(v)}</td></tr>`
-  ).join('')
-
-  const html = `<div style="font-family:sans-serif;max-width:640px">
-    <h2>${failed ? '⚠️ Audit FERAL eșuat' : 'Raport preliminar FERAL'} — ${esc(lead.name)}</h2>
-    <table style="border-collapse:collapse;background:#f7f5f2;border-radius:6px">${rows}</table>
-    <div style="line-height:1.65;color:#1A1814;margin-top:20px">${mdToHtml(report)}</div>
-    <p style="color:#9A9590;font-size:12px">Generat automat. Verifică înainte să trimiți ceva lead-ului.</p>
-  </div>`
-
-  if (!RESEND_KEY) { console.log('[audit-worker] report (no Resend key):\n', report); return 'logged' }
+async function sendAgencyEmail(subject, html) {
+  if (!RESEND_KEY) { console.log('[audit-worker] email skipped (no Resend key):', subject); return 'logged' }
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${RESEND_KEY}` },
-    body: JSON.stringify({
-      from: FROM_EMAIL,
-      to: AGENCY_EMAIL,
-      subject: `${failed ? '[Audit FERAL — EȘUAT]' : '[Audit FERAL]'} ${lead.name}`,
-      html,
-    }),
+    body: JSON.stringify({ from: FROM_EMAIL, to: AGENCY_EMAIL, subject, html }),
   })
   if (!res.ok) {
     console.error('[audit-worker] resend error:', res.status, await res.text())
@@ -261,13 +222,32 @@ async function runAudit(lead) {
   const artifact = {
     sessionId, lead, target,
     startedAt: new Date().toISOString(),
-    status: 'running', report: null, emailStatus: null, error: null, durationMs: null,
+    status: 'running', report: null, audit: null, emailStatus: null, error: null, durationMs: null,
   }
   console.log(`[audit-worker] start ${sessionId} → ${target}`)
   try {
-    const report = await callFeral(buildPrompt(lead), sessionId, AbortSignal.timeout(JOB_TIMEOUT_MS))
-    artifact.report = report
-    artifact.emailStatus = await emailReport(lead, report, false)
+    const signal = AbortSignal.timeout(JOB_TIMEOUT_MS)
+    let raw = await callFeral(buildPrompt(lead), sessionId, signal)
+    artifact.report = raw
+    let audit
+    try {
+      audit = parseAudit(raw)
+    } catch {
+      // Un singur retry corectiv, în aceeași sesiune (FERAL are contextul).
+      raw = await callFeral(
+        'Răspunsul anterior nu a fost JSON valid. Retrimite EXCLUSIV obiectul JSON cerut, fără niciun alt text.',
+        sessionId, signal,
+      )
+      artifact.report = raw
+      audit = parseAudit(raw)
+    }
+    artifact.audit = audit
+    const score = computeScore(audit.categories)
+    const html = renderAuditEmail({ lead, audit })
+    artifact.emailStatus = await sendAgencyEmail(
+      `[Audit FERAL] ${lead.name} — ${domainOf(target)}${score != null ? ` — ${score}/100` : ''}`,
+      html,
+    )
     artifact.status = 'done'
     stats.done++
     console.log(`[audit-worker] done ${sessionId} in ${Date.now() - t0}ms`)
@@ -278,7 +258,15 @@ async function runAudit(lead) {
     stats.failed++
     stats.lastError = { at: new Date().toISOString(), sessionId, message }
     console.error(`[audit-worker] failed ${sessionId}:`, message)
-    artifact.emailStatus = await emailReport(lead, `Auditul automat a eșuat: ${message}`, true).catch(() => 'email-failed')
+    // Raportul brut (dacă există) ajunge tot la agenție — nimic nu se pierde.
+    artifact.emailStatus = await sendAgencyEmail(
+      `[Audit FERAL — EȘUAT] ${lead.name}`,
+      renderInternalEmail({
+        title: `Auditul automat a eșuat: ${message}`,
+        text: artifact.report || '(fără răspuns de la FERAL)',
+        lead,
+      }),
+    ).catch(() => 'email-failed')
   } finally {
     artifact.durationMs = Date.now() - t0
     stats.durationsMs.push(artifact.durationMs)
