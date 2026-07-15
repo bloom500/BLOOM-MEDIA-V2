@@ -98,6 +98,54 @@ function esc(s) {
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;')
 }
 
+/**
+ * Markdown minimal → HTML pentru rapoartele FERAL: titluri, bold/italic,
+ * liste (-, *, 1.), citate, ---. Input-ul e escapat ÎNTÂI, deci nimic din
+ * raport nu poate injecta HTML în email.
+ * ponytail: acoperă doar ce produce FERAL în rapoarte; un parser complet
+ * (tabele, code blocks, nested lists) abia dacă apare nevoia.
+ */
+function mdToHtml(md) {
+  const lines = esc(md).split(/\r?\n/)
+  const out = []
+  let list = null // 'ul' | 'ol' | null
+
+  const closeList = () => { if (list) { out.push(`</${list}>`); list = null } }
+  const inline = (s) => s
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>')
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+
+  for (const raw of lines) {
+    const line = raw.trimEnd()
+    const t = line.trim()
+    if (!t) { closeList(); continue }
+    let m
+    if ((m = t.match(/^(#{1,4})\s+(.*)/))) {
+      closeList()
+      const level = Math.min(m[1].length + 1, 4) // # → h2, ## → h3, ### → h4
+      out.push(`<h${level} style="margin:20px 0 8px;color:#1A1814">${inline(m[2])}</h${level}>`)
+    } else if (/^(-{3,}|_{3,}|\*{3,})$/.test(t)) {
+      closeList()
+      out.push('<hr style="border:none;border-top:1px solid #e5e0d8;margin:16px 0">')
+    } else if ((m = t.match(/^[-*]\s+(.*)/))) {
+      if (list !== 'ul') { closeList(); out.push('<ul style="margin:6px 0;padding-left:22px">'); list = 'ul' }
+      out.push(`<li style="margin:4px 0">${inline(m[1])}</li>`)
+    } else if ((m = t.match(/^\d+[.)]\s+(.*)/))) {
+      if (list !== 'ol') { closeList(); out.push('<ol style="margin:6px 0;padding-left:22px">'); list = 'ol' }
+      out.push(`<li style="margin:4px 0">${inline(m[1])}</li>`)
+    } else if ((m = t.match(/^&gt;\s?(.*)/))) {
+      closeList()
+      out.push(`<p style="margin:8px 0;padding:6px 12px;border-left:3px solid #d0cbc3;color:#6b6660">${inline(m[1])}</p>`)
+    } else {
+      closeList()
+      out.push(`<p style="margin:8px 0">${inline(t)}</p>`)
+    }
+  }
+  closeList()
+  return out.join('\n')
+}
+
 function buildPrompt(lead) {
   const target = lead.website || lead.social
   return [
@@ -152,7 +200,7 @@ async function emailReport(lead, report, failed) {
   const html = `<div style="font-family:sans-serif;max-width:640px">
     <h2>${failed ? '⚠️ Audit FERAL eșuat' : 'Raport preliminar FERAL'} — ${esc(lead.name)}</h2>
     <table style="border-collapse:collapse;background:#f7f5f2;border-radius:6px">${rows}</table>
-    <pre style="white-space:pre-wrap;font-family:inherit;line-height:1.6;margin-top:20px">${esc(report)}</pre>
+    <div style="line-height:1.65;color:#1A1814;margin-top:20px">${mdToHtml(report)}</div>
     <p style="color:#9A9590;font-size:12px">Generat automat. Verifică înainte să trimiți ceva lead-ului.</p>
   </div>`
 
