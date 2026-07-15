@@ -34,9 +34,6 @@
         </video>
       </div>
     </div>
-    <p class="videoduo__caption">
-      Din campaniile clienților noștri, scripting, editare și optimizare, in-house.
-    </p>
   </section>
 </template>
 
@@ -137,16 +134,6 @@ onUnmounted(() => {
   gap: 1.5rem;
   padding: 14rem 8vw;
   background: transparent;
-}
-
-.videoduo__caption {
-  font-family: var(--font-body);
-  font-size: 0.65rem;
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
-  color: var(--color-text-faint);
-  text-align: center;
-  margin: 0;
 }
 
 .videoduo__inner {

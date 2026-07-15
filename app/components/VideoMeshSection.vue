@@ -24,9 +24,6 @@
         <source :src="currentMp4" type="video/mp4" />
       </video>
     </div>
-    <p class="videomesh__caption">
-      Creative din campanii active, produse intern, de la script la editare.
-    </p>
   </section>
 </template>
 
@@ -114,16 +111,6 @@ onUnmounted(() => {
   gap: 1.5rem;
   padding: 8vw 8vw;
   background: transparent;
-}
-
-.videomesh__caption {
-  font-family: var(--font-body);
-  font-size: 0.65rem;
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
-  color: var(--color-text-faint);
-  text-align: center;
-  margin: 0;
 }
 
 .videomesh__frame {
