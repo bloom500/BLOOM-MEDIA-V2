@@ -1,10 +1,15 @@
 /*
- * Audit worker — rulează pe VPS, lângă gateway-ul FERAL.
+ * Audit worker v0.2 — rulează pe VPS, lângă gateway-ul FERAL.
  *
  * Flux: site-ul (Vercel) POST-ează lead-ul aici cu un shared secret →
  * răspundem 202 imediat → chemăm FERAL /runtime/chat (non-stream) care
  * citește site-ul lead-ului cu read_webpage → trimitem raportul pe mail
  * AGENȚIEI prin Resend (human-in-the-loop: nimic nu pleacă direct la lead).
+ *
+ * În plus față de v0.1: limite anti-abuz (per email, per domeniu,
+ * concurență, timeout de job, cap pe output), statistici pe /health și
+ * artefacte per job în ./jobs/<sessionId>.json (lead + raport + status
+ * email) pentru debugging ulterior.
  *
  * Zero dependențe npm — doar node:http + fetch. Node >= 18.
  *
@@ -19,9 +24,10 @@
  *   FROM_EMAIL           — default Bloom Media <contact@bloommedia.ro>
  */
 import http from 'node:http'
-import { readFileSync } from 'node:fs'
+import { readFileSync, mkdirSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
-import { join } from 'node:path'
+import { join, dirname } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { timingSafeEqual, randomUUID } from 'node:crypto'
 
 const PORT          = Number(process.env.PORT || 8787)
@@ -31,9 +37,50 @@ const TOKEN_FILE    = process.env.FERAL_TOKEN_FILE || join(homedir(), '.feral', 
 const RESEND_KEY    = process.env.RESEND_API_KEY || ''
 const AGENCY_EMAIL  = process.env.AGENCY_EMAIL || 'bloommediacorporation@gmail.com'
 const FROM_EMAIL    = process.env.FROM_EMAIL || 'Bloom Media <contact@bloommedia.ro>'
+const JOBS_DIR      = join(dirname(fileURLToPath(import.meta.url)), 'jobs')
+
+// ── Limite anti-abuz ─────────────────────────────────────────────────────────
+const MAX_CONCURRENT   = 2            // audituri FERAL simultane
+const MAX_QUEUE        = 10           // joburi în așteptare peste cele active
+const PER_KEY_WINDOW   = 24 * 3600e3  // fereastra limitelor per email/domeniu
+const MAX_PER_EMAIL    = 3            // audituri / email / 24h
+const MAX_PER_DOMAIN   = 3            // audituri / domeniu / 24h
+const JOB_TIMEOUT_MS   = 5 * 60e3     // cap dur pe un audit (FERAL inclus)
+const MAX_REPORT_CHARS = 20_000       // cap pe output înainte de email/artefact
 
 if (!SECRET) { console.error('[audit-worker] AUDIT_WORKER_SECRET missing'); process.exit(1) }
 if (!RESEND_KEY) console.warn('[audit-worker] RESEND_API_KEY missing — reports will only be logged')
+mkdirSync(JOBS_DIR, { recursive: true })
+
+// ── Statistici (în memorie; se resetează la restart — suficient pt v1) ──────
+const stats = {
+  startedAt: new Date().toISOString(),
+  accepted: 0, rejected: 0, running: 0, queued: 0,
+  done: 0, failed: 0,
+  durationsMs: [],           // ultimele 50
+  lastError: null,           // { at, sessionId, message }
+  lastJob: null,             // { sessionId, target, status, ms }
+}
+
+// ponytail: Map în memorie pentru limite, ca în lead-guard — un restart le
+// golește; Redis abia dacă spam-ul devine real.
+const hits = new Map() // key → timestamps[]
+function overLimit(key, max) {
+  const now = Date.now()
+  const recent = (hits.get(key) ?? []).filter((t) => now - t < PER_KEY_WINDOW)
+  if (recent.length >= max) { hits.set(key, recent); return true }
+  recent.push(now)
+  hits.set(key, recent)
+  if (hits.size > 5000) {
+    for (const [k, ts] of hits) if (ts.every((t) => now - t >= PER_KEY_WINDOW)) hits.delete(k)
+  }
+  return false
+}
+
+function domainOf(url) {
+  try { return new URL(String(url).startsWith('http') ? url : `https://${url}`).hostname.replace(/^www\./, '') }
+  catch { return String(url).toLowerCase().slice(0, 100) }
+}
 
 function feralToken() {
   return readFileSync(TOKEN_FILE, 'utf8').trim()
@@ -62,7 +109,7 @@ function buildPrompt(lead) {
     '',
     'REGULI STRICTE:',
     '- Folosește DOAR read_webpage pe URL-urile date mai sus. NU folosi web_search.',
-    '- Dacă un URL nu poate fi citit, spune explicit asta. NU inventa constatări.',
+    '- Dacă un URL nu poate fi citit, redirecționează, are certificat invalid sau e prea lent, spune explicit asta. NU inventa constatări.',
     '- Răspunde în română, maxim 600 de cuvinte.',
     '',
     'STRUCTURA RAPORTULUI (exact aceste secțiuni):',
@@ -74,7 +121,7 @@ function buildPrompt(lead) {
   ].filter(Boolean).join('\n')
 }
 
-async function callFeral(content, sessionId) {
+async function callFeral(content, sessionId, signal) {
   const body = JSON.stringify({ content, session_id: sessionId, stream: false })
   const doFetch = () => fetch(`${FERAL_URL}/runtime/chat`, {
     method: 'POST',
@@ -83,13 +130,14 @@ async function callFeral(content, sessionId) {
       'Authorization': `Bearer ${feralToken()}`,
     },
     body,
+    signal,
   })
   let res = await doFetch()
   // CHAT_IDLE_TIMEOUT poate da 504 pe site-uri lente — un singur retry.
   if (res.status === 504) res = await doFetch()
-  if (!res.ok) throw new Error(`FERAL ${res.status}: ${await res.text()}`)
+  if (!res.ok) throw new Error(`FERAL ${res.status}: ${(await res.text()).slice(0, 300)}`)
   const json = await res.json()
-  return json.content
+  return String(json.content ?? '').slice(0, MAX_REPORT_CHARS)
 }
 
 async function emailReport(lead, report, failed) {
@@ -108,7 +156,7 @@ async function emailReport(lead, report, failed) {
     <p style="color:#9A9590;font-size:12px">Generat automat. Verifică înainte să trimiți ceva lead-ului.</p>
   </div>`
 
-  if (!RESEND_KEY) { console.log('[audit-worker] report (no Resend key):\n', report); return }
+  if (!RESEND_KEY) { console.log('[audit-worker] report (no Resend key):\n', report); return 'logged' }
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${RESEND_KEY}` },
@@ -119,26 +167,90 @@ async function emailReport(lead, report, failed) {
       html,
     }),
   })
-  if (!res.ok) console.error('[audit-worker] resend error:', res.status, await res.text())
+  if (!res.ok) {
+    console.error('[audit-worker] resend error:', res.status, await res.text())
+    return `resend-error-${res.status}`
+  }
+  return 'sent'
+}
+
+function saveArtifact(sessionId, artifact) {
+  try {
+    writeFileSync(join(JOBS_DIR, `${sessionId}.json`), JSON.stringify(artifact, null, 2))
+  } catch (err) {
+    console.error('[audit-worker] artifact write failed:', err)
+  }
+}
+
+// ── Coadă cu concurență limitată ─────────────────────────────────────────────
+const queue = []
+let active = 0
+
+function enqueue(lead) {
+  queue.push(lead)
+  stats.queued = queue.length
+  drain()
+}
+
+function drain() {
+  while (active < MAX_CONCURRENT && queue.length) {
+    const lead = queue.shift()
+    stats.queued = queue.length
+    active++
+    stats.running = active
+    runAudit(lead).finally(() => {
+      active--
+      stats.running = active
+      drain()
+    })
+  }
 }
 
 async function runAudit(lead) {
   const sessionId = `audit-${lead.leadId || randomUUID()}`
-  console.log(`[audit-worker] start ${sessionId} → ${lead.website || lead.social}`)
+  const target = lead.website || lead.social
+  const t0 = Date.now()
+  const artifact = {
+    sessionId, lead, target,
+    startedAt: new Date().toISOString(),
+    status: 'running', report: null, emailStatus: null, error: null, durationMs: null,
+  }
+  console.log(`[audit-worker] start ${sessionId} → ${target}`)
   try {
-    const report = await callFeral(buildPrompt(lead), sessionId)
-    await emailReport(lead, report, false)
-    console.log(`[audit-worker] done ${sessionId}`)
+    const report = await callFeral(buildPrompt(lead), sessionId, AbortSignal.timeout(JOB_TIMEOUT_MS))
+    artifact.report = report
+    artifact.emailStatus = await emailReport(lead, report, false)
+    artifact.status = 'done'
+    stats.done++
+    console.log(`[audit-worker] done ${sessionId} in ${Date.now() - t0}ms`)
   } catch (err) {
-    console.error(`[audit-worker] failed ${sessionId}:`, err)
-    await emailReport(lead, `Auditul automat a eșuat: ${err?.message || err}`, true).catch(() => {})
+    const message = String(err?.message || err)
+    artifact.status = 'failed'
+    artifact.error = message
+    stats.failed++
+    stats.lastError = { at: new Date().toISOString(), sessionId, message }
+    console.error(`[audit-worker] failed ${sessionId}:`, message)
+    artifact.emailStatus = await emailReport(lead, `Auditul automat a eșuat: ${message}`, true).catch(() => 'email-failed')
+  } finally {
+    artifact.durationMs = Date.now() - t0
+    stats.durationsMs.push(artifact.durationMs)
+    if (stats.durationsMs.length > 50) stats.durationsMs.shift()
+    stats.lastJob = { sessionId, target, status: artifact.status, ms: artifact.durationMs }
+    saveArtifact(sessionId, artifact)
   }
 }
 
+// ── HTTP ─────────────────────────────────────────────────────────────────────
 const server = http.createServer((req, res) => {
   if (req.method === 'GET' && req.url === '/health') {
+    const d = stats.durationsMs
     res.writeHead(200, { 'Content-Type': 'application/json' })
-    return res.end('{"ok":true}')
+    return res.end(JSON.stringify({
+      ok: true,
+      ...stats,
+      durationsMs: undefined,
+      avgDurationMs: d.length ? Math.round(d.reduce((a, b) => a + b, 0) / d.length) : null,
+    }))
   }
   if (req.method !== 'POST' || req.url !== '/audit') {
     res.writeHead(404); return res.end()
@@ -159,13 +271,29 @@ const server = http.createServer((req, res) => {
       // Fără site și fără social nu avem ce audita — confirmăm dar nu rulăm.
       res.writeHead(204); return res.end()
     }
+
+    // Limite anti-abuz. 429 doar informativ — site-ul oricum nu-l arată
+    // lead-ului; pur și simplu nu mai consumăm tokens pe duplicate.
+    const email = String(lead.email).toLowerCase().trim()
+    const domain = domainOf(lead.website || lead.social)
+    if (overLimit(`e:${email}`, MAX_PER_EMAIL) || overLimit(`d:${domain}`, MAX_PER_DOMAIN)) {
+      stats.rejected++
+      console.warn(`[audit-worker] rate-limited ${email} / ${domain}`)
+      res.writeHead(429); return res.end()
+    }
+    if (queue.length >= MAX_QUEUE) {
+      stats.rejected++
+      console.warn('[audit-worker] queue full, dropping job')
+      res.writeHead(503); return res.end()
+    }
+
+    stats.accepted++
     res.writeHead(202, { 'Content-Type': 'application/json' })
     res.end('{"accepted":true}')
-    // Fire-and-forget: 202 a plecat, auditul rulează în fundal.
-    runAudit(lead)
+    enqueue(lead)
   })
 })
 
 server.listen(PORT, '127.0.0.1', () => {
-  console.log(`[audit-worker] listening on 127.0.0.1:${PORT}, gateway ${FERAL_URL}`)
+  console.log(`[audit-worker] v0.2 listening on 127.0.0.1:${PORT}, gateway ${FERAL_URL}`)
 })
