@@ -277,6 +277,16 @@ html[data-page="servicii"] .site-main {
 html[data-page="servicii"] section.configurator {
   background: #000000 !important;
 }
+/* Override global text color rule for dark pages */
+html[data-page="servicii"] section,
+html[data-page="servicii"] section p,
+html[data-page="servicii"] section li,
+html[data-page="servicii"] section span,
+html[data-page="servicii"] section h1,
+html[data-page="servicii"] section h2,
+html[data-page="servicii"] section h3 {
+  color: #edebe6;
+}
 
 /* Hero — StringTune word reveal (word[start]) */
 .hero__statement.-splitted .-s-word {
