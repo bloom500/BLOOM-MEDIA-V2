@@ -16,7 +16,7 @@
             <span class="why__line" string="split" string-split="word" data-anim="surface-dissolve">Lucrăm cu:</span>
           </p>
           <p class="why__entry">
-            <span class="why__line" string="split" string-split="word" data-anim="surface-dissolve">Antreprenori cu budget</span>
+            <span class="why__line" string="split" string-split="word" data-anim="surface-dissolve">Antreprenori cu buget</span>
             <span class="why__line" string="split" string-split="word" data-anim="surface-dissolve">de marketing de minim 800€/lună</span>
           </p>
           <p class="why__entry">
@@ -43,7 +43,7 @@
           </p>
           <p class="why__entry">
             <span class="why__line" string="split" string-split="word" data-anim="surface-dissolve">Companii care urmăresc followeri,</span>
-            <span class="why__line" string="split" string-split="word" data-anim="surface-dissolve">reach și engagement în loc de revenue</span>
+            <span class="why__line" string="split" string-split="word" data-anim="surface-dissolve">reach și engagement în loc de vânzări</span>
           </p>
           <p class="why__entry">
             <span class="why__line" string="split" string-split="word" data-anim="surface-dissolve">Clienți care vin cu brief finalizat</span>
@@ -59,7 +59,7 @@
 
     <div class="why__cta">
       <p class="why__cta-text">
-        Sună a fit bun?
+        Te regăsești?
       </p>
       <NuxtLink to="/audit" class="why__cta-link">
         Începe cu un audit gratuit →

@@ -21,6 +21,40 @@ export function getStringTune() {
   return instance
 }
 
+/*
+ * StringSplit prezice unde va rupe browserul rândurile și OMITE spațiul
+ * ( ) după cuvântul estimat ca ultimul de pe un rând vizual. Când
+ * predicția diferă de layoutul real (font încărcat târziu, viewport mobil),
+ * cele două cuvinte ajung lipite pe același rând („momentulpotrivit.").
+ * După fiecare split re-adăugăm NBSP la orice .-s-word care nu e ultimul
+ * din elementul lui. Dacă predicția a fost corectă, NBSP-ul cade la capăt
+ * de rând și e invizibil. Re-split-urile refac DOM-ul din original, deci
+ * corecția e idempotentă.
+ */
+const NBSP = '\u00A0'
+let fixTimer: ReturnType<typeof setTimeout> | undefined
+
+function fixSplitWordSpacing() {
+  document.querySelectorAll('.-splitted').forEach((el) => {
+    const words = el.querySelectorAll('.-s-word')
+    words.forEach((w, i) => {
+      if (i === words.length - 1) return
+      // Char-split (titluri cu char-reveal): fără spații între glife, nu atingem.
+      if (w.querySelector('.-s-char')) return
+      const t = w.textContent ?? ''
+      if (!t.endsWith(NBSP) && !t.endsWith(' ')) {
+        w.appendChild(document.createTextNode(NBSP))
+      }
+    })
+  })
+}
+
+function scheduleSplitSpacingFix() {
+  clearTimeout(fixTimer)
+  // După debounce-ul intern de re-split al bibliotecii.
+  fixTimer = setTimeout(fixSplitWordSpacing, 350)
+}
+
 export function initStringTune(options: InitStringTuneOptions = {}) {
   if (!import.meta.client) {
     return null
@@ -65,7 +99,9 @@ export function initStringTune(options: InitStringTuneOptions = {}) {
     instance.on('update', () => Trigger.update())
     instance.on('start', () => {
       requestAnimationFrame(() => Trigger.refresh())
+      scheduleSplitSpacingFix()
     })
+    instance.on('resize', () => scheduleSplitSpacingFix())
 
     instance.start(60)
     started = true
@@ -89,6 +125,7 @@ export function refreshStringTune() {
   requestAnimationFrame(() => {
     instance?.onResize(true)
     ScrollTrigger.refresh()
+    scheduleSplitSpacingFix()
   })
 }
 

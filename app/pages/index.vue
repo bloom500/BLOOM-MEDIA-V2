@@ -129,35 +129,59 @@ onMounted(async () => {
     // Grain-ul din FAQ se estompează în lockstep cu curtain-ul (vezi
     // FaqSection .faq__grain). Îl scriem tot inline, din același onUpdate.
     const grainEl = document.querySelector<HTMLElement>('.faq__grain')
-    ScrollTrigger.create({
-      trigger: faqEndAnchor.value,
+
+    /*
+     * Opacity direct pe element, NU CSS var pe documentElement: o custom
+     * property schimbată pe root invalidează stilurile întregului document
+     * la fiecare frame — pe mobil asta făcea crossfade-ul choppy.
+     * Inline style pe un singur element = doar compositor, zero recalc.
+     */
+    const applyCurtain = (p: number) => {
+      if (curtainEl.value) curtainEl.value.style.opacity = String(p)
+      if (grainEl) grainEl.style.opacity = String(0.06 * (1 - p))
+      // Flip cursor/navbar to white once the curtain is mostly drawn.
+      cursorDark.value = p > 0.5
+    }
+
+    if (isMobile) {
       /*
-       * Start la intrarea anchor-ului în viewport (top 100%), nu mai târziu —
-       * altfel există o bandă de scroll în care titlul alb „Începem?" e deja
-       * vizibil jos în viewport peste fundalul deschis, înainte ca cortina să
-       * înceapă să se tragă (măsurat pe desktop: Contact intra la scrollY≈8150,
-       * cortina pornea abia la ≈8460; pe mobil la fel, cu start-ul vechi 90%).
-       * end la 50% ca fundalul să fie negru cât titlul e încă în treimea de
-       * jos. Scrub mic și pe mobil: 1.8 lăsa cortina cu ~2s în urma unui
-       * swipe rapid, exact fereastra în care textul alb stătea pe deschis.
+       * Pe mobil renunțăm la scrub: progresul legat de scroll depinde de
+       * cadența evenimentelor touch + frame-drops sub WebGL, deci fade-ul
+       * arăta în trepte oricât am ajustat scrub-ul. Un tween cu durată fixă
+       * rulează pe ticker-ul gsap indiferent de scroll — mereu fluid.
+       * Reversibil la scroll înapoi prin onLeaveBack.
        */
-      start: 'top 100%',
-      end: 'top 50%',
-      scrub: isMobile ? 0.8 : 0.6,
-      onUpdate: (self) => {
-        const p = self.progress
+      const proxy = { p: 0 }
+      const fadeTo = (p: number) => gsap.to(proxy, {
+        p,
+        duration: 0.7,
+        ease: 'power2.out',
+        overwrite: true,
+        onUpdate: () => applyCurtain(proxy.p),
+      })
+      ScrollTrigger.create({
+        trigger: faqEndAnchor.value,
+        start: 'top 85%',
+        onEnter: () => fadeTo(1),
+        onLeaveBack: () => fadeTo(0),
+      })
+    } else {
+      ScrollTrigger.create({
+        trigger: faqEndAnchor.value,
         /*
-         * Opacity direct pe element, NU CSS var pe documentElement: o custom
-         * property schimbată pe root invalidează stilurile întregului document
-         * la fiecare frame de scrub — pe mobil asta făcea crossfade-ul choppy.
-         * Inline style pe un singur element = doar compositor, zero recalc.
+         * Start la intrarea anchor-ului în viewport (top 100%), nu mai târziu —
+         * altfel există o bandă de scroll în care titlul alb „Începem?" e deja
+         * vizibil jos în viewport peste fundalul deschis, înainte ca cortina să
+         * înceapă să se tragă (măsurat pe desktop: Contact intra la scrollY≈8150,
+         * cortina pornea abia la ≈8460). end la 50% ca fundalul să fie negru
+         * cât titlul e încă în treimea de jos.
          */
-        if (curtainEl.value) curtainEl.value.style.opacity = String(p)
-        if (grainEl) grainEl.style.opacity = String(0.06 * (1 - p))
-        // Flip cursor/navbar to white once the curtain is mostly drawn.
-        cursorDark.value = p > 0.5
-      },
-    })
+        start: 'top 100%',
+        end: 'top 50%',
+        scrub: 0.6,
+        onUpdate: (self) => applyCurtain(self.progress),
+      })
+    }
   })
 
   /*

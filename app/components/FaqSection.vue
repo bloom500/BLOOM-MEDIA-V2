@@ -128,8 +128,8 @@ const items = faqItems
  * de clip, marginile negative anulează efectul în layout.
  */
 .faq__title > span {
-  padding: 0.1em 0.16em 0.12em 0.04em;
-  margin: -0.1em -0.16em -0.12em -0.04em;
+  padding: 0.18em 0.4em 0.18em 0.1em;
+  margin: -0.18em -0.4em -0.18em -0.1em;
 }
 
 .faq__title--accent {
