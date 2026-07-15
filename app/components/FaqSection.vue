@@ -122,14 +122,29 @@ const items = faqItems
 }
 
 /*
- * char-reveal pune overflow:hidden pe span (clip pentru reveal-ul de jos
- * în sus), dar asta taie și depășirea italică/serifele ultimelor glife
- * („întrebări?" era cropat la final pe mobil). Padding-ul lărgește cutia
- * de clip, marginile negative anulează efectul în layout.
+ * char-reveal folosește overflow:hidden ca mască pentru glisarea literelor,
+ * dar pe WebKit (iOS) clipul tăia vârfurile glifelor („întrebări?" apărea
+ * decapitat), indiferent cât lărgeam cutia de clip — line-height 1 +
+ * caractere inline-flex se aliniază diferit față de Blink. Renunțăm la
+ * mască doar aici: reveal-ul devine fade + rise, care nu poate trunchia
+ * nimic, pe niciun engine. Delay-ul per caracter e păstrat identic.
  */
-.faq__title > span {
-  padding: 0.18em 0.4em 0.18em 0.1em;
-  margin: -0.18em -0.4em -0.18em -0.1em;
+.faq__title :deep([data-anim="char-reveal"].-splitted) {
+  overflow: visible;
+}
+
+.faq__title :deep([data-anim="char-reveal"] .-s-char) {
+  opacity: 0;
+  transform: translate3d(0, 0.35em, 0);
+}
+
+.faq__title :deep([data-anim="char-reveal"].-inview .-s-char) {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+  transition:
+    opacity var(--ease-timing, 1.2s) var(--ease-1, cubic-bezier(0.86, 0, 0.31, 1)),
+    transform var(--ease-timing, 1.2s) var(--ease-1, cubic-bezier(0.86, 0, 0.31, 1));
+  transition-delay: calc((var(--char-start, 0) / 5) * 0.3s);
 }
 
 .faq__title--accent {
