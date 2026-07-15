@@ -74,10 +74,10 @@ const items = faqItems
    * sits above the dark curtain (.faq is z=1, curtain z=0), so additive
    * white noise creates a gray lift relative to the curtain-only sections
    * below (Contact). We fade the grain out in lockstep with the curtain
-   * via --page-curtain-opacity (set by index.vue's ScrollTrigger). On
-   * pages without a curtain, the var defaults to 0 → opacity stays 0.06.
+   * inline, from index.vue's ScrollTrigger onUpdate (same write as the
+   * curtain itself). On pages without a curtain, opacity stays 0.06.
    */
-  opacity: calc(0.06 * (1 - var(--page-curtain-opacity, 0)));
+  opacity: 0.06;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   background-size: 160px 160px;
 }

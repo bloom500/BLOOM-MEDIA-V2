@@ -94,6 +94,7 @@ useHead({
  * those components).
  */
 const faqEndAnchor = ref<HTMLElement | null>(null)
+const curtainEl = ref<HTMLElement | null>(null)
 const cursorDark = useState('cursorDark', () => false)
 const tailEl = ref<HTMLElement | null>(null)
 let curtainCtx: { revert: () => void } | null = null
@@ -125,6 +126,9 @@ onMounted(async () => {
      * fast touch-swipe sees a gradual paper→black crossfade rather than a pop.
      */
     const isMobile = window.matchMedia('(max-width: 768px)').matches
+    // Grain-ul din FAQ se estompează în lockstep cu curtain-ul (vezi
+    // FaqSection .faq__grain). Îl scriem tot inline, din același onUpdate.
+    const grainEl = document.querySelector<HTMLElement>('.faq__grain')
     ScrollTrigger.create({
       trigger: faqEndAnchor.value,
       start: isMobile ? 'top 90%' : 'top 65%',
@@ -132,7 +136,14 @@ onMounted(async () => {
       scrub: isMobile ? 1.8 : 0.6,
       onUpdate: (self) => {
         const p = self.progress
-        document.documentElement.style.setProperty('--page-curtain-opacity', String(p))
+        /*
+         * Opacity direct pe element, NU CSS var pe documentElement: o custom
+         * property schimbată pe root invalidează stilurile întregului document
+         * la fiecare frame de scrub — pe mobil asta făcea crossfade-ul choppy.
+         * Inline style pe un singur element = doar compositor, zero recalc.
+         */
+        if (curtainEl.value) curtainEl.value.style.opacity = String(p)
+        if (grainEl) grainEl.style.opacity = String(0.06 * (1 - p))
         // Flip cursor/navbar to white once the curtain is mostly drawn.
         cursorDark.value = p > 0.5
       },
@@ -154,9 +165,6 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   curtainCtx?.revert()
   cursorDark.value = false
-  if (typeof document !== 'undefined') {
-    document.documentElement.style.removeProperty('--page-curtain-opacity')
-  }
 })
 </script>
 
@@ -167,7 +175,7 @@ onBeforeUnmount(() => {
       sits behind every section (sections have transparent bg). Crossfades
       in via --page-curtain-opacity, which a ScrollTrigger above scrubs.
     -->
-    <div class="page-curtain" aria-hidden="true" />
+    <div ref="curtainEl" class="page-curtain" aria-hidden="true" />
 
     <HeroSection />
     <section
@@ -240,7 +248,8 @@ onBeforeUnmount(() => {
      shows as a visible seam between the two layers when the footer reveal
      starts pinning. */
   background: #000;
-  opacity: var(--page-curtain-opacity, 0);
+  /* Opacitatea e scrisă inline de ScrollTrigger (vezi onUpdate). */
+  opacity: 0;
   will-change: opacity;
 }
 

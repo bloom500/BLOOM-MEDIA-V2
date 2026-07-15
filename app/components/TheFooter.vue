@@ -135,6 +135,22 @@
   transform: translate3d(0, calc(-50% + 50% * var(--progress)), 0);
 }
 
+/*
+ * Mobil: reveal static, fără animație. --progress vine din bucla JS a
+ * StringTune, care pe mobil (scroll nativ) rămâne vizibil în urma
+ * scroll-ului → transformul „trage" după deget. Același pattern ca
+ * FooterReveal, care e și el static sub 768px.
+ */
+@media (max-width: 767px) {
+  .footer__inner {
+    transform: none;
+  }
+
+  .footer::after {
+    opacity: 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .footer__inner {
     transform: none;
