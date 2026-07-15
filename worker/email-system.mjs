@@ -37,7 +37,9 @@ export const T = {
   sans:      "'Geist', -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif",
 }
 
-export const BADGE_URL_DEFAULT = 'https://www.bloommedia.ro/feral-badge.png'
+// ?v= doar cache-bust pentru proxy-ul de imagini Gmail — crește-l la orice
+// schimbare a fișierului.
+export const BADGE_URL_DEFAULT = 'https://www.bloommedia.ro/feral-badge.png?v=2'
 
 export function esc(s) {
   return String(s ?? '')
