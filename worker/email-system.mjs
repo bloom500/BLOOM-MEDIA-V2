@@ -37,7 +37,7 @@ export const T = {
   sans:      "'Geist', -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif",
 }
 
-export const BADGE_URL_DEFAULT = 'https://bloommedia.ro/feral-badge.png'
+export const BADGE_URL_DEFAULT = 'https://www.bloommedia.ro/feral-badge.png'
 
 export function esc(s) {
   return String(s ?? '')
@@ -73,12 +73,12 @@ function emailLayout({ title, preheader, body }) {
 <style>
   /* Fonturile brandului — ignorate de Gmail (fallback system sans), încărcate
      de Apple Mail & co. Ambele subseturi, pentru diacriticele românești. */
-  @font-face { font-family:'Gloock'; font-style:normal; font-weight:400; src:url('https://bloommedia.ro/fonts/self/gloock-400-normal-latin.woff2') format('woff2'); unicode-range:U+0000-00FF,U+2013-2014,U+201C-201E; }
-  @font-face { font-family:'Gloock'; font-style:normal; font-weight:400; src:url('https://bloommedia.ro/fonts/self/gloock-400-normal-latin-ext.woff2') format('woff2'); unicode-range:U+0100-024F,U+0218-021B; }
-  @font-face { font-family:'Geist'; font-style:normal; font-weight:400; src:url('https://bloommedia.ro/fonts/self/geist-400-normal-latin.woff2') format('woff2'); unicode-range:U+0000-00FF,U+2013-2014,U+201C-201E; }
-  @font-face { font-family:'Geist'; font-style:normal; font-weight:400; src:url('https://bloommedia.ro/fonts/self/geist-400-normal-latin-ext.woff2') format('woff2'); unicode-range:U+0100-024F,U+0218-021B; }
-  @font-face { font-family:'Geist'; font-style:normal; font-weight:500; src:url('https://bloommedia.ro/fonts/self/geist-500-normal-latin.woff2') format('woff2'); unicode-range:U+0000-00FF,U+2013-2014,U+201C-201E; }
-  @font-face { font-family:'Geist'; font-style:normal; font-weight:500; src:url('https://bloommedia.ro/fonts/self/geist-500-normal-latin-ext.woff2') format('woff2'); unicode-range:U+0100-024F,U+0218-021B; }
+  @font-face { font-family:'Gloock'; font-style:normal; font-weight:400; src:url('https://www.bloommedia.ro/fonts/self/gloock-400-normal-latin.woff2') format('woff2'); unicode-range:U+0000-00FF,U+2013-2014,U+201C-201E; }
+  @font-face { font-family:'Gloock'; font-style:normal; font-weight:400; src:url('https://www.bloommedia.ro/fonts/self/gloock-400-normal-latin-ext.woff2') format('woff2'); unicode-range:U+0100-024F,U+0218-021B; }
+  @font-face { font-family:'Geist'; font-style:normal; font-weight:400; src:url('https://www.bloommedia.ro/fonts/self/geist-400-normal-latin.woff2') format('woff2'); unicode-range:U+0000-00FF,U+2013-2014,U+201C-201E; }
+  @font-face { font-family:'Geist'; font-style:normal; font-weight:400; src:url('https://www.bloommedia.ro/fonts/self/geist-400-normal-latin-ext.woff2') format('woff2'); unicode-range:U+0100-024F,U+0218-021B; }
+  @font-face { font-family:'Geist'; font-style:normal; font-weight:500; src:url('https://www.bloommedia.ro/fonts/self/geist-500-normal-latin.woff2') format('woff2'); unicode-range:U+0000-00FF,U+2013-2014,U+201C-201E; }
+  @font-face { font-family:'Geist'; font-style:normal; font-weight:500; src:url('https://www.bloommedia.ro/fonts/self/geist-500-normal-latin-ext.woff2') format('woff2'); unicode-range:U+0100-024F,U+0218-021B; }
   body { margin:0; padding:0; -webkit-text-size-adjust:100%; }
   @media (max-width: 620px) {
     .container { width:100% !important; }
