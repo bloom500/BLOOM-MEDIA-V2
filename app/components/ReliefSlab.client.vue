@@ -131,8 +131,15 @@ const RELIEF_SCENE_BG = 0xa8a6a2
 const RELIEF_SCENE_BG_CSS = `#${RELIEF_SCENE_BG.toString(16).padStart(6, '0')}`
 const reliefSlabCssVars = { '--relief-scene-bg': RELIEF_SCENE_BG_CSS }
 
-/** Dimensiune trail canvas — SketchSettings.dimensions [2048, 2048] din index.ts. */
-const TRAIL_CANVAS_SIZE = 2048
+/**
+ * Dimensiune trail canvas — SketchSettings.dimensions [2048, 2048] din index.ts.
+ * Pe mobil 1024: trail-ul e un gradient difuz, diferența nu se vede, dar
+ * upload-ul CanvasTexture pe frame scade de la 16MB la 4MB — competiția cu
+ * scroll-ul pe threadul de compositing era sursa principală de jank.
+ */
+function trailCanvasSize() {
+  return isMobileLayout ? 1024 : 2048
+}
 
 /**
  * Trail fade: fracțiune din canvas-ul precedent care rămâne la fiecare frame.
@@ -265,8 +272,8 @@ function configureTrailThreeTexture(tex) {
  */
 function ensureTrailLayer() {
   if (!renderer) return false
-  const bw = TRAIL_CANVAS_SIZE
-  const bh = TRAIL_CANVAS_SIZE
+  const bw = trailCanvasSize()
+  const bh = trailCanvasSize()
 
   if (trailLayer && trailLayer.canvas.width === bw && trailLayer.canvas.height === bh) {
     trailLayer.setFadeSpeed(TRAIL_FADE_ALPHA)
@@ -371,7 +378,7 @@ function paintTrail() {
   if (!ensureTrailLayer()) return
 
   const shouldPaint = updateTrailPaintTargetCss()
-  const bw = TRAIL_CANVAS_SIZE
+  const bw = trailCanvasSize()
   trailLayer.setCircleRadius(
     bw * (isTrailUserActiveNow() ? TRAIL_CIRCLE_RADIUS_MULT_MOUSE : TRAIL_CIRCLE_RADIUS_MULT_GHOST),
   )
@@ -758,12 +765,20 @@ function tick() {
    */
   if (typeof document !== 'undefined' && document.hidden) return
 
+  /*
+   * Pe mobil, doar partea scumpă (paint + upload textură trail) rulează la
+   * 30fps. Poziția legată de scroll și render-ul rulează la fiecare frame —
+   * vechiul skip total îngheța modelul la 30Hz în timp ce pagina scrolla la
+   * 60Hz, exact sacadarea raportată. Frame-urile fără paint sunt ieftine:
+   * textura nu se re-uploadează (needsUpdate rămâne false).
+   */
+  let paintThisFrame = true
   if (isMobileLayout) {
     frameSkip = (frameSkip + 1) % 2
-    if (frameSkip !== 0) return
+    paintThisFrame = frameSkip === 0
   }
 
-  paintTrail()
+  if (paintThisFrame) paintTrail()
 
   if (modelRoot && camera) {
     const scrollTarget = window.scrollY
@@ -786,7 +801,7 @@ function tick() {
   }
 
   if (renderer && scene && camera) {
-    if (trailTexture) trailTexture.needsUpdate = true
+    if (trailTexture && paintThisFrame) trailTexture.needsUpdate = true
     renderer.render(scene, camera)
   }
 }
