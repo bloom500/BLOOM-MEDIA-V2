@@ -158,40 +158,13 @@ img, video {
   max-width: 100%;
 }
 
-/* StringTune — reveal pe cuvinte legat de scroll progress (declaration etc.) */
-.-splitted:not([data-anim="surface-dissolve"]).-inview .-s-word {
-  --word-turn: calc(
-    (var(--word-index) - 3) /
-    var(--word-global-total)
-  );
-  --word-step: calc(1 / var(--word-global-total));
-  --word-progress: clamp(
-    0,
-    calc(
-      (var(--progress) - var(--word-turn)) /
-      var(--word-step)
-    ),
-    1
-  );
-
-  transform: translate3d(
-    0,
-    calc(100% - var(--word-progress) * 100%),
-    0
-  );
-  clip-path: inset(
-    -15% 0
-    calc(115% - var(--word-progress) * 130%)
-    0
-  );
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .-splitted:not([data-anim="surface-dissolve"]).-inview .-s-word {
-    transform: none !important;
-    clip-path: none !important;
-  }
-}
+/*
+ * ȘTERS: vechea regulă generică „reveal pe cuvinte legat de scroll progress"
+ * (.-splitted:not([data-anim=surface-dissolve]) .-s-word). Era scrisă pentru
+ * secțiunea `declaration` (arhivată), dar singurul element care o mai matchuia
+ * era hero__statement — și îi ascundea cuvintele cu index ≥ 3 („în sistem.")
+ * până creștea scroll-progress-ul. Hero-ul are propriul reveal stagger mai jos.
+ */
 
 section,
 section p,

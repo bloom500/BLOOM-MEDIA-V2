@@ -131,9 +131,19 @@ onMounted(async () => {
     const grainEl = document.querySelector<HTMLElement>('.faq__grain')
     ScrollTrigger.create({
       trigger: faqEndAnchor.value,
-      start: isMobile ? 'top 90%' : 'top 65%',
-      end: isMobile ? 'top -30%' : 'top 25%',
-      scrub: isMobile ? 1.8 : 0.6,
+      /*
+       * Start la intrarea anchor-ului în viewport (top 100%), nu mai târziu —
+       * altfel există o bandă de scroll în care titlul alb „Începem?" e deja
+       * vizibil jos în viewport peste fundalul deschis, înainte ca cortina să
+       * înceapă să se tragă (măsurat pe desktop: Contact intra la scrollY≈8150,
+       * cortina pornea abia la ≈8460; pe mobil la fel, cu start-ul vechi 90%).
+       * end la 50% ca fundalul să fie negru cât titlul e încă în treimea de
+       * jos. Scrub mic și pe mobil: 1.8 lăsa cortina cu ~2s în urma unui
+       * swipe rapid, exact fereastra în care textul alb stătea pe deschis.
+       */
+      start: 'top 100%',
+      end: 'top 50%',
+      scrub: isMobile ? 0.8 : 0.6,
       onUpdate: (self) => {
         const p = self.progress
         /*
