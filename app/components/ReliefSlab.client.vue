@@ -37,6 +37,8 @@ import {
   fract,
   length,
   pow,
+  sin,
+  sqrt,
   normalize,
   cross,
   dot,
@@ -164,8 +166,17 @@ const MODEL_ORIGINAL_OFFSET_Y = 2
 /** Ridică mesh-ul cu o fracțiune din înălțimea frustum-ului — acoperă banda sub navbar unde se vedea „golul”. */
 const RELIEF_TOP_EXTRA_LIFT_FRAC = 0.11
 
+/**
+ * Preview direcție dark (?dark în URL): portul lui blackRender de la IG —
+ * gamma-crush pe nivele (pow 5.5), tencuiala devine aproape neagră, reliefu'
+ * rămâne fantomatic. DOAR pentru evaluare vizuală: textul/navbar-ul NU sunt
+ * adaptate; dacă direcția place, flip-ul de UI e task separat.
+ */
+const RELIEF_DARK = typeof window !== 'undefined'
+  && new URLSearchParams(window.location.search).has('dark')
+
 /** Clear + scene.background + CSS wrapper/canvas — același hex ca _l0 vizual. */
-const RELIEF_SCENE_BG = 0xa8a6a2
+const RELIEF_SCENE_BG = RELIEF_DARK ? 0x0d0d0c : 0xa8a6a2
 const RELIEF_SCENE_BG_CSS = `#${RELIEF_SCENE_BG.toString(16).padStart(6, '0')}`
 const reliefSlabCssVars = { '--relief-scene-bg': RELIEF_SCENE_BG_CSS }
 
@@ -210,6 +221,24 @@ const FLUID_AMPLITUDE = 0.57
 const FLUID_MAGNITUDE = 1.2
 const FLUID_HUE_SHIFT = -0.52
 const FLUID_COLOR_RANGE = 2
+
+/**
+ * IG home: scrollExtrude — „fierberea” reliefului la scroll rapid: extrude-ul
+ * e preluat de un noise animat care mătură scena cât timp derulezi.
+ * Valorile noiseSize/speed/strength sunt din configul lor.
+ */
+const SCROLL_EXTRUDE_SPEED = 2
+const SCROLL_EXTRUDE_NOISE_SIZE = 7.77
+const SCROLL_EXTRUDE_STRENGTH = 1.02
+/** px de scroll/frame la care boil-ul e 100% activ. */
+const FAST_SCROLL_FULL_PX = 45
+/** Attack rapid, release lent (lerp/frame) — ca la ei: apare brusc, se stinge lin. */
+const FAST_SCROLL_ATTACK = 0.12
+const FAST_SCROLL_RELEASE = 0.045
+
+/** Granulație „tencuială” peste tot cadrul (IG: plaster.jpg; noi refolosim fbm-ul). */
+const GRAIN_STRENGTH = 0.35
+
 
 /** Ca positionNode: pos.z *= mix(0.03, 1., extrude) */
 const Z_EXTRUDE_MIN = 0.03
@@ -278,6 +307,17 @@ const uFlowFalloff = uniform(FLOW_FALLOFF_MOUSE)
 const uFlowAlpha = uniform(0)
 const uFlowDeltaMult = uniform(1)
 const uFlowTime = uniform(0)
+/** Compensare scroll la citirea frame-ului precedent — trail-ul rămâne PE relief (IG: uOffset). */
+const uFlowOffset = uniform(0)
+/** Scroll acumulat în unități viewport — ancorează noise-ul de boil pe conținut (IG: uScreenScroll). */
+const uScreenScroll = uniform(0)
+/** 0..1 — cât de „rapid” e scroll-ul; conduce boil-ul (IG: uFastScroll). */
+const uFastScroll = uniform(0)
+
+/** Noise-ul fbm partajat cu materialele relief (boil + granulație). */
+let noiseTexNodeShared = null
+let prevFlowScroll = 0
+let fastScrollLevel = 0
 
 /** Poziția netezită din frame-ul precedent (px CSS) — pentru velocitate. */
 const prevPaintCss = { x: 0, y: 0 }
@@ -435,7 +475,11 @@ function createFlowmap() {
   const flowFragment = Fn(() => {
     const uvv = uv()
     const dissipation = float(1).div(float(1).add(uFlowDeltaMult.mul(FLOW_FRICTION)))
-    const data = flowMapNode.sample(uvv).mul(dissipation)
+    /*
+     * Citirea frame-ului precedent e deplasată cu scroll-ul (IG: uv.y+=uOffset):
+     * pata revelată rămâne pe relief când derulezi, nu pe ecran.
+     */
+    const data = flowMapNode.sample(vec2(uvv.x, uvv.y.add(uFlowOffset))).mul(dissipation)
 
     const drift = vec2(0.01, 0.01).mul(uFlowTime)
     const noiseUv = uvv.mul(vec2(uFlowAspect, float(1)))
@@ -458,6 +502,7 @@ function createFlowmap() {
   flowQuad = new QuadMesh(mat)
 
   flowTexNode = texture(flowRtRead.texture)
+  noiseTexNodeShared = noiseNode
 }
 
 /** Rulează pass-ul de flowmap și face swap-ul ping-pong. */
@@ -570,6 +615,16 @@ function updateFlowmapInputs(deltaMs) {
 
   uFlowAlpha.value = shouldPaint ? 1 : 0
 
+  // Scroll → compensarea trail-ului + intensitatea boil-ului (attack/release asimetric)
+  const dScroll = scrollSmoothed - prevFlowScroll
+  prevFlowScroll = scrollSmoothed
+  uFlowOffset.value = dScroll / vh
+  uScreenScroll.value = scrollSmoothed / vh
+  const fastTarget = Math.min(Math.abs(dScroll) / FAST_SCROLL_FULL_PX, 1)
+  const fastK = fastTarget > fastScrollLevel ? FAST_SCROLL_ATTACK : FAST_SCROLL_RELEASE
+  fastScrollLevel += (fastTarget - fastScrollLevel) * fastK
+  uFastScroll.value = fastScrollLevel
+
   // Tap pe mobil: puls de magnitudine care decade — ștampila 2 (doar b/a)
   if (tapPulse > 1e-4) {
     uFlowVelocity2.value.set(tapPulse, tapPulse * 0.6)
@@ -644,15 +699,44 @@ function makeReliefMaterial(baseMap, emMap, _skinned, _morphTargets) {
     return mix(flow.b, flow.a, 0.5)
   }
 
+  /*
+   * Boil-ul de scroll (port getFastScrollNoise, doar componenta folosită):
+   * două sample-uri de noise care plutesc în sensuri opuse, proiectate pe un
+   * vector „de culoare” rotitor → benzi organice care fierb; circularIn la
+   * final. Noise-ul e ancorat de conținut prin uScreenScroll.
+   */
+  const boilExtrude = (uvScreen) => {
+    const t = uFlowTime.mul(SCROLL_EXTRUDE_SPEED)
+    const anchored = uvScreen.add(vec2(float(0), uScreenScroll))
+    const base = anchored.div(SCROLL_EXTRUDE_NOISE_SIZE)
+    const drift = t.mul(0.007)
+    const n1 = noiseTexNodeShared.sample(base.add(drift)).rgb
+    const n2 = noiseTexNodeShared.sample(base.sub(drift)).rgb
+    const n = n1.add(n2).div(2)
+    const cd = sin(vec3(t, t.add(1.047), t.add(2.094)))
+    const avg = abs(cd.x).add(abs(cd.y)).add(abs(cd.z)).div(3)
+    const colorDot = cd.div(max(avg, float(1e-4)))
+    const e = smoothstep(float(-1), float(1), dot(normalize(n.sub(0.5)), colorDot))
+    // circularIn(e) = 1 - sqrt(1 - e²)
+    return float(1).sub(sqrt(max(float(1).sub(e.mul(e)), float(0))))
+  }
+
+  /** extrude final: trail-ul, preluat de boil cât timp se derulează rapid. */
+  const combinedExtrude = (uvScreen) => {
+    const ex = flowExtrude(uvScreen)
+    const boil = boilExtrude(uvScreen).mul(SCROLL_EXTRUDE_STRENGTH)
+    return clamp(mix(ex, boil, uFastScroll), float(0), float(1))
+  }
+
   const positionNode = Fn(() => {
     const clipPre = cameraProjectionMatrix.mul(modelViewMatrix).mul(vec4(positionLocal, 1))
     const w = max(clipPre.w, epsW)
     const uvx = clipPre.x.div(w).mul(0.5).add(0.5)
     const uvy = oneF.sub(clipPre.y.div(w).mul(0.5).add(0.5))
     const uvScreen = vec2(uvx, uvy)
-    const ex = flowExtrude(uvScreen)
+    const ex = combinedExtrude(uvScreen)
     const lat = smoothstep(lat0, latF, uvScreen.x).mul(oneF.sub(smoothstep(lat1m, lat1, uvScreen.x)))
-    const extrude = clamp(ex, float(0), float(1)).mul(lat)
+    const extrude = ex.mul(lat)
     const zScale = mix(zMinF, oneF, extrude)
     return vec3(positionLocal.x, positionLocal.y, positionLocal.z.mul(zScale))
   })()
@@ -661,7 +745,7 @@ function makeReliefMaterial(baseMap, emMap, _skinned, _morphTargets) {
     /* `screenUV` (TSL / WebGPU) e deja aliniat la viewport ca flowmap-ul (Y de sus); fără `1-y` ca la gl_FragCoord. */
     const sv = screenUV
     const flow = flowTexNode.sample(sv)
-    const exf = clamp(mix(flow.b, flow.a, 0.5), float(0), float(1))
+    const exf = combinedExtrude(sv)
     const latf = smoothstep(lat0, latF, sv.x).mul(oneF.sub(smoothstep(lat1m, lat1, sv.x)))
     const extrude = exf.mul(latf)
     const tt1 = sRGBTransferOETF(map1.sample(uv()).rgb)
@@ -678,9 +762,36 @@ function makeReliefMaterial(baseMap, emMap, _skinned, _morphTargets) {
     const sh4 = mix(sh3, level4, smoothstep(float(0.6), float(0.8), extrude))
     const shade = mix(sh4, level5, smoothstep(float(0.8), float(1), extrude))
 
+    /*
+     * Granulație „tencuială” pe UV-urile bake-ului (IG: tPlaster la vPos/10).
+     * NU positionLocal în fragment — corupea build-ul nodurilor: tot mesh-ul
+     * ieșea gri uniform (fallback), fără nicio eroare în consolă.
+     */
+    const grain = noiseTexNodeShared.sample(uv().mul(5)).g.mul(0.5).add(0.75)
+    const shadeGrained = mix(shade, shade.mul(grain), GRAIN_STRENGTH)
+
+    /*
+     * ?dark — portul lui blackRender de la IG: pow(o·(|fluid|·0.0003)+o, 5.5),
+     * gamma-crush care lasă doar vârfurile de lumină; velocitatea flowmap-ului
+     * aprinde ușor zonele agitate.
+     */
+    /*
+     * blackRender-ul IG (pow(o,5.5)) iese argintiu la noi — bake-urile
+     * noastre sunt mult mai luminoase ca ale lor. Varianta noastră: gravură
+     * inversată — hârtia devine aproape neagră, crestăturile reliefului
+     * (umbrele) devin lumini; velocitatea flowmap-ului aprinde zonele agitate.
+     */
+    const shadeFinal = RELIEF_DARK
+      ? pow(float(1).sub(shadeGrained), 2.0)
+          .mul(float(1).add(length(flow.rg).mul(0.15)))
+          .add(0.012)
+      : shadeGrained
+
     /* Gradient radial de ecran (IG: gradient*0.7*gradientStrength). */
     const gradient = mix(float(1), float(0.5), length(sv.sub(vec2(0, 0.8))))
-    let color = vec3(shade, shade, shade).add(gradient.mul(0.7 * GRADIENT_STRENGTH))
+    const gradientAmount = RELIEF_DARK ? 0.15 : 1
+    let color = vec3(shadeFinal, shadeFinal, shadeFinal)
+      .add(gradient.mul(0.7 * GRADIENT_STRENGTH * gradientAmount))
 
     /*
      * Stratul cromatic IG: normala din derivate de ecran → fresnel mask,
