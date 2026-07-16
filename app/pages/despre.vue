@@ -13,8 +13,14 @@
 </template>
 
 <script setup lang="ts">
+import { onMounted, onUnmounted } from 'vue'
 import AboutSection from '~/components/AboutSection.vue'
 import TheFooter from '~/components/TheFooter.vue'
+
+// Pagină cu fundal închis → cursor alb, ca pe /servicii.
+const cursorDark = useState('cursorDark', () => false)
+onMounted(() => { cursorDark.value = true })
+onUnmounted(() => { cursorDark.value = false })
 
 useHead({
   title: 'Despre | Bloom Media',
