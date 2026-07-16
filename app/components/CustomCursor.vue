@@ -72,15 +72,20 @@ const cursorStyle = computed(() => {
 
 onMounted(() => {
   if (!import.meta.client) return
+  // Cursorul nativ se ascunde DOAR după ce componenta a montat și doar
+  // pentru pointer fin fără reduced-motion — dacă JS pică, cursorul rămâne.
   isDesktop.value = window.matchMedia('(pointer: fine)').matches
+    && !window.matchMedia('(prefers-reduced-motion: reduce)').matches
   if (!isDesktop.value) return
 
+  document.documentElement.classList.add('has-custom-cursor')
   window.addEventListener('mousemove', move, { passive: true })
   document.addEventListener('mouseover', onOver)
 })
 
 onUnmounted(() => {
   if (!import.meta.client) return
+  document.documentElement.classList.remove('has-custom-cursor')
   window.removeEventListener('mousemove', move)
   document.removeEventListener('mouseover', onOver)
 })
@@ -97,9 +102,8 @@ onUnmounted(() => {
 </template>
 
 <style>
-@media (pointer: fine) {
-  * { cursor: none !important; }
-}
+/* Clasa e pusă de componentă la mount — fără JS, cursorul nativ rămâne. */
+html.has-custom-cursor * { cursor: none !important; }
 
 .cursor {
   position: fixed;

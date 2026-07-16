@@ -69,6 +69,7 @@ useHead({
     { property: 'og:title',       content: 'Proces: Cum lucrăm | Bloom Media' },
     { property: 'og:description', content: 'De la audit gratuit la primul sistem live, în două săptămâni. Fiecare pas are o dată și un livrabil.' },
     { property: 'og:url',         content: 'https://bloommedia.ro/proces' },
+    { property: 'og:image',       content: 'https://bloommedia.ro/og-image.jpg' },
   ],
   link: [{ rel: 'canonical', href: 'https://bloommedia.ro/proces' }],
 })

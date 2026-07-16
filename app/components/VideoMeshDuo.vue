@@ -48,6 +48,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 type VideoEntry = { webm: string | null; mp4: string }
 const playlistA: VideoEntry[] = [
   { webm: '/videos/ad1section2.webm', mp4: '/videos/ad1section2.mp4' },
+  // webm: null intenționat — VP9 iese mai mare decât MP4-urile deja comprimate.
   { webm: null,                       mp4: '/videos/ad2section2.mp4' },
 ]
 const playlistB: VideoEntry[] = [

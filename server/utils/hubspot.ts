@@ -7,7 +7,8 @@ interface HubSpotContactData {
 }
 
 export async function createHubSpotContact(data: HubSpotContactData): Promise<void> {
-  const token = process.env.HUBSPOT_TOKEN
+  // Vercel are variabila sub numele HUBSPOT_API_KEY — acceptăm ambele.
+  const token = process.env.HUBSPOT_TOKEN || process.env.HUBSPOT_API_KEY
   if (!token) {
     console.warn('[hubspot] HUBSPOT_TOKEN not set — skipping')
     return

@@ -173,6 +173,28 @@
               </div>
             </div>
 
+            <!-- Honeypot anti-spam: invizibil pentru oameni -->
+            <input
+              v-model="form.company_website"
+              class="hp-field"
+              type="text"
+              name="company_website"
+              tabindex="-1"
+              autocomplete="off"
+              aria-hidden="true"
+            />
+
+            <!-- GDPR consent -->
+            <label class="cfg-consent">
+              <input v-model="form.consent" type="checkbox" required />
+              <span>
+                Sunt de acord cu prelucrarea datelor pentru pregătirea ofertei
+                și contactare, prin instrumentele noastre (email, CRM, măsurare
+                publicitară), conform
+                <NuxtLink to="/privacy-policy">politicii de confidențialitate</NuxtLink>.
+              </span>
+            </label>
+
             <p v-if="submitError" class="cfg-form-error" role="alert">{{ submitError }}</p>
 
             <div class="cfg-form-footer">
@@ -210,6 +232,7 @@
 import { ref, reactive, computed, nextTick, onMounted, onUnmounted } from 'vue'
 import { gsap } from 'gsap'
 import { categories, presets } from '~/lib/pricing'
+import { trackLead } from '~/composables/useAnalytics'
 
 // Force white cursor on dark background
 const cursorDark = useState('cursorDark', () => false)
@@ -222,7 +245,10 @@ useHead({
     { name: 'description', content: 'Meta & Google Ads, site-uri de conversie și agenți AI, prețuri transparente, ofertă fixă în 24h, fără contract pe termen lung.' },
     { property: 'og:title', content: 'Servicii: Sisteme de Creștere cu AI | Bloom Media' },
     { property: 'og:description', content: 'Ads, site-uri de conversie și agenți AI. Prețuri transparente, zero surprize.' },
+    { property: 'og:url',   content: 'https://bloommedia.ro/servicii' },
+    { property: 'og:image', content: 'https://bloommedia.ro/og-image.jpg' },
   ],
+  link: [{ rel: 'canonical', href: 'https://bloommedia.ro/servicii' }],
   htmlAttrs: { 'data-page': 'servicii' },
   bodyAttrs: { style: 'background: #000000 !important;' },
 })
@@ -232,10 +258,20 @@ const selIds   = reactive(new Set<string>())
 const openCats = reactive<Record<string, boolean>>(
   Object.fromEntries(categories.map((c, i) => [c.id, i === 0]))
 )
-const form     = reactive({ businessName: '', yourName: '', email: '', phone: '', objectives: '' })
+const form     = reactive({
+  businessName: '', yourName: '', email: '', phone: '', objectives: '',
+  consent: false,
+  // Honeypot — invizibil pentru oameni (CSS .hp-field); completat = bot.
+  company_website: '',
+})
 const isSubmitting = ref(false)
 const submitted    = ref(false)
 const submitError  = ref('')
+
+// Aceleași regex-uri ca în audit.vue și lead-guard.ts — un typo în email
+// nu mai trece cu ecran de succes.
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
+const PHONE_RE = /^[+\d][\d\s().-]{7,}$/
 
 function toggle(id: string)    { selIds.has(id) ? selIds.delete(id) : selIds.add(id) }
 
@@ -304,7 +340,13 @@ const monthlyTotal = computed(() =>
 const oneTimeTotal = computed(() =>
   allItems.reduce((s, i) => selIds.has(i.id) && i.oneTime ? s + i.price : s, 0)
 )
-const formValid    = computed(() => form.businessName.trim() && form.yourName.trim() && form.email.trim() && form.phone.trim())
+const formValid    = computed(() =>
+  form.businessName.trim()
+  && form.yourName.trim()
+  && EMAIL_RE.test(form.email.trim())
+  && PHONE_RE.test(form.phone.trim())
+  && form.consent
+)
 
 function getSelectedServiceNames(): string[] {
   return categories.flatMap(c => c.items).filter(i => selIds.has(i.id)).map(i => i.name)
@@ -314,6 +356,9 @@ async function handleSubmit() {
   if (!formValid.value || isSubmitting.value) return
   isSubmitting.value = true
   submitError.value = ''
+
+  // Același eventId merge la Meta Pixel (browser) și la CAPI (server) — dedup.
+  const eventId = crypto.randomUUID()
 
   try {
     const res = await fetch('/api/leads', {
@@ -328,10 +373,14 @@ async function handleSubmit() {
         selectedServices: getSelectedServiceNames(),
         monthlyTotal:     monthlyTotal.value,
         oneTimeTotal:     oneTimeTotal.value,
+        consent:          form.consent,
+        company_website:  form.company_website,
+        eventId,
       }),
     })
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     submitted.value = true
+    trackLead(eventId)
   } catch {
     submitError.value = 'Nu am putut trimite cererea. Încearcă din nou sau scrie la hello@bloommedia.ro.'
   } finally {
@@ -1073,6 +1122,30 @@ async function handleSubmit() {
   font-size: 0.78rem;
   color: #e07070;
   line-height: 1.5;
+}
+
+.cfg-consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  line-height: 1.6;
+  color: rgba(237, 235, 230, 0.6);
+  cursor: pointer;
+  margin-top: 1.4rem;
+}
+
+.cfg-consent input {
+  margin-top: 0.15rem;
+  accent-color: #EDEBE6;
+  cursor: pointer;
+}
+
+.cfg-consent a {
+  color: rgba(237, 235, 230, 0.9);
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .cfg-success {

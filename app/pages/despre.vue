@@ -27,6 +27,7 @@ useHead({
     { property: 'og:title',       content: 'Despre Bloom Media' },
     { property: 'og:description', content: 'Strategie, onestitate și rezultate măsurabile. Aflați cum lucrăm și ce ne diferențiază.' },
     { property: 'og:url',         content: 'https://bloommedia.ro/despre' },
+    { property: 'og:image',       content: 'https://bloommedia.ro/og-image.jpg' },
     { name: 'robots',             content: 'index, follow' },
   ],
   link: [{ rel: 'canonical', href: 'https://bloommedia.ro/despre' }],

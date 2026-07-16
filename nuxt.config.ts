@@ -8,9 +8,30 @@ const appManifestShim = fileURLToPath(
 export default defineNuxtConfig({
   compatibilityDate: '2024-11-01',
   devtools: { enabled: true },
+  runtimeConfig: {
+    public: {
+      // GA4 measurement ID (G-XXXX). Gol = GA4 dezactivat; Pixel-ul Meta
+      // are ID-ul hardcodat în useAnalytics.ts. Setează NUXT_PUBLIC_GA_ID.
+      gaId: '',
+    },
+  },
+  // Headere de securitate pe tot site-ul. CSP lipsește deliberat: JSON-LD
+  // inline + hydration Nuxt cer nonce-uri — proiect separat, nu un header.
+  routeRules: {
+    '/**': {
+      headers: {
+        'X-Frame-Options':           'DENY',
+        'X-Content-Type-Options':    'nosniff',
+        'Referrer-Policy':           'strict-origin-when-cross-origin',
+        'Permissions-Policy':        'camera=(), microphone=(), geolocation=()',
+        'Strict-Transport-Security': 'max-age=63072000; includeSubDomains; preload',
+      },
+    },
+  },
   app: {
     head: {
       link: [
+        { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
         // Fonturile sunt self-hosted (@font-face în assets/css/fonts.css,
         // fișiere în /public/fonts/self) — fără CDN-uri Google/Bunny (GDPR).
         // Preload doar fonturile critice above-the-fold (hero + body, latin +

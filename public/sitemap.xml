@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Static: 7 URL-uri, se schimbă rar. /portofoliu e noindex → exclus. -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://bloommedia.ro/</loc><priority>1.0</priority><changefreq>weekly</changefreq></url>
+  <url><loc>https://bloommedia.ro/servicii</loc><priority>0.9</priority><changefreq>weekly</changefreq></url>
+  <url><loc>https://bloommedia.ro/audit</loc><priority>0.9</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://bloommedia.ro/proces</loc><priority>0.7</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://bloommedia.ro/despre</loc><priority>0.7</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://bloommedia.ro/privacy-policy</loc><priority>0.2</priority><changefreq>yearly</changefreq></url>
+  <url><loc>https://bloommedia.ro/termeni</loc><priority>0.2</priority><changefreq>yearly</changefreq></url>
+</urlset>

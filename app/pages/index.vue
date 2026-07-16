@@ -3,7 +3,7 @@ import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { faqItems } from '~/lib/pricing'
 
 useHead({
-  title: 'Bloom Media, AI Growth Systems | Ads, Site-uri și Agenți AI',
+  title: 'Bloom Media — AI Growth Systems | Ads, Site-uri și Agenți AI',
   meta: [
     {
       name: 'description',

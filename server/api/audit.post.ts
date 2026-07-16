@@ -1,9 +1,9 @@
 import { randomUUID } from 'node:crypto'
-import { defineEventHandler, readBody, createError } from 'h3'
+import { defineEventHandler, readBody, createError, getRequestIP, getRequestHeader, getCookie } from 'h3'
 import { sendMetaLeadEvent } from '../utils/meta-capi'
 import { createHubSpotContact } from '../utils/hubspot'
 import { insertLead } from '../utils/supabase'
-import { rateLimit, clean, escapeHtml, requireContact, sendEmail } from '../utils/lead-guard'
+import { rateLimit, checkOrigin, isSpam, clean, escapeHtml, requireContact, sendEmail } from '../utils/lead-guard'
 
 const AGENCY_EMAIL = 'bloommediacorporation@gmail.com'
 
@@ -36,9 +36,13 @@ async function notifyAuditWorker(lead: {
 }
 
 export default defineEventHandler(async (event) => {
+  checkOrigin(event)
   rateLimit(event)
 
   const body = await readBody(event)
+
+  // Honeypot: bot → succes fals, zero procesare.
+  if (isSpam(body)) return { ok: true }
 
   const name    = clean(body?.name,    120)
   const email   = clean(body?.email,   254)
@@ -46,13 +50,33 @@ export default defineEventHandler(async (event) => {
   const website = clean(body?.website, 300)
   const social  = clean(body?.social,  300)
   const message = clean(body?.message, 4000)
+  const eventId = clean(body?.eventId,  64)
 
   if (!name || !email || !phone) {
     throw createError({ statusCode: 400, message: 'Câmpurile obligatorii lipsesc.' })
   }
+  if (body?.consent !== true) {
+    throw createError({ statusCode: 400, message: 'Lipsește acordul pentru prelucrarea datelor.' })
+  }
   requireContact(email, phone)
 
   const leadId = randomUUID()
+
+  // Supabase e sursa de adevăr: dacă persist-ul eșuează, utilizatorul NU
+  // primește ecran de succes — restul integrărilor sunt best-effort.
+  const persisted = await insertLead({
+    source:  'audit',
+    lead_id: leadId,
+    name,
+    email,
+    phone,
+    website: website || null,
+    social:  social  || null,
+    message: message || null,
+  })
+  if (persisted === 'failed') {
+    throw createError({ statusCode: 500, message: 'Nu am putut înregistra cererea. Încearcă din nou sau scrie la hello@bloommedia.ro.' })
+  }
 
   await Promise.allSettled([
     // ── VPS audit worker: FERAL preliminary report (202 = handshake) ─────
@@ -81,23 +105,17 @@ export default defineEventHandler(async (event) => {
       source:  'audit-page',
     }),
 
-    // ── Meta CAPI: Lead event ────────────────────────────────────────────
+    // ── Meta CAPI: Lead event (dedup cu Pixel prin eventId comun) ───────
     sendMetaLeadEvent({
       name,
       email,
       phone,
       sourceUrl: 'https://bloommedia.ro/audit',
-    }),
-
-    // ── Supabase: persist lead ───────────────────────────────────────────
-    insertLead({
-      source:  'audit',
-      name,
-      email,
-      phone,
-      website: website || null,
-      social:  social  || null,
-      message: message || null,
+      eventId:   eventId || undefined,
+      clientIp:  getRequestIP(event, { xForwardedFor: true }),
+      userAgent: getRequestHeader(event, 'user-agent'),
+      fbp:       getCookie(event, '_fbp'),
+      fbc:       getCookie(event, '_fbc'),
     }),
   ])
 

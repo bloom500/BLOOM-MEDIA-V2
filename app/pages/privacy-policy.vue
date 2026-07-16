@@ -121,9 +121,13 @@ useHead({
           <p>Nu vindem datele tale. Putem transmite date, strict în limita necesarului, către:</p>
           <ul>
             <li>
-              <strong>Furnizori de servicii tehnice</strong> (hosting, CRM, automatizări):
-              ex. Make (Celonis SE), Google LLC, Meta Platforms Ireland Ltd, cu care avem
-              contracte de prelucrare a datelor (DPA) în conformitate cu GDPR.
+              <strong>Furnizori de servicii tehnice</strong>, cu care avem contracte de
+              prelucrare a datelor (DPA) în conformitate cu GDPR:
+              Vercel Inc. (găzduire site), Resend Inc. (trimitere email),
+              HubSpot Ireland Ltd (CRM), Supabase Inc. (stocare lead-uri),
+              Meta Platforms Ireland Ltd (măsurare publicitară, cu acordul tău),
+              Google LLC (analiză, cu acordul tău), plus infrastructura proprie
+              Bloom (server european pe care rulează analiza automată a auditului).
             </li>
             <li>
               <strong>Autorități publice</strong>, exclusiv când suntem obligați prin lege.

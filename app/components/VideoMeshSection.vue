@@ -38,6 +38,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 const playlist: Array<{ webm: string | null; mp4: string }> = [
   { webm: '/videos/ad1demo.webm', mp4: '/videos/ad1demo.mp4' },
   { webm: '/videos/ad2demo.webm', mp4: '/videos/ad2demo.mp4' },
+  // webm: null intenționat — VP9 iese mai mare decât MP4-ul deja comprimat.
   { webm: null,                   mp4: '/videos/ad3demo.mp4' },
   { webm: '/videos/ad4demo.webm', mp4: '/videos/ad4demo.mp4' },
 ]

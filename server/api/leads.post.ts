@@ -1,39 +1,65 @@
-import { defineEventHandler, readBody, createError } from 'h3'
+import { randomUUID } from 'node:crypto'
+import { defineEventHandler, readBody, createError, getRequestIP, getRequestHeader, getCookie } from 'h3'
 import { sendMetaLeadEvent } from '../utils/meta-capi'
 import { createHubSpotContact } from '../utils/hubspot'
 import { insertLead } from '../utils/supabase'
-import { rateLimit, clean, escapeHtml, requireContact, sendEmail } from '../utils/lead-guard'
+import { rateLimit, checkOrigin, isSpam, clean, escapeHtml, requireContact, sendEmail } from '../utils/lead-guard'
 
 const AGENCY_EMAIL = 'bloommediacorporation@gmail.com'
 
 export default defineEventHandler(async (event) => {
+  checkOrigin(event)
   rateLimit(event)
 
   const body = await readBody(event)
+
+  // Honeypot: bot → succes fals, zero procesare.
+  if (isSpam(body)) return { ok: true }
 
   const businessName = clean(body?.businessName, 160)
   const yourName     = clean(body?.yourName,     120)
   const email        = clean(body?.email,        254)
   const phone        = clean(body?.phone,         40)
   const objectives   = clean(body?.objectives,  4000)
+  const eventId      = clean(body?.eventId,       64)
 
   const selectedServices = Array.isArray(body?.selectedServices)
     ? body.selectedServices.slice(0, 30).map((s: unknown) => clean(s, 80)).filter(Boolean)
     : []
 
   const monthlyTotal = Number.isFinite(Number(body?.monthlyTotal)) ? Number(body.monthlyTotal) : 0
+  const oneTimeTotal = Number.isFinite(Number(body?.oneTimeTotal)) ? Number(body.oneTimeTotal) : 0
 
   if (!businessName || !yourName || !email || !phone) {
     throw createError({ statusCode: 400, message: 'Câmpurile obligatorii lipsesc.' })
   }
+  if (body?.consent !== true) {
+    throw createError({ statusCode: 400, message: 'Lipsește acordul pentru prelucrarea datelor.' })
+  }
   requireContact(email, phone)
+
+  // Supabase primul — sursa de adevăr; vezi audit.post.ts pentru raționament.
+  const persisted = await insertLead({
+    source:            'configurator',
+    lead_id:           randomUUID(),
+    name:              yourName,
+    email,
+    phone,
+    message:           objectives || null,
+    selected_services: selectedServices,
+    monthly_total:     monthlyTotal,
+    one_time_total:    oneTimeTotal,
+  })
+  if (persisted === 'failed') {
+    throw createError({ statusCode: 500, message: 'Nu am putut înregistra cererea. Încearcă din nou sau scrie la hello@bloommedia.ro.' })
+  }
 
   await Promise.allSettled([
     // ── Resend: agency notification ──────────────────────────────────────
     sendEmail({
       to:      AGENCY_EMAIL,
       subject: `[Configurator] Cerere nouă de la ${yourName} — ${businessName}`,
-      html:    buildAgencyEmail({ businessName, yourName, email, phone, objectives, selectedServices, monthlyTotal }),
+      html:    buildAgencyEmail({ businessName, yourName, email, phone, objectives, selectedServices, monthlyTotal, oneTimeTotal }),
     }),
 
     // ── Resend: client confirmation ──────────────────────────────────────
@@ -51,23 +77,17 @@ export default defineEventHandler(async (event) => {
       source: 'configurator',
     }),
 
-    // ── Meta CAPI: Lead event ────────────────────────────────────────────
+    // ── Meta CAPI: Lead event (dedup cu Pixel prin eventId comun) ───────
     sendMetaLeadEvent({
       name:      yourName,
       email,
       phone,
       sourceUrl: 'https://bloommedia.ro/servicii',
-    }),
-
-    // ── Supabase: persist lead ───────────────────────────────────────────
-    insertLead({
-      source:            'configurator',
-      name:              yourName,
-      email,
-      phone,
-      message:           objectives || null,
-      selected_services: selectedServices,
-      monthly_total:     monthlyTotal,
+      eventId:   eventId || undefined,
+      clientIp:  getRequestIP(event, { xForwardedFor: true }),
+      userAgent: getRequestHeader(event, 'user-agent'),
+      fbp:       getCookie(event, '_fbp'),
+      fbc:       getCookie(event, '_fbc'),
     }),
   ])
 
@@ -77,17 +97,18 @@ export default defineEventHandler(async (event) => {
 // ── Email templates ──────────────────────────────────────────────────────────
 function buildAgencyEmail(d: {
   businessName: string; yourName: string; email: string; phone: string
-  objectives: string; selectedServices: string[]; monthlyTotal: number
+  objectives: string; selectedServices: string[]; monthlyTotal: number; oneTimeTotal: number
 }) {
   const services = d.selectedServices.length ? d.selectedServices.join(', ') : '—'
   const rows = [
-    ['Firmă',      d.businessName],
-    ['Nume',       d.yourName],
-    ['Email',      d.email],
-    ['Telefon',    d.phone],
-    ['Servicii',   services],
-    ['Total/lună', d.monthlyTotal ? `€${d.monthlyTotal}` : '—'],
-    ['Obiective',  d.objectives || '—'],
+    ['Firmă',          d.businessName],
+    ['Nume',           d.yourName],
+    ['Email',          d.email],
+    ['Telefon',        d.phone],
+    ['Servicii',       services],
+    ['Total/lună',     d.monthlyTotal ? `€${d.monthlyTotal}` : '—'],
+    ['Setup one-time', d.oneTimeTotal ? `€${d.oneTimeTotal}` : '—'],
+    ['Obiective',      d.objectives || '—'],
   ]
   const trs = rows.map(([k, v]) =>
     `<tr><td style="padding:6px 12px;color:#9A9590;width:110px">${k}</td><td style="padding:6px 12px;color:#1A1814">${escapeHtml(String(v))}</td></tr>`

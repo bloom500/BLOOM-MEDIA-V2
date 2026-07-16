@@ -2,7 +2,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import type { H3Event } from 'h3'
-import { rateLimit, clean, escapeHtml, requireContact } from '../server/utils/lead-guard.ts'
+import { rateLimit, checkOrigin, isSpam, clean, escapeHtml, requireContact } from '../server/utils/lead-guard.ts'
 
 // Event minimal — getRequestIP citește headerele, context.clientAddress și socket-ul.
 const eventFrom = (ip: string) =>
@@ -21,6 +21,28 @@ test('rateLimit numără per IP, nu global', () => {
   const a = eventFrom('10.0.0.2')
   for (let i = 0; i < 5; i++) rateLimit(a)
   rateLimit(eventFrom('10.0.0.3')) // IP nou: nu trebuie să arunce
+})
+
+test('checkOrigin respinge Origin străin, acceptă al nostru și absența lui', () => {
+  const eventWithOrigin = (origin?: string) =>
+    ({
+      context: {},
+      node: { req: { headers: origin ? { origin } : {}, socket: { remoteAddress: '10.0.0.9' } } },
+    }) as unknown as H3Event
+
+  assert.throws(() => checkOrigin(eventWithOrigin('https://evil.example')), (e: any) => e.statusCode === 403)
+  checkOrigin(eventWithOrigin('https://bloommedia.ro'))       // nu aruncă
+  checkOrigin(eventWithOrigin('https://www.bloommedia.ro'))   // nu aruncă
+  checkOrigin(eventWithOrigin('http://localhost:3000'))       // dev: nu aruncă
+  checkOrigin(eventWithOrigin('https://preview-abc.vercel.app')) // preview: nu aruncă
+  checkOrigin(eventWithOrigin())                              // fără header: nu aruncă
+})
+
+test('isSpam detectează honeypot-ul completat', () => {
+  assert.equal(isSpam({ company_website: 'http://spam.example' }), true)
+  assert.equal(isSpam({ company_website: '' }), false)
+  assert.equal(isSpam({ name: 'Ana' }), false)
+  assert.equal(isSpam(null), false)
 })
 
 test('escapeHtml neutralizează markup-ul injectat în email', () => {

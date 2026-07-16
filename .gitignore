@@ -61,3 +61,5 @@ public/fonts/1.png
 /public/models/source/
 
 worker/jobs/
+.vercel
+.env*

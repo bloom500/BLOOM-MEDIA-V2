@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, reactive, computed } from 'vue'
+import { trackLead } from '~/composables/useAnalytics'
 
 useHead({
   title: 'Audit Gratuit | Bloom Media',
@@ -11,8 +12,9 @@ useHead({
     { property: 'og:title',       content: 'Audit Gratuit | Bloom Media' },
     { property: 'og:description', content: 'Analiză gratuită a prezenței tale digitale. Fără obligații.' },
     { property: 'og:url',         content: 'https://bloommedia.ro/audit' },
-    { rel: 'canonical',           href: 'https://bloommedia.ro/audit' },
+    { property: 'og:image',       content: 'https://bloommedia.ro/og-image.jpg' },
   ],
+  link: [{ rel: 'canonical', href: 'https://bloommedia.ro/audit' }],
 })
 
 // ── Endpoint ────────────────────────────────────────────────────────────────
@@ -27,6 +29,8 @@ const form = reactive({
   social:  '',
   message: '',
   consent: false,
+  // Honeypot — invizibil pentru oameni (CSS .hp-field); completat = bot.
+  company_website: '',
 })
 
 const isSubmitting = ref(false)
@@ -66,6 +70,9 @@ async function handleSubmit() {
   isSubmitting.value = true
   error.value = ''
 
+  // Același eventId merge la Meta Pixel (browser) și la CAPI (server) — dedup.
+  const eventId = crypto.randomUUID()
+
   try {
     const res = await fetch(WEBHOOK_URL, {
       method: 'POST',
@@ -77,12 +84,14 @@ async function handleSubmit() {
         website: form.website.trim() || null,
         social:  form.social.trim()  || null,
         message: form.message.trim() || null,
-        source:  'audit-page',
-        sentAt:  new Date().toISOString(),
+        consent: form.consent,
+        company_website: form.company_website,
+        eventId,
       }),
     })
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     submitted.value = true
+    trackLead(eventId)
   } catch {
     error.value = 'Nu am putut trimite cererea. Încearcă din nou sau scrie la hello@bloommedia.ro.'
   } finally {
@@ -238,12 +247,24 @@ async function handleSubmit() {
             />
           </div>
 
+          <!-- Honeypot anti-spam: invizibil pentru oameni -->
+          <input
+            v-model="form.company_website"
+            class="hp-field"
+            type="text"
+            name="company_website"
+            tabindex="-1"
+            autocomplete="off"
+            aria-hidden="true"
+          />
+
           <!-- GDPR consent -->
           <label class="audit__consent">
             <input v-model="form.consent" type="checkbox" required />
             <span>
-              Sunt de acord ca datele mele să fie folosite pentru pregătirea
-              auditului, conform
+              Sunt de acord cu prelucrarea datelor pentru pregătirea auditului
+              și contactare, prin instrumentele noastre (email, CRM, măsurare
+              publicitară), conform
               <NuxtLink to="/privacy-policy">politicii de confidențialitate</NuxtLink>.
             </span>
           </label>
@@ -262,8 +283,8 @@ async function handleSubmit() {
           </button>
 
           <p class="audit__legal">
-            Datele tale sunt folosite exclusiv pentru a pregăti auditul.
-            Nu trimitem spam.
+            Datele tale sunt folosite pentru audit și pentru a te contacta.
+            Nu le vindem și nu trimitem spam.
           </p>
         </form>
       </Transition>

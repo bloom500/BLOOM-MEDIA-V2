@@ -24,7 +24,7 @@
  *   FROM_EMAIL           — default Bloom Media <contact@bloommedia.ro>
  */
 import http from 'node:http'
-import { readFileSync, mkdirSync, writeFileSync } from 'node:fs'
+import { readFileSync, mkdirSync, writeFileSync, readdirSync, statSync, unlinkSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -49,9 +49,81 @@ const MAX_PER_DOMAIN   = 3            // audituri / domeniu / 24h
 const JOB_TIMEOUT_MS   = 5 * 60e3     // cap dur pe un audit (FERAL inclus)
 const MAX_REPORT_CHARS = 20_000       // cap pe output înainte de email/artefact
 
+// Supabase (opțional): PATCH pe status-ul lead-ului + recovery poll pentru
+// joburile pierdute (Vercel n-a ajuns la worker / worker era jos). Cheia
+// trebuie scoped la UPDATE/SELECT pe tabela leads.
+const SUPABASE_URL = (process.env.SUPABASE_URL || '').replace(/\/$/, '')
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+const JOB_RETENTION_MS = 30 * 24 * 3600e3   // GDPR: artefactele cu PII se șterg după 30 zile
+const RECOVERY_POLL_MS = 10 * 60e3          // re-preia lead-uri 'received' mai vechi de 10 min
+
 if (!SECRET) { console.error('[audit-worker] AUDIT_WORKER_SECRET missing'); process.exit(1) }
 if (!RESEND_KEY) console.warn('[audit-worker] RESEND_API_KEY missing — reports will only be logged')
 mkdirSync(JOBS_DIR, { recursive: true })
+
+// ── Retenție artefacte: șterge joburile mai vechi de 30 zile ────────────────
+function cleanOldJobs() {
+  try {
+    const cutoff = Date.now() - JOB_RETENTION_MS
+    for (const f of readdirSync(JOBS_DIR)) {
+      const p = join(JOBS_DIR, f)
+      if (statSync(p).mtimeMs < cutoff) unlinkSync(p)
+    }
+  } catch (err) {
+    console.error('[audit-worker] job cleanup failed:', err)
+  }
+}
+cleanOldJobs()
+setInterval(cleanOldJobs, 24 * 3600e3).unref()
+
+// ── Supabase: status pe lead + recovery poll ─────────────────────────────────
+async function patchLeadStatus(leadId, status) {
+  if (!SUPABASE_URL || !SUPABASE_KEY || !leadId) return
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/leads?lead_id=eq.${leadId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Prefer': 'return=minimal',
+      },
+      body: JSON.stringify({ status }),
+    })
+    if (!res.ok) console.error('[audit-worker] supabase patch failed:', res.status, await res.text())
+  } catch (err) {
+    console.error('[audit-worker] supabase patch error:', err)
+  }
+}
+
+/**
+ * Plasa de siguranță: lead-urile de audit rămase pe 'received' (worker jos,
+ * queue full, notify eșuat pe Vercel) sunt re-preluate de aici. Le marcăm
+ * 'audit_queued' ÎNAINTE de enqueue ca să nu fie luate de două ori.
+ */
+async function recoverLostLeads() {
+  if (!SUPABASE_URL || !SUPABASE_KEY) return
+  try {
+    const olderThan = new Date(Date.now() - RECOVERY_POLL_MS).toISOString()
+    const q = `${SUPABASE_URL}/rest/v1/leads` +
+      `?source=eq.audit&status=eq.received&created_at=lt.${olderThan}` +
+      `&select=lead_id,name,email,phone,website,social,message&limit=5`
+    const res = await fetch(q, {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` },
+    })
+    if (!res.ok) return console.error('[audit-worker] recovery query failed:', res.status)
+    for (const row of await res.json()) {
+      if (!(row.website || row.social)) { await patchLeadStatus(row.lead_id, 'no_target'); continue }
+      if (queue.length >= MAX_QUEUE) continue
+      await patchLeadStatus(row.lead_id, 'audit_queued')
+      console.log(`[audit-worker] recovered lost lead ${row.lead_id}`)
+      enqueue({ leadId: row.lead_id, ...row })
+    }
+  } catch (err) {
+    console.error('[audit-worker] recovery error:', err)
+  }
+}
+setInterval(recoverLostLeads, RECOVERY_POLL_MS).unref()
 
 // ── Statistici (în memorie; se resetează la restart — suficient pt v1) ──────
 const stats = {
@@ -250,6 +322,7 @@ async function runAudit(lead) {
     )
     artifact.status = 'done'
     stats.done++
+    patchLeadStatus(lead.leadId, 'audit_done')
     console.log(`[audit-worker] done ${sessionId} in ${Date.now() - t0}ms`)
   } catch (err) {
     const message = String(err?.message || err)
@@ -257,6 +330,7 @@ async function runAudit(lead) {
     artifact.error = message
     stats.failed++
     stats.lastError = { at: new Date().toISOString(), sessionId, message }
+    patchLeadStatus(lead.leadId, 'audit_failed')
     console.error(`[audit-worker] failed ${sessionId}:`, message)
     // Raportul brut (dacă există) ajunge tot la agenție — nimic nu se pierde.
     artifact.emailStatus = await sendAgencyEmail(
@@ -305,6 +379,8 @@ const server = http.createServer((req, res) => {
     try { lead = JSON.parse(body) } catch { res.writeHead(400); return res.end() }
     if (!lead?.name || !lead?.email || !(lead.website || lead.social)) {
       // Fără site și fără social nu avem ce audita — confirmăm dar nu rulăm.
+      // Marcăm status-ul ca recovery poll-ul să nu-l tot ia la rând.
+      patchLeadStatus(lead?.leadId, 'no_target')
       res.writeHead(204); return res.end()
     }
 
@@ -326,6 +402,7 @@ const server = http.createServer((req, res) => {
     stats.accepted++
     res.writeHead(202, { 'Content-Type': 'application/json' })
     res.end('{"accepted":true}')
+    patchLeadStatus(lead.leadId, 'audit_queued')
     enqueue(lead)
   })
 })

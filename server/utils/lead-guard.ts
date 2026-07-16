@@ -1,6 +1,32 @@
-import { createError, getRequestIP, type H3Event } from 'h3'
+import { createError, getRequestIP, getRequestHeader, type H3Event } from 'h3'
 
 const FROM_EMAIL = 'Bloom Media <contact@bloommedia.ro>'
+
+// Origin-uri din care acceptăm POST-uri de formular. Absența headerului e
+// permisă (curl/monitoare); un Origin străin prezent = spam cross-site → 403.
+const ALLOWED_ORIGINS = [
+  /^https:\/\/(www\.)?bloommedia\.ro$/,
+  /^https?:\/\/localhost(:\d+)?$/,
+  /^https:\/\/[\w-]+\.vercel\.app$/,
+]
+
+/** Aruncă 403 dacă cererea vine dintr-un Origin care nu e al nostru. */
+export function checkOrigin(event: H3Event) {
+  const origin = getRequestHeader(event, 'origin')
+  if (origin && !ALLOWED_ORIGINS.some(re => re.test(origin))) {
+    throw createError({ statusCode: 403, message: 'Origin refuzat.' })
+  }
+}
+
+/**
+ * Honeypot: câmpul `company_website` e invizibil pentru oameni (CSS), deci
+ * orice valoare în el = bot. Rutele răspund cu succes fals ca să nu dea
+ * indicii botului.
+ */
+export function isSpam(body: unknown): boolean {
+  const hp = (body as Record<string, unknown> | null)?.company_website
+  return typeof hp === 'string' && hp.trim().length > 0
+}
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
 const PHONE_RE = /^[+()\d][\d\s.\-()]{6,}$/

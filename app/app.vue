@@ -16,6 +16,8 @@
   <FixedServicesCta />
 
   <CustomCursor />
+
+  <ConsentBanner />
 </template>
 
 <script setup>
@@ -24,7 +26,7 @@ import { useRoute } from 'vue-router'
 import CustomCursor from '~/components/CustomCursor.vue'
 import FixedServicesCta from '~/components/FixedServicesCta.vue'
 import SiteBackground3d from '~/components/SiteBackground3d.vue'
-import { initStringTune, getStringTune, refreshStringTune } from '~/lib/stringtune/client'
+import { initStringTune, refreshStringTune } from '~/lib/stringtune/client'
 // useViewportHeight kept available but currently unused — see note below.
 // import { useViewportHeight } from '~/composables/useViewportHeight'
 
@@ -60,8 +62,6 @@ onMounted(async () => {
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
 
   initStringTune({ loadingTimeout: 450 })
-  const st = getStringTune()
-  if (st) window.__st = st
 })
 </script>
 
