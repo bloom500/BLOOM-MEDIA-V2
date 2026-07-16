@@ -167,16 +167,16 @@ const MODEL_ORIGINAL_OFFSET_Y = 2
 const RELIEF_TOP_EXTRA_LIFT_FRAC = 0.11
 
 /**
- * Preview direcție dark (?dark în URL): portul lui blackRender de la IG —
- * gamma-crush pe nivele (pow 5.5), tencuiala devine aproape neagră, reliefu'
- * rămâne fantomatic. DOAR pentru evaluare vizuală: textul/navbar-ul NU sunt
- * adaptate; dacă direcția place, flip-ul de UI e task separat.
+ * Tonul IG (user-approved 2026-07-17, în locul preview-ului dark — scos):
+ * compresie de contrast ca în shader-ul lor (color*uBrightnessFactor
+ * +uBrightnessOffset) — hârtia coboară spre gri-ul lor mat, iar diferența
+ * relief↔fundal se aplatizează în „embosaj sub ceață”, nu „spotlight”.
  */
-const RELIEF_DARK = typeof window !== 'undefined'
-  && new URLSearchParams(window.location.search).has('dark')
+const RELIEF_BRIGHTNESS_FACTOR = 0.42
+const RELIEF_BRIGHTNESS_OFFSET = 0.22
 
 /** Clear + scene.background + CSS wrapper/canvas — același hex ca _l0 vizual. */
-const RELIEF_SCENE_BG = RELIEF_DARK ? 0x0d0d0c : 0xa8a6a2
+const RELIEF_SCENE_BG = 0xa8a6a2
 const RELIEF_SCENE_BG_CSS = `#${RELIEF_SCENE_BG.toString(16).padStart(6, '0')}`
 const reliefSlabCssVars = { '--relief-scene-bg': RELIEF_SCENE_BG_CSS }
 
@@ -775,23 +775,15 @@ function makeReliefMaterial(baseMap, emMap, _skinned, _morphTargets) {
      * gamma-crush care lasă doar vârfurile de lumină; velocitatea flowmap-ului
      * aprinde ușor zonele agitate.
      */
-    /*
-     * blackRender-ul IG (pow(o,5.5)) iese argintiu la noi — bake-urile
-     * noastre sunt mult mai luminoase ca ale lor. Varianta noastră: gravură
-     * inversată — hârtia devine aproape neagră, crestăturile reliefului
-     * (umbrele) devin lumini; velocitatea flowmap-ului aprinde zonele agitate.
-     */
-    const shadeFinal = RELIEF_DARK
-      ? pow(float(1).sub(shadeGrained), 2.0)
-          .mul(float(1).add(length(flow.rg).mul(0.15)))
-          .add(0.012)
-      : shadeGrained
+    /* Tonul IG: compresie de contrast spre gri-ul lor mat. */
+    const shadeFinal = shadeGrained
+      .mul(RELIEF_BRIGHTNESS_FACTOR)
+      .add(RELIEF_BRIGHTNESS_OFFSET)
 
     /* Gradient radial de ecran (IG: gradient*0.7*gradientStrength). */
     const gradient = mix(float(1), float(0.5), length(sv.sub(vec2(0, 0.8))))
-    const gradientAmount = RELIEF_DARK ? 0.15 : 1
     let color = vec3(shadeFinal, shadeFinal, shadeFinal)
-      .add(gradient.mul(0.7 * GRADIENT_STRENGTH * gradientAmount))
+      .add(gradient.mul(0.7 * GRADIENT_STRENGTH))
 
     /*
      * Stratul cromatic IG: normala din derivate de ecran → fresnel mask,
