@@ -2,37 +2,41 @@
   <section class="videoduo" aria-label="Ad showcase duo">
     <div ref="sectionEl" class="videoduo__inner">
       <div class="videoduo__frame videoduo__frame--a" :class="{ 'is-visible': visible }">
-        <video
-          :key="`a-${indexA}`"
-          ref="playerA"
-          autoplay
-          muted
-          playsinline
-          :preload="warm ? 'auto' : 'none'"
-          class="videoduo__video"
-          @ended="nextA"
-        >
-          <source v-if="currentA.webm" :src="currentA.webm" type="video/webm" />
-          <source :src="currentA.mp4" type="video/mp4" />
-        </video>
+        <Transition name="vxfade">
+          <video
+            :key="`a-${indexA}`"
+            ref="playerA"
+            autoplay
+            muted
+            playsinline
+            :preload="warm ? 'auto' : 'none'"
+            class="videoduo__video"
+            @ended="nextA"
+          >
+            <source v-if="currentA.webm" :src="currentA.webm" type="video/webm" />
+            <source :src="currentA.mp4" type="video/mp4" />
+          </video>
+        </Transition>
       </div>
       <div class="videoduo__frame videoduo__frame--b" :class="{ 'is-visible': visible }">
-        <video
-          :key="`b-${indexB}`"
-          ref="playerB"
-          autoplay
-          muted
-          playsinline
-          :preload="warm ? 'auto' : 'none'"
-          class="videoduo__video"
-          @ended="nextB"
-        >
-          <source v-if="currentB.webm" :src="currentB.webm" type="video/webm" />
-          <source :src="currentB.mp4" type="video/mp4" />
-        </video>
+        <Transition name="vxfade">
+          <video
+            :key="`b-${indexB}`"
+            ref="playerB"
+            autoplay
+            muted
+            playsinline
+            :preload="warm ? 'auto' : 'none'"
+            class="videoduo__video"
+            @ended="nextB"
+          >
+            <source v-if="currentB.webm" :src="currentB.webm" type="video/webm" />
+            <source :src="currentB.mp4" type="video/mp4" />
+          </video>
+        </Transition>
       </div>
     </div>
-    <p class="videoduo__note">Video demo — concepte create de noi, nu campanii ale clienților</p>
+    <p class="videoduo__note">Video demo create de noi. Nu sunt campanii de clienți.</p>
   </section>
 </template>
 
@@ -204,6 +208,16 @@ onUnmounted(() => {
   display: block;
   opacity: 0.9;
   filter: saturate(1.25) contrast(1.1);
+}
+
+/* Crossfade la rotația playlistului: vechiul video se stinge peste cel nou. */
+.videoduo__video.vxfade-enter-active,
+.videoduo__video.vxfade-leave-active {
+  transition: opacity 0.7s ease;
+}
+.videoduo__video.vxfade-enter-from,
+.videoduo__video.vxfade-leave-to {
+  opacity: 0;
 }
 
 @media (max-width: 768px) {

@@ -92,7 +92,7 @@ export default defineEventHandler(async (event) => {
     // ── Resend: client confirmation ──────────────────────────────────────
     sendEmail({
       to:      email,
-      subject: 'Am primit cererea ta de audit — Bloom Media',
+      subject: 'Am primit cererea ta de audit · Bloom Media',
       html:    buildClientEmail(name),
     }),
 
@@ -131,9 +131,9 @@ function buildAgencyEmail(d: {
     ['Nume',    d.name],
     ['Email',   d.email],
     ['Telefon', d.phone],
-    ['Website', d.website || '—'],
-    ['Social',  d.social  || '—'],
-    ['Mesaj',   d.message || '—'],
+    ['Website', d.website || '-'],
+    ['Social',  d.social  || '-'],
+    ['Mesaj',   d.message || '-'],
   ]
   const trs = rows.map(([k, v]) =>
     `<tr><td style="padding:6px 12px;color:#9A9590;width:100px">${k}</td><td style="padding:6px 12px;color:#1A1814">${escapeHtml(v)}</td></tr>`

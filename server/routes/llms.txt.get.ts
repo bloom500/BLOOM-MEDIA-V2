@@ -13,7 +13,7 @@ export default defineEventHandler((event) => {
   const services = categories.map(cat =>
     `### ${cat.label}\n${cat.tagline}\n` +
     cat.items.map(i =>
-      `- ${i.name}: €${i.price} ${i.oneTime ? 'one-time' : '/ lună'} — ${i.desc}`
+      `- ${i.name}: €${i.price} ${i.oneTime ? 'one-time' : '/ lună'}: ${i.desc}`
     ).join('\n')
   ).join('\n\n')
 

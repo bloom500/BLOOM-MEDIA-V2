@@ -9,21 +9,25 @@
         "auto" by IntersectionObserver to avoid burning bandwidth on 4
         videos at parse time.
       -->
-      <video
-        :key="index"
-        ref="player"
-        autoplay
-        muted
-        playsinline
-        :preload="warm ? 'auto' : 'none'"
-        class="videomesh__video"
-        @ended="nextVideo"
-      >
-        <source v-if="currentWebm" :src="currentWebm" type="video/webm" />
-        <source :src="currentMp4" type="video/mp4" />
-      </video>
+      <!-- Transition fără mode: ambele videouri coexistă (absolute, suprapuse)
+           pe durata tranziției → crossfade real, nu tăietură. -->
+      <Transition name="vxfade">
+        <video
+          :key="index"
+          ref="player"
+          autoplay
+          muted
+          playsinline
+          :preload="warm ? 'auto' : 'none'"
+          class="videomesh__video"
+          @ended="nextVideo"
+        >
+          <source v-if="currentWebm" :src="currentWebm" type="video/webm" />
+          <source :src="currentMp4" type="video/mp4" />
+        </video>
+      </Transition>
     </div>
-    <p class="videomesh__note">Video demo — concept creat de noi, nu campanie de client</p>
+    <p class="videomesh__note">Video demo creat de noi. Nu e campanie de client.</p>
   </section>
 </template>
 
@@ -65,6 +69,29 @@ function nextVideo() {
 
 let observer: IntersectionObserver | null = null
 let warmObserver: IntersectionObserver | null = null
+let swooshRaf = 0
+
+/*
+ * „Ridicarea telefonului de pe masă”: transform per-frame legat de scroll,
+ * nu one-shot. p=0 când marginea de sus a cadrului intră în viewport,
+ * p=1 când a urcat 60% din el; smoothstep pentru capete moi. Subtil:
+ * 42px lift + 7° tilt din origine jos + scale 0.97→1.
+ */
+function swooshTick() {
+  swooshRaf = requestAnimationFrame(swooshTick)
+  const el = frame.value
+  if (!el) return
+  const r = el.getBoundingClientRect()
+  const vh = window.innerHeight || 1
+  if (r.top > vh * 1.2 || r.bottom < -100) return
+  let p = (vh - r.top) / (vh * 0.6)
+  p = Math.min(Math.max(p, 0), 1)
+  p = p * p * (3 - 2 * p)
+  const ty = (1 - p) * 42
+  const rx = (1 - p) * 7
+  const sc = 0.97 + 0.03 * p
+  el.style.transform = `perspective(900px) translateY(${ty}px) rotateX(${rx}deg) scale(${sc})`
+}
 
 function tryPlay(v: HTMLVideoElement | null) {
   if (!v) return
@@ -118,6 +145,10 @@ onMounted(() => {
     { rootMargin: window.matchMedia('(pointer: coarse)').matches ? '75% 0px' : '200% 0px' }
   )
   if (frame.value) warmObserver.observe(frame.value)
+
+  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    swooshRaf = requestAnimationFrame(swooshTick)
+  }
 })
 
 onUnmounted(() => {
@@ -125,6 +156,7 @@ onUnmounted(() => {
   observer = null
   warmObserver?.disconnect()
   warmObserver = null
+  if (swooshRaf) cancelAnimationFrame(swooshRaf)
 })
 </script>
 
@@ -148,28 +180,27 @@ onUnmounted(() => {
   touch-action: pan-y;
 
   opacity: 0;
-  transform: translateY(48px) scale(0.97);
-  transition:
-    opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1),
-    transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1);
   /*
-   * content-visibility: auto on entrance allows the browser to skip
-   * rendering this frame until it's near viewport. Major TBT win.
+   * Transform-ul NU mai e aici: e condus per-frame din JS (swooshTick),
+   * legat de progresul scroll-ului — cadrul se „ridică de pe masă”
+   * (translateY + rotateX din origine jos) pe măsură ce intră în viewport.
    */
+  transform-origin: 50% 100%;
 }
 
 .videomesh__frame.is-visible {
   opacity: 1;
-  transform: translateY(0) scale(1);
 }
 
-@media (max-width: 768px) {
-  .videomesh__frame {
-    transform: translateY(20px) scale(1);
-    transition:
-      opacity 1.1s cubic-bezier(0.22, 1, 0.36, 1),
-      transform 1.1s cubic-bezier(0.22, 1, 0.36, 1);
-  }
+/* Crossfade la rotația playlistului: vechiul video se stinge peste cel nou. */
+.videomesh__video.vxfade-enter-active,
+.videomesh__video.vxfade-leave-active {
+  transition: opacity 0.7s ease;
+}
+.videomesh__video.vxfade-enter-from,
+.videomesh__video.vxfade-leave-to {
+  opacity: 0;
 }
 
 .videomesh__note {

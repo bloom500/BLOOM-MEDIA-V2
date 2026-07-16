@@ -358,7 +358,7 @@ async function handleSubmit() {
 }
 
 .audit__promises li::before {
-  content: '—';
+  content: '·';
   position: absolute;
   left: 0;
   color: var(--color-divider);
@@ -528,7 +528,7 @@ async function handleSubmit() {
 }
 
 .audit__success-steps li::before {
-  content: '—';
+  content: '·';
   position: absolute;
   left: 0;
   color: var(--color-divider);

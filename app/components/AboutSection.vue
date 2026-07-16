@@ -143,7 +143,7 @@ const philosophy = [
   },
   {
     title: 'Orice agenție îți face prezentări frumoase. Puține îți arată și rezultate.',
-    desc: 'Noi suntem dintre cele puține. Nu vindem slide-uri colorate, vindem creștere pe care o vezi în cifre reale, în contul tău de business.',
+    desc: 'Nu vindem slide-uri colorate. Vindem creștere măsurată în cifre pe care le verifici singur, în conturile tale, nu în rapoartele noastre.',
   },
   {
     title: 'Ne gândim unde vrei să fii peste 3 ani, dar începem de mâine.',

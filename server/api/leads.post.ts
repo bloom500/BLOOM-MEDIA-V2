@@ -58,14 +58,14 @@ export default defineEventHandler(async (event) => {
     // ── Resend: agency notification ──────────────────────────────────────
     sendEmail({
       to:      AGENCY_EMAIL,
-      subject: `[Configurator] Cerere nouă de la ${yourName} — ${businessName}`,
+      subject: `[Configurator] Cerere nouă de la ${yourName} · ${businessName}`,
       html:    buildAgencyEmail({ businessName, yourName, email, phone, objectives, selectedServices, monthlyTotal, oneTimeTotal }),
     }),
 
     // ── Resend: client confirmation ──────────────────────────────────────
     sendEmail({
       to:      email,
-      subject: 'Am primit brieful tău — Bloom Media',
+      subject: 'Am primit brieful tău · Bloom Media',
       html:    buildClientEmail(yourName),
     }),
 
@@ -99,16 +99,16 @@ function buildAgencyEmail(d: {
   businessName: string; yourName: string; email: string; phone: string
   objectives: string; selectedServices: string[]; monthlyTotal: number; oneTimeTotal: number
 }) {
-  const services = d.selectedServices.length ? d.selectedServices.join(', ') : '—'
+  const services = d.selectedServices.length ? d.selectedServices.join(', ') : '-'
   const rows = [
     ['Firmă',          d.businessName],
     ['Nume',           d.yourName],
     ['Email',          d.email],
     ['Telefon',        d.phone],
     ['Servicii',       services],
-    ['Total/lună',     d.monthlyTotal ? `€${d.monthlyTotal}` : '—'],
-    ['Setup one-time', d.oneTimeTotal ? `€${d.oneTimeTotal}` : '—'],
-    ['Obiective',      d.objectives || '—'],
+    ['Total/lună',     d.monthlyTotal ? `€${d.monthlyTotal}` : '-'],
+    ['Setup one-time', d.oneTimeTotal ? `€${d.oneTimeTotal}` : '-'],
+    ['Obiective',      d.objectives || '-'],
   ]
   const trs = rows.map(([k, v]) =>
     `<tr><td style="padding:6px 12px;color:#9A9590;width:110px">${k}</td><td style="padding:6px 12px;color:#1A1814">${escapeHtml(String(v))}</td></tr>`
