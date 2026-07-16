@@ -108,13 +108,14 @@ const RELIEF_COMFORT_ZOOM_OUT = 0.77
 const RELIEF_TOP_FRAC = 0.9
 const RELIEF_TOP_BLEND = 0.95
 /*
- * Pixel-ratio cap: 2 on desktop is fine, but on iOS Retina (DPR=3) the
- * WebGPU canvas balloons to ~5+ MP per frame and the relief shader runs
- * a per-pixel TSL pipeline including trail texture sampling and 5-level
- * mixing. 1.5 on mobile is a major perf win without visible quality loss
- * on hand-held screens.
+ * Pixel-ratio cap: the relief shader runs a per-pixel TSL pipeline
+ * (trail sampling + 5-level mixing), so pixel count is the dominant GPU
+ * cost. DPR 2 on Retina Macs (~6 MP/frame) pinned the GPU at ~30fps and
+ * starved the main thread (smooth scroll, cursor). 1.5 everywhere:
+ * ~44% fewer pixels, no visible loss on this diffuse mesh (2026-07-16,
+ * user-approved change to locked file).
  */
-const MAX_PIXEL_RATIO_DESKTOP = 2
+const MAX_PIXEL_RATIO_DESKTOP = 1.5
 const MAX_PIXEL_RATIO_MOBILE = 1.5
 let isMobileLayout = false
 function maxPixelRatio() {
@@ -138,13 +139,14 @@ const RELIEF_SCENE_BG_CSS = `#${RELIEF_SCENE_BG.toString(16).padStart(6, '0')}`
 const reliefSlabCssVars = { '--relief-scene-bg': RELIEF_SCENE_BG_CSS }
 
 /**
- * Dimensiune trail canvas — SketchSettings.dimensions [2048, 2048] din index.ts.
- * Pe mobil 1024: trail-ul e un gradient difuz, diferența nu se vede, dar
- * upload-ul CanvasTexture pe frame scade de la 16MB la 4MB — competiția cu
- * scroll-ul pe threadul de compositing era sursa principală de jank.
+ * Dimensiune trail canvas — sketch-ul original folosea 2048. Trail-ul e un
+ * gradient difuz: la 1024 diferența nu se vede, dar upload-ul CanvasTexture
+ * pe frame scade de la 16MB la 4MB. Pe mobil asta a eliminat jank-ul de
+ * touch-scroll; pe Mac Retina același upload sătura bandwidth-ul GPU →
+ * 1024 peste tot (2026-07-16, user-approved change to locked file).
  */
 function trailCanvasSize() {
-  return isMobileLayout ? 1024 : 2048
+  return 1024
 }
 
 /**

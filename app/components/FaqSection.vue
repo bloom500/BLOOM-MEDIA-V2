@@ -3,23 +3,16 @@
     <div class="faq__grain" aria-hidden="true" />
 
     <div class="faq__header">
+      <!--
+        ponytail: titlu STATIC, fără char-reveal. Al 3-lea fix pe clipul iOS:
+        masca tăia glifele, fade+rise per caracter tăia și el — WebKit
+        rasterizează fiecare .-s-char cu transition ca layer de compositing
+        și taie ink overflow-ul diacriticelor italice (î, ă). Nicio animație
+        per-caracter nu e sigură aici; text simplu nu poate fi trunchiat.
+      -->
       <h2 id="faq-heading" class="faq__title">
-        <!--
-          Fără string-repeat: starea de bază char-reveal n-are transition,
-          deci la exit-ul din viewport literele săreau instant sub clip —
-          titlul „dispărea brusc" când treceai de el. Reveal o dată, rămâne.
-        -->
-        <span
-          string="split"
-          string-split="char"
-          data-anim="char-reveal"
-        >Ai</span>
-        <span
-          class="faq__title--accent"
-          string="split"
-          string-split="char"
-          data-anim="char-reveal"
-        >întrebări?</span>
+        <span>Ai</span>
+        <span class="faq__title--accent">întrebări?</span>
       </h2>
     </div>
 
@@ -119,32 +112,6 @@ const items = faqItems
   margin: 0;
   display: flex;
   flex-direction: column;
-}
-
-/*
- * char-reveal folosește overflow:hidden ca mască pentru glisarea literelor,
- * dar pe WebKit (iOS) clipul tăia vârfurile glifelor („întrebări?" apărea
- * decapitat), indiferent cât lărgeam cutia de clip — line-height 1 +
- * caractere inline-flex se aliniază diferit față de Blink. Renunțăm la
- * mască doar aici: reveal-ul devine fade + rise, care nu poate trunchia
- * nimic, pe niciun engine. Delay-ul per caracter e păstrat identic.
- */
-.faq__title :deep([data-anim="char-reveal"].-splitted) {
-  overflow: visible;
-}
-
-.faq__title :deep([data-anim="char-reveal"] .-s-char) {
-  opacity: 0;
-  transform: translate3d(0, 0.35em, 0);
-}
-
-.faq__title :deep([data-anim="char-reveal"].-inview .-s-char) {
-  opacity: 1;
-  transform: translate3d(0, 0, 0);
-  transition:
-    opacity var(--ease-timing, 1.2s) var(--ease-1, cubic-bezier(0.86, 0, 0.31, 1)),
-    transform var(--ease-timing, 1.2s) var(--ease-1, cubic-bezier(0.86, 0, 0.31, 1));
-  transition-delay: calc((var(--char-start, 0) / 5) * 0.3s);
 }
 
 .faq__title--accent {
