@@ -116,13 +116,13 @@ export function initStringTune(options: InitStringTuneOptions = {}) {
     })
     instance.on('resize', () => scheduleSplitSpacingFix())
 
-    instance.start(60)
-    started = true
-
     /*
      * Lenis smooth scroll — doar wheel (touch rămâne nativ, default-ul Lenis).
-     * Rulează pe ticker-ul GSAP ca să existe UN singur rAF loop; lagSmoothing
-     * off ca ScrollTrigger să nu „sară" după un frame lung de WebGPU.
+     * Rulează pe ticker-ul GSAP; lagSmoothing off ca ScrollTrigger să nu
+     * „sară" după un frame lung de WebGPU. Creat ÎNAINTE de instance.start()
+     * ca rAF-ul ticker-ului să fie înregistrat primul: în fiecare frame Lenis
+     * scrie scrollY, apoi loop-ul StringTune citește valoarea proaspătă —
+     * altfel efectele rulează mereu pe scrollul frame-ului precedent.
      */
     const { gsap } = setupGsap()
     // lerp mai mare = inerție mai scurtă; 0.1 (default) era prea „alunecos"
@@ -131,6 +131,15 @@ export function initStringTune(options: InitStringTuneOptions = {}) {
     lenis.on('scroll', () => Trigger.update())
     gsap.ticker.add((time) => lenis?.raf(time * 1000))
     gsap.ticker.lagSmoothing(0)
+
+    /*
+     * start(0) = loop necapat (rAF pur), NU 60. Cu 60, throttle-ul intern
+     * sare frame-uri pe display-urile 120Hz (ProMotion): Lenis mișcă pagina
+     * la 120Hz, StringTune actualiza parallax/progress doar la 60Hz — cu
+     * lerp 1 diferența nu mai era mascată de smoothing și totul „sacada".
+     */
+    instance.start(0)
+    started = true
 
     ;(window as unknown as { __stringTune?: StringTuneInstance }).__stringTune = instance
   } else {
