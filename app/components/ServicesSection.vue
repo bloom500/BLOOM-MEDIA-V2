@@ -83,9 +83,6 @@ const systems = [
   color: var(--color-text-primary);
   text-align: center;
   margin: 0 0 3rem 0;
-  text-shadow:
-    0 0 12px rgba(255, 255, 255, 0.9),
-    0 0 24px rgba(255, 255, 255, 0.6);
 }
 
 .services__lead {
@@ -128,6 +125,18 @@ const systems = [
 
 .services__card:hover {
   background: rgba(0, 0, 0, 0.035);
+}
+
+/*
+ * Touch: cardurile nu mai navighează — la scroll cu degetul peste ele era
+ * foarte ușor să ajungi din greșeală pe /servicii (raportat de user,
+ * 2026-07-17). Scroll-ul funcționează normal peste pointer-events:none;
+ * calea intenționată pe mobil rămâne linkul „Vezi toate sistemele →”.
+ */
+@media (pointer: coarse) {
+  .services__card {
+    pointer-events: none;
+  }
 }
 
 .services__num {

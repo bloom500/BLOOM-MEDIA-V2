@@ -32,6 +32,7 @@
         </video>
       </div>
     </div>
+    <p class="videoduo__note">Video demo — concepte create de noi, nu campanii ale clienților</p>
   </section>
 </template>
 
@@ -151,6 +152,15 @@ onUnmounted(() => {
   gap: 1.5rem;
   padding: 14rem 8vw;
   background: transparent;
+}
+
+.videoduo__note {
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+  margin: 1.5rem 0 0 0;
+  text-align: center;
 }
 
 .videoduo__inner {

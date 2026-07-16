@@ -23,6 +23,7 @@
         <source :src="currentMp4" type="video/mp4" />
       </video>
     </div>
+    <p class="videomesh__note">Video demo — concept creat de noi, nu campanie de client</p>
   </section>
 </template>
 
@@ -169,6 +170,15 @@ onUnmounted(() => {
       opacity 1.1s cubic-bezier(0.22, 1, 0.36, 1),
       transform 1.1s cubic-bezier(0.22, 1, 0.36, 1);
   }
+}
+
+.videomesh__note {
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+  margin: 0;
+  text-align: center;
 }
 
 .videomesh__video {

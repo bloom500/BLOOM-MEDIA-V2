@@ -106,9 +106,6 @@
   color: var(--color-text-primary);
   text-align: center;
   margin: 0 0 5rem 0;
-  text-shadow:
-    0 0 12px rgba(255, 255, 255, 0.9),
-    0 0 24px rgba(255, 255, 255, 0.6);
 }
 
 .why__columns {

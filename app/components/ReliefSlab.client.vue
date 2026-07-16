@@ -176,8 +176,12 @@ const RELIEF_CONTRAST = 1.55
 const RELIEF_BRIGHTNESS_FACTOR = 0.40
 const RELIEF_BRIGHTNESS_OFFSET = 0.10
 
-/** Clear + scene.background + CSS wrapper/canvas — același hex ca _l0 vizual. */
-const RELIEF_SCENE_BG = 0xa8a6a2
+/**
+ * Clear + scene.background + CSS wrapper/canvas. Actualizat la tonul gri
+ * de după contrast+factor/offset (hârtia randează ~#c6c4c0) — vechiul
+ * a8a6a2 nu mai corespundea și pe mobil golurile se citeau alb/deschis.
+ */
+const RELIEF_SCENE_BG = 0xc6c4c0
 const RELIEF_SCENE_BG_CSS = `#${RELIEF_SCENE_BG.toString(16).padStart(6, '0')}`
 const reliefSlabCssVars = { '--relief-scene-bg': RELIEF_SCENE_BG_CSS }
 
@@ -722,9 +726,16 @@ function makeReliefMaterial(baseMap, emMap, _skinned, _morphTargets) {
     return float(1).sub(sqrt(max(float(1).sub(e.mul(e)), float(0))))
   }
 
-  /** extrude final: trail-ul, preluat de boil cât timp se derulează rapid. */
+  /**
+   * extrude final: trail-ul, preluat de boil cât timp se derulează rapid.
+   * FĂRĂ boil pe mobil (compile-time): flingul de touch ținea uFastScroll
+   * la 1 → tot reliefu' fierbea la orice scroll („reacție dubioasă”), iar
+   * cele 2 sample-uri de noise în plus PE VERTEX (~500k vertecși/frame)
+   * sacadau GPU-ul de telefon (raportat 2026-07-17).
+   */
   const combinedExtrude = (uvScreen) => {
     const ex = flowExtrude(uvScreen)
+    if (isMobileLayout) return clamp(ex, float(0), float(1))
     const boil = boilExtrude(uvScreen).mul(SCROLL_EXTRUDE_STRENGTH)
     return clamp(mix(ex, boil, uFastScroll), float(0), float(1))
   }

@@ -5,7 +5,7 @@
     rezultat: canvas 3D într-o „coloană” centrată în loc de fullscreen.
   -->
   <Teleport to="body">
-    <div class="site-bg-3d" aria-hidden="true">
+    <div class="site-bg-3d" :class="{ 'site-bg-3d--home': isHome }" aria-hidden="true">
       <MorphingReliefBackground v-if="deferDone && enabled3d && !isHome && !isServicii && !isDespre" />
       <!--
         Fără gate WebGPU: WebGPURenderer cade automat pe backend-ul WebGL2
@@ -70,6 +70,16 @@ const isDespre   = computed(() => route.path === '/despre' || route.name === 'de
 </script>
 
 <style scoped>
+/*
+ * Pe home, containerul poartă gri-ul scenei ca fundal static: acoperă
+ * intervalul de defer al 3D-ului, toggle-ul 3D Off și telefoanele unde
+ * canvas-ul întârzie — altfel se vedea body-ul deschis („fundal alb”,
+ * raportat pe mobil 2026-07-17). Aceeași valoare ca RELIEF_SCENE_BG.
+ */
+.site-bg-3d--home {
+  background: #c6c4c0;
+}
+
 .site-bg-3d {
   position: fixed;
   inset: 0;
