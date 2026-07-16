@@ -90,10 +90,10 @@ onMounted(() => {
   // ── Renderer — alpha:false + scene.background = dark, no bleed-through ──
   renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false })
   /*
-   * On Retina mobile (DPR=3) capping at 2 doubles the work for no
-   * perceptible quality gain. Cap to 1.5 there to free GPU budget.
+   * DPR 1 peste tot — aliniat cu ReliefSlab și cu immersive-g.com:
+   * florile sunt decor difuz pe fundal negru, fluiditatea > claritate.
    */
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobileLayout ? 1.5 : 2))
+  renderer.setPixelRatio(1)
   renderer.setSize(frozenWidth, frozenHeight)
   renderer.outputColorSpace = THREE.SRGBColorSpace
   renderer.toneMapping = THREE.ACESFilmicToneMapping

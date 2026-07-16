@@ -1,4 +1,7 @@
 <template>
+  <!-- Prima încărcare: logo + progres până sunt gata fonturile și 3D-ul (home). -->
+  <LoadingScreen />
+
   <!--
     Fundal 3D: pe / → fishpond (ReliefSlab); pe restul rutelor → plan procedural (Morphing).
     Stacking: morph z-0, relief slab z-1, conținut site z-2 (vezi .site-content).
@@ -15,6 +18,11 @@
 
   <FixedServicesCta />
 
+  <!-- Toggle experiență 3D, dreapta-jos — pattern immersive-g.com -->
+  <ClientOnly>
+    <Experience3dToggle />
+  </ClientOnly>
+
   <CustomCursor />
 
   <ConsentBanner />
@@ -24,7 +32,9 @@
 import { onMounted, nextTick, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import CustomCursor from '~/components/CustomCursor.vue'
+import Experience3dToggle from '~/components/Experience3dToggle.vue'
 import FixedServicesCta from '~/components/FixedServicesCta.vue'
+import LoadingScreen from '~/components/LoadingScreen.vue'
 import SiteBackground3d from '~/components/SiteBackground3d.vue'
 import { initStringTune, refreshStringTune, resetStringTuneScroll } from '~/lib/stringtune/client'
 // useViewportHeight kept available but currently unused — see note below.

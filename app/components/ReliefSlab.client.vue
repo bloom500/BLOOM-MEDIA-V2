@@ -100,6 +100,13 @@ const VIEWPORT_COVER = 2.5
  */
 const RELIEF_COMFORT_ZOOM_OUT = 0.77
 /**
+ * Mobil: recadrare close-up, ca pe immersive-g.com — pe telefon nu vezi
+ * toată compoziția, vezi un fragment sculptural mărit, ca detaliile să
+ * rămână lizibile pe ecran mic. Scroll-pan-ul recalculat din bbox-ul
+ * scalat parcurge automat mai mult din model (user-approved, 2026-07-16).
+ */
+const RELIEF_MOBILE_CLOSEUP_ZOOM = 1.6
+/**
  * Ținta pe Y pentru vârful bbox (fracție din semi-înălțimea vizibilă, de la centru spre marginea de sus).
  * RELIEF_TOP_BLEND amestecă această țintă cu centrarea verticală: 0 = centrat pe ecran, 1 = aliniere completă sus.
  * Prea mare → muchia de sus a mesh-ului / capătul GLB-ului devine vizibil sub navbar.
@@ -111,12 +118,13 @@ const RELIEF_TOP_BLEND = 0.95
  * Pixel-ratio cap: the relief shader runs a per-pixel TSL pipeline
  * (trail sampling + 5-level mixing), so pixel count is the dominant GPU
  * cost. DPR 2 on Retina Macs (~6 MP/frame) pinned the GPU at ~30fps and
- * starved the main thread (smooth scroll, cursor). 1.5 everywhere:
- * ~44% fewer pixels, no visible loss on this diffuse mesh (2026-07-16,
- * user-approved change to locked file).
+ * starved the main thread (smooth scroll, cursor). DPR 1 everywhere —
+ * immersive-g.com (referința vizuală a site-ului) randează la DPR 1 și pe
+ * desktop: mesh-ul difuz + textura maschează soft-ul, fluiditatea primează
+ * (2026-07-16, user-approved change to locked file).
  */
-const MAX_PIXEL_RATIO_DESKTOP = 1.5
-const MAX_PIXEL_RATIO_MOBILE = 1.5
+const MAX_PIXEL_RATIO_DESKTOP = 1
+const MAX_PIXEL_RATIO_MOBILE = 1
 let isMobileLayout = false
 function maxPixelRatio() {
   return isMobileLayout ? MAX_PIXEL_RATIO_MOBILE : MAX_PIXEL_RATIO_DESKTOP
@@ -518,7 +526,8 @@ function fitModelToViewport() {
 
   const sx = visibleW / Math.max(size.x, 1e-6)
   const sy = visibleH / Math.max(size.y, 1e-6)
-  const scale = Math.max(sx, sy) * VIEWPORT_COVER * RELIEF_COMFORT_ZOOM_OUT
+  let scale = Math.max(sx, sy) * VIEWPORT_COVER * RELIEF_COMFORT_ZOOM_OUT
+  if (isMobileLayout) scale *= RELIEF_MOBILE_CLOSEUP_ZOOM
   modelRoot.scale.setScalar(scale)
   modelRoot.updateMatrixWorld(true)
 
@@ -671,6 +680,10 @@ async function initScene(canvas) {
 
   scene.add(modelRoot)
   fitModelToViewport()
+
+  // Loading screen-ul (LoadingScreen.vue) așteaptă semnalul ăsta pe home:
+  // modelul e încărcat + fitted, prima pictură urmează în frame-ul următor.
+  window.dispatchEvent(new CustomEvent('bloom:relief-ready'))
 }
 
 // ─── EVENTS ──────────────────────────────────────────────────────────────────

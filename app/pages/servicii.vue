@@ -235,19 +235,20 @@ import { categories, presets } from '~/lib/pricing'
 import { trackLead } from '~/composables/useAnalytics'
 
 /*
- * Florile 3D: async + doar desktop, montate după idle — același pattern ca
- * SiteBackground3d. Import static = three (~600KB) în chunk-ul paginii
- * pentru TOATE device-urile; pe mobil decorul nu justifică nici JS-ul,
- * nici GLB-ul de 6.3MB.
+ * Florile 3D: async, montate după idle — același pattern ca
+ * SiteBackground3d. Rulează și pe mobil (decizie user 2026-07-16, pattern
+ * immersive-g.com); escape hatch = toggle-ul 3D (use3d). Async ca three
+ * (~600KB) să nu stea în chunk-ul critic al paginii.
  */
 const ServiciiBackground = defineAsyncComponent(() =>
   import('~/components/ServiciiBackground.vue')
 )
-const show3dBg = ref(false)
+const { enabled: enabled3d } = use3d()
+const idleReady = ref(false)
+const show3dBg = computed(() => idleReady.value && enabled3d.value)
 onMounted(() => {
-  const mobile = window.matchMedia('(max-width: 767px), (pointer: coarse) and (max-width: 1024px)').matches
-  if (mobile || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
-  const go = () => { show3dBg.value = true }
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+  const go = () => { idleReady.value = true }
   if ('requestIdleCallback' in window) window.requestIdleCallback(go, { timeout: 600 })
   else setTimeout(go, 250)
 })

@@ -56,12 +56,9 @@ onMounted(async () => {
     const THREE = await import('three')
     const canvas = canvasRef.value
     const isMobile = window.innerWidth < 768
-    // Hi-DPI mobile (iPhone Pro DPR=3) renders ~5MP per frame at 1.5;
-    // capped to 1 there because the vertex shader is FBM-3 octave noise
-    // running per-vertex at 140×140 = 20k vertices. Identical visual.
-    const dprCap = isMobile
-      ? (window.devicePixelRatio >= 2.5 ? 1 : 1.5)
-      : 1.75
+    // DPR 1 peste tot — aliniat cu ReliefSlab/ServiciiBackground și cu
+    // immersive-g.com: suprafață difuză, fluiditatea primează.
+    const dprCap = 1
     // Antialias off on mobile — MSAA is a major fill-rate cost; the
     // smooth shaded surface masks aliasing well enough at retina DPR.
     const renderer = new THREE.WebGLRenderer({
