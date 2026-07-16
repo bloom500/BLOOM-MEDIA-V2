@@ -130,7 +130,8 @@ onMounted(() => {
         warmObserver = null
       }
     },
-    { rootMargin: '200% 0px' }
+    // 75% pe mobil — vezi VideoMeshSection.vue
+    { rootMargin: window.matchMedia('(pointer: coarse)').matches ? '75% 0px' : '200% 0px' }
   )
   if (sectionEl.value) warmObserver.observe(sectionEl.value)
 })

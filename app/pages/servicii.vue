@@ -2,7 +2,7 @@
   <main class="site-main">
     <section class="configurator">
       <ClientOnly>
-        <ServiciiBackground />
+        <ServiciiBackground v-if="show3dBg" />
       </ClientOnly>
       <div class="cfg-grain"  aria-hidden="true" />
 
@@ -229,10 +229,28 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, nextTick, onMounted, onUnmounted } from 'vue'
+import { ref, reactive, computed, nextTick, onMounted, onUnmounted, defineAsyncComponent } from 'vue'
 import { gsap } from 'gsap'
 import { categories, presets } from '~/lib/pricing'
 import { trackLead } from '~/composables/useAnalytics'
+
+/*
+ * Florile 3D: async + doar desktop, montate după idle — același pattern ca
+ * SiteBackground3d. Import static = three (~600KB) în chunk-ul paginii
+ * pentru TOATE device-urile; pe mobil decorul nu justifică nici JS-ul,
+ * nici GLB-ul de 6.3MB.
+ */
+const ServiciiBackground = defineAsyncComponent(() =>
+  import('~/components/ServiciiBackground.vue')
+)
+const show3dBg = ref(false)
+onMounted(() => {
+  const mobile = window.matchMedia('(max-width: 767px), (pointer: coarse) and (max-width: 1024px)').matches
+  if (mobile || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+  const go = () => { show3dBg.value = true }
+  if ('requestIdleCallback' in window) window.requestIdleCallback(go, { timeout: 600 })
+  else setTimeout(go, 250)
+})
 
 // Force white cursor on dark background
 const cursorDark = useState('cursorDark', () => false)

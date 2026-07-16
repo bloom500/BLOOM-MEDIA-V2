@@ -6,7 +6,7 @@
   -->
   <Teleport to="body">
     <div class="site-bg-3d" aria-hidden="true">
-      <MorphingReliefBackground v-if="deferDone && !isHome && !isServicii && !isDespre" />
+      <MorphingReliefBackground v-if="deferDone && !isMobile && !isHome && !isServicii && !isDespre" />
       <!--
         Gate WebGPU: ReliefSlab e scris pe WebGPURenderer + TSL; fallback-ul
         WebGL2 al lui three e inutilizabil de lent pe browserele fără WebGPU
@@ -15,7 +15,7 @@
         --relief-scene-bg din main.css, iar bundle-ul three/webgpu nici nu
         se mai descarcă.
       -->
-      <ReliefSlab v-if="deferDone && isHome && hasWebGPU" />
+      <ReliefSlab v-if="deferDone && !isMobile && isHome && hasWebGPU" />
     </div>
   </Teleport>
 </template>
@@ -39,6 +39,18 @@ const ReliefSlab = defineAsyncComponent(() =>
 
 // SiteBackground3d e montat sub <ClientOnly>, deci navigator există la setup.
 const hasWebGPU = typeof navigator !== 'undefined' && !!navigator.gpu
+
+/*
+ * Pe telefoane nu montăm NICIUN layer 3D. navigator.gpu există și pe
+ * Chrome Android / iOS Safari modern, deci gate-ul WebGPU nu filtrează
+ * mobilul — iar costul e disproporționat acolo: original.glb are 5.7MB
+ * + decoder Draco + chunk-ul three/webgpu, măsurat de Lighthouse mobile
+ * ca sursa principală de TBT (task-uri de 1.7s). Fundalurile statice
+ * din CSS acoperă. Tabletă/desktop (pointer fine sau ecran ≥768px cu
+ * hover) primesc 3D-ul ca până acum.
+ */
+const isMobile = typeof window !== 'undefined'
+  && window.matchMedia('(max-width: 767px), (pointer: coarse) and (max-width: 1024px)').matches
 
 /*
  * Montarea 3D e amânată până după hidratare + un moment de idle. Fetch-ul

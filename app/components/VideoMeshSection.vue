@@ -112,7 +112,9 @@ onMounted(() => {
         warmObserver = null
       }
     },
-    { rootMargin: '200% 0px' }
+    // Mobil (pointer coarse): ~4.6MB de video porneau la load cu 200% —
+    // pe date mobile e risipă; 75% = tot pre-încărcat înainte de intrare.
+    { rootMargin: window.matchMedia('(pointer: coarse)').matches ? '75% 0px' : '200% 0px' }
   )
   if (frame.value) warmObserver.observe(frame.value)
 })
