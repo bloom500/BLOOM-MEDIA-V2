@@ -199,6 +199,9 @@ onMounted(async () => {
         start: 'top top',
         end: '+=75%',
         pin: true,
+        // Cu scroll lerped (Lenis), pin-ul aplicat cu un frame întârziere
+        // se vedea ca un „snap" la intrarea în secțiune.
+        anticipatePin: 1,
         scrub: 0.9,
       },
     })

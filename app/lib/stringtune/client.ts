@@ -115,8 +115,9 @@ export function initStringTune(options: InitStringTuneOptions = {}) {
      * off ca ScrollTrigger să nu „sară" după un frame lung de WebGPU.
      */
     const { gsap } = setupGsap()
-    // lerp mai mare = inerție mai scurtă; 0.1 (default) era prea „alunecos" pe touchpad.
-    lenis = new Lenis({ lerp: 0.25 })
+    // lerp mai mare = inerție mai scurtă; 0.1 (default) era prea „alunecos"
+    // pe touchpad, 0.25 încă prea moale — 0.5 la cererea userului.
+    lenis = new Lenis({ lerp: 0.5 })
     lenis.on('scroll', () => Trigger.update())
     gsap.ticker.add((time) => lenis?.raf(time * 1000))
     gsap.ticker.lagSmoothing(0)
