@@ -105,14 +105,16 @@ const RELIEF_COMFORT_ZOOM_OUT = 0.77
  * rămână lizibile pe ecran mic. Scroll-pan-ul recalculat din bbox-ul
  * scalat parcurge automat mai mult din model (user-approved, 2026-07-16).
  */
-const RELIEF_MOBILE_CLOSEUP_ZOOM = 2.2
+const RELIEF_MOBILE_CLOSEUP_ZOOM = 3.2
 /**
  * Mobil, scroll=0: vârful bbox (păsările) puțin peste marginea de sus a
  * viewport-ului (>1 = rezervă pentru float/parallax, fără muchie vizibilă).
  * Pe mobil NU se aplică MODEL_ORIGINAL_OFFSET_Y / RELIEF_TOP_EXTRA_LIFT_FRAC —
  * ele împingeau păsările afară din cadru și porneai de la cerb (user, 2026-07-16).
  */
-const RELIEF_MOBILE_TOP_FRAC = 1.06
+const RELIEF_MOBILE_TOP_FRAC = 1.6
+/** Mobil: placa păsărilor (coloana din mijloc) cade puțin în stânga centrului la close-up — corecție spre dreapta, fracție din semi-lățimea bbox (bbox-ul e umflat de headroom-ul geometriei, deci valorile utile sunt mici). */
+const RELIEF_MOBILE_X_SHIFT_FRAC = 0.02
 /**
  * Ținta pe Y pentru vârful bbox (fracție din semi-înălțimea vizibilă, de la centru spre marginea de sus).
  * RELIEF_TOP_BLEND amestecă această țintă cu centrarea verticală: 0 = centrat pe ecran, 1 = aliniere completă sus.
@@ -543,6 +545,7 @@ function fitModelToViewport() {
   if (isMobileLayout) {
     const topTargetY = halfVisibleH * RELIEF_MOBILE_TOP_FRAC
     modelRoot.position.y += topTargetY - fitBox.max.y
+    modelRoot.position.x += ((fitBox.max.x - fitBox.min.x) / 2) * RELIEF_MOBILE_X_SHIFT_FRAC
   } else {
     const topTargetY = halfVisibleH * RELIEF_TOP_FRAC
     const topDelta = topTargetY - fitBox.max.y
@@ -575,11 +578,21 @@ async function initScene(canvas) {
    *
    * orientationchange triggers a separate handler that re-measures.
    */
-  isMobileLayout = window.matchMedia('(max-width: 768px)').matches
+  // ?forcemobile = framing-ul de telefon (390x844) testabil de pe desktop.
+  const forceMobile = import.meta.dev
+    && new URLSearchParams(window.location.search).has('forcemobile')
+
+  isMobileLayout = forceMobile
+    || window.matchMedia('(max-width: 768px)').matches
     || window.matchMedia('(pointer: coarse)').matches
 
   const wrap = containerRef.value
-  if (wrap) {
+  if (forceMobile) {
+    frozenWidth = 390
+    frozenHeight = 844
+    canvas.style.width = '390px'
+    canvas.style.height = '844px'
+  } else if (wrap) {
     const r = wrap.getBoundingClientRect()
     frozenWidth = Math.max(Math.round(r.width), window.innerWidth)
     frozenHeight = Math.max(Math.round(r.height), window.innerHeight)
@@ -593,6 +606,8 @@ async function initScene(canvas) {
     antialias: true,
     alpha: false,
     powerPreference: 'high-performance',
+    // ?forcegl = calea Zen/Firefox (backend WebGL2) testabilă din orice Chromium.
+    forceWebGL: new URLSearchParams(window.location.search).has('forcegl'),
   })
   await renderer.init()
 
@@ -637,6 +652,7 @@ async function initScene(canvas) {
 
   modelRoot = gltf.scene
   modelRoot.updateMatrixWorld(true)
+  if (import.meta.dev) window.__relief = () => ({ renderer, scene, camera, modelRoot })
 
   let meshCount = 0
   let materialCount = 0
