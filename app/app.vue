@@ -26,7 +26,7 @@ import { useRoute } from 'vue-router'
 import CustomCursor from '~/components/CustomCursor.vue'
 import FixedServicesCta from '~/components/FixedServicesCta.vue'
 import SiteBackground3d from '~/components/SiteBackground3d.vue'
-import { initStringTune, refreshStringTune } from '~/lib/stringtune/client'
+import { initStringTune, refreshStringTune, resetStringTuneScroll } from '~/lib/stringtune/client'
 // useViewportHeight kept available but currently unused — see note below.
 // import { useViewportHeight } from '~/composables/useViewportHeight'
 
@@ -45,6 +45,18 @@ const route = useRoute()
 watch(() => route.fullPath, async () => {
   await nextTick()
   refreshStringTune()
+})
+
+/*
+ * Fiecare pagină pornește de sus. Nuxt face scroll-to-top singur, dar Lenis
+ * are propria țintă internă de scroll și în frame-ul următor anima înapoi
+ * spre poziția veche (aterizat „în footer" la click pe Despre). Resetul
+ * forțează Lenis + StringTune + window la 0, imediat. Doar pe schimbare de
+ * path — nu pe query/hash.
+ */
+watch(() => route.path, async () => {
+  await nextTick()
+  resetStringTuneScroll()
 })
 
 // useViewportHeight() was wired here for the classic --vh fallback pattern,
