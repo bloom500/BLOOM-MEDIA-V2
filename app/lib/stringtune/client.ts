@@ -76,14 +76,16 @@ export function initStringTune(options: InitStringTuneOptions = {}) {
       repeat: 'true'
     })
 
-    instance.scrollDesktopMode = 'smooth'
     /*
-     * Native on mobile: lets the browser compositor handle scroll off the main
-     * thread, which prevents the JS lerp loop from competing with WebGL rAF
-     * and ScrollTrigger scrub on touch devices. Parallax is suppressed on
-     * mobile as a side-effect, but that's acceptable — the main gain is
-     * eliminating touch lag near 3D sections and scroll-driven transitions.
+     * Native scroll EVERYWHERE (2026-07-16): the desktop 'smooth' lerp loop
+     * moved the whole page from JS every frame, competing with the WebGPU
+     * rAF — on Mac touchpads scroll and cursor visibly trailed the input.
+     * StringTune parallax isn't used in any template, so smooth mode's only
+     * output was the inertia itself. Progress/split/curtain already run on
+     * native scroll on mobile; desktop behaves identically.
+     * Revert = scrollDesktopMode 'smooth'.
      */
+    instance.scrollDesktopMode = 'native'
     instance.scrollMobileMode = 'native'
     instance.speed = 0.035
     instance.speedAccelerate = 0.09
