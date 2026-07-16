@@ -70,12 +70,15 @@ function nextVideo() {
 let observer: IntersectionObserver | null = null
 let warmObserver: IntersectionObserver | null = null
 let swooshRaf = 0
+let swooshP = 0
 
 /*
- * „Ridicarea telefonului de pe masă”: transform per-frame legat de scroll,
- * nu one-shot. p=0 când marginea de sus a cadrului intră în viewport,
- * p=1 când a urcat 60% din el; smoothstep pentru capete moi. Subtil:
- * 42px lift + 7° tilt din origine jos + scale 0.97→1.
+ * „Ridicarea telefonului de pe masă”, pe rețeta immersive-g.com: scrollul
+ * brut NU se mapează niciodată direct pe transform — progresul-țintă din
+ * poziția cadrului trece printr-un lerp propriu (k=0.08), deci mișcarea
+ * glisează și continuă lin după ce scrollul s-a oprit, în loc să copieze
+ * pașii rotiței (aia era sacadarea). Gain redus: zona de progres întinsă
+ * pe 85% din viewport, amplitudine 26px + 4.5° — subtil, ca la ei.
  */
 function swooshTick() {
   swooshRaf = requestAnimationFrame(swooshTick)
@@ -83,13 +86,18 @@ function swooshTick() {
   if (!el) return
   const r = el.getBoundingClientRect()
   const vh = window.innerHeight || 1
-  if (r.top > vh * 1.2 || r.bottom < -100) return
-  let p = (vh - r.top) / (vh * 0.6)
-  p = Math.min(Math.max(p, 0), 1)
-  p = p * p * (3 - 2 * p)
-  const ty = (1 - p) * 42
-  const rx = (1 - p) * 7
-  const sc = 0.97 + 0.03 * p
+  if (r.top > vh * 1.3 || r.bottom < -150) return
+  let target = (vh - r.top) / (vh * 0.85)
+  target = Math.min(Math.max(target, 0), 1)
+  target = target * target * (3 - 2 * target)
+
+  swooshP += (target - swooshP) * 0.08
+  if (Math.abs(target - swooshP) < 0.0005) swooshP = target
+
+  const p = swooshP
+  const ty = (1 - p) * 26
+  const rx = (1 - p) * 4.5
+  const sc = 0.975 + 0.025 * p
   el.style.transform = `perspective(900px) translateY(${ty}px) rotateX(${rx}deg) scale(${sc})`
 }
 
