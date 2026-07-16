@@ -141,7 +141,7 @@ async function handleSubmit() {
             <li>Dacă are sens, în 24h după call ai propunerea cu preț fix.</li>
           </ul>
           <p class="audit__success-body">
-            Grabă? Sună direct: <a href="tel:+40763281168">0763 281 168</a> sau
+            Grabă? Sună direct: <a href="tel:+40734270188">0734 270 188</a> sau
             scrie la <a href="mailto:hello@bloommedia.ro">hello@bloommedia.ro</a>
           </p>
         </div>
