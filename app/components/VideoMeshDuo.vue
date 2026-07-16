@@ -7,7 +7,6 @@
           ref="playerA"
           autoplay
           muted
-          loop
           playsinline
           :preload="warm ? 'auto' : 'none'"
           class="videoduo__video"
@@ -23,7 +22,6 @@
           ref="playerB"
           autoplay
           muted
-          loop
           playsinline
           :preload="warm ? 'auto' : 'none'"
           class="videoduo__video"

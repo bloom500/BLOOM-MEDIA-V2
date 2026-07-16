@@ -14,7 +14,6 @@
         ref="player"
         autoplay
         muted
-        loop
         playsinline
         :preload="warm ? 'auto' : 'none'"
         class="videomesh__video"
@@ -41,6 +40,7 @@ const playlist: Array<{ webm: string | null; mp4: string }> = [
   // webm: null intenționat — VP9 iese mai mare decât MP4-ul deja comprimat.
   { webm: null,                   mp4: '/videos/ad3demo.mp4' },
   { webm: '/videos/ad4demo.webm', mp4: '/videos/ad4demo.mp4' },
+  { webm: null,                   mp4: '/videos/ad6demo.mp4' },
 ]
 
 const index = ref(0)

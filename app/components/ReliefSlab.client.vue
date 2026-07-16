@@ -163,7 +163,13 @@ const reliefSlabCssVars = { '--relief-scene-bg': RELIEF_SCENE_BG_CSS }
  * 1024 peste tot (2026-07-16, user-approved change to locked file).
  */
 function trailCanvasSize() {
-  return 1024
+  /*
+   * Mobil: 512 — upload-ul CanvasTexture pe frame scade de la 4MB la 1MB.
+   * Trail-ul e un gradient difuz, la 512 nu se vede diferența, dar pe
+   * GPU-urile de telefon upload-ul de 4MB la 30Hz concura cu scroll-pan-ul
+   * modelului = sacadare la swipe (raportat 2026-07-16 seara).
+   */
+  return isMobileLayout ? 512 : 1024
 }
 
 /**
@@ -261,6 +267,21 @@ let modelBaseY = 0
 let modelScrollPanRange = 0
 /** Scroll Y netezit (px). */
 let scrollSmoothed = 0
+/*
+ * scrollMax cache: document.documentElement.scrollHeight citit în tick()
+ * forța un reflow pe FIECARE rAF în timpul scroll-ului (layout-ul e mereu
+ * murdar cât StringTune mută transformuri) — cauza principală a sacadării
+ * modelului la swipe pe mobil. Reîmprospătat o dată pe secundă (acoperă
+ * acordeoanele FAQ care schimbă înălțimea paginii) + la resize/orientation.
+ */
+let scrollMaxCached = 1
+let scrollMaxFrameCounter = 0
+
+function refreshScrollMax(vh) {
+  const doc = typeof document !== 'undefined' ? document.documentElement : null
+  const scrollH = doc ? Math.max(doc.scrollHeight, doc.clientHeight) : 1
+  scrollMaxCached = Math.max(1, scrollH - vh)
+}
 
 /** Timestamp `performance.now()` la prima inițializare; permite GHOST_START_AFTER_MS. */
 let mountTime = 0
@@ -601,15 +622,34 @@ async function initScene(canvas) {
     frozenHeight = window.innerHeight
   }
 
-  renderer = new WebGPURenderer({
+  /*
+   * Zen/Firefox: navigator.gpu EXISTĂ (WebGPU e activ din Firefox 141),
+   * deci WebGPURenderer alege backend-ul WebGPU real — unde adapter-ul /
+   * WGSL-ul generat de TSL eșuează și scena rămâne goală. Fallback-ul
+   * automat se declanșează doar când navigator.gpu lipsește. Pe Firefox
+   * forțăm direct WebGL2 (calea verificată cu ?forcegl: 19 draw calls,
+   * 60fps la DPR 1); pentru orice alt motor, dacă init-ul WebGPU aruncă,
+   * reîncercăm o dată cu forceWebGL.
+   */
+  const rendererOpts = {
     canvas,
     antialias: true,
     alpha: false,
     powerPreference: 'high-performance',
     // ?forcegl = calea Zen/Firefox (backend WebGL2) testabilă din orice Chromium.
-    forceWebGL: new URLSearchParams(window.location.search).has('forcegl'),
-  })
-  await renderer.init()
+    forceWebGL: /firefox/i.test(navigator.userAgent)
+      || new URLSearchParams(window.location.search).has('forcegl'),
+  }
+  renderer = new WebGPURenderer(rendererOpts)
+  try {
+    await renderer.init()
+  } catch (err) {
+    if (rendererOpts.forceWebGL) throw err
+    console.warn('[ReliefSlab] WebGPU init a eșuat, retry cu WebGL2:', err)
+    renderer.dispose()
+    renderer = new WebGPURenderer({ ...rendererOpts, forceWebGL: true })
+    await renderer.init()
+  }
 
   renderer.setClearColor(RELIEF_SCENE_BG, 1)
   renderer.toneMapping = NoToneMapping
@@ -766,6 +806,7 @@ function onResize() {
   scrollSmoothed = window.scrollY
   trailPaintCss.x = w * 0.5
   trailPaintCss.y = h * 0.5
+  refreshScrollMax(h)
   fitModelToViewport()
 }
 
@@ -795,6 +836,7 @@ function onOrientation() {
     renderer.setSize(frozenWidth, frozenHeight, false)
 
     ensureTrailLayer()
+    refreshScrollMax(frozenHeight)
     fitModelToViewport()
   }))
 }
@@ -842,10 +884,9 @@ function tick() {
     const vh = isMobileLayout
       ? Math.max(frozenHeight, 1)
       : Math.max(typeof window !== 'undefined' ? window.innerHeight : 1, 1)
-    const doc = typeof document !== 'undefined' ? document.documentElement : null
-    const scrollH = doc ? Math.max(doc.scrollHeight, doc.clientHeight) : 1
-    const scrollMax = Math.max(1, scrollH - vh)
-    const t = Math.min(Math.max(scrollSmoothed / scrollMax, 0), 1)
+    scrollMaxFrameCounter = (scrollMaxFrameCounter + 1) % 60
+    if (scrollMaxFrameCounter === 0 || scrollMaxCached <= 1) refreshScrollMax(vh)
+    const t = Math.min(Math.max(scrollSmoothed / scrollMaxCached, 0), 1)
     modelRoot.position.y = modelBaseY + t * modelScrollPanRange
   }
 
