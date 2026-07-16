@@ -264,10 +264,10 @@ useHead({
     { name: 'description', content: 'Meta & Google Ads, site-uri de conversie și agenți AI, prețuri transparente, ofertă fixă în 24h, fără contract pe termen lung.' },
     { property: 'og:title', content: 'Servicii: Sisteme de Creștere cu AI | Bloom Media' },
     { property: 'og:description', content: 'Ads, site-uri de conversie și agenți AI. Prețuri transparente, zero surprize.' },
-    { property: 'og:url',   content: 'https://bloommedia.ro/servicii' },
-    { property: 'og:image', content: 'https://bloommedia.ro/og-image.jpg' },
+    { property: 'og:url',   content: 'https://www.bloommedia.ro/servicii' },
+    { property: 'og:image', content: 'https://www.bloommedia.ro/og-image.jpg' },
   ],
-  link: [{ rel: 'canonical', href: 'https://bloommedia.ro/servicii' }],
+  link: [{ rel: 'canonical', href: 'https://www.bloommedia.ro/servicii' }],
   htmlAttrs: { 'data-page': 'servicii' },
   bodyAttrs: { style: 'background: #000000 !important;' },
 })

@@ -11,10 +11,10 @@ useHead({
     },
     { property: 'og:title',       content: 'Audit Gratuit | Bloom Media' },
     { property: 'og:description', content: 'Analiză gratuită a prezenței tale digitale. Fără obligații.' },
-    { property: 'og:url',         content: 'https://bloommedia.ro/audit' },
-    { property: 'og:image',       content: 'https://bloommedia.ro/og-image.jpg' },
+    { property: 'og:url',         content: 'https://www.bloommedia.ro/audit' },
+    { property: 'og:image',       content: 'https://www.bloommedia.ro/og-image.jpg' },
   ],
-  link: [{ rel: 'canonical', href: 'https://bloommedia.ro/audit' }],
+  link: [{ rel: 'canonical', href: 'https://www.bloommedia.ro/audit' }],
 })
 
 // ── Endpoint ────────────────────────────────────────────────────────────────

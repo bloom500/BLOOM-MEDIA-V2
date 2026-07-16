@@ -65,7 +65,7 @@ export async function sendMetaLeadEvent(data: CAPILeadData): Promise<void> {
         event_name: 'Lead',
         event_time: Math.floor(Date.now() / 1000),
         event_id: data.eventId ?? `lead_${Date.now()}`,
-        event_source_url: data.sourceUrl ?? 'https://bloommedia.ro',
+        event_source_url: data.sourceUrl ?? 'https://www.bloommedia.ro',
         action_source: 'website',
         user_data,
       },

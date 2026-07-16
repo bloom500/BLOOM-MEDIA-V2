@@ -82,7 +82,7 @@ export default defineEventHandler(async (event) => {
       name:      yourName,
       email,
       phone,
-      sourceUrl: 'https://bloommedia.ro/servicii',
+      sourceUrl: 'https://www.bloommedia.ro/servicii',
       eventId:   eventId || undefined,
       clientIp:  getRequestIP(event, { xForwardedFor: true }),
       userAgent: getRequestHeader(event, 'user-agent'),

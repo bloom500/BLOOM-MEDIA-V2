@@ -110,7 +110,7 @@ export default defineEventHandler(async (event) => {
       name,
       email,
       phone,
-      sourceUrl: 'https://bloommedia.ro/audit',
+      sourceUrl: 'https://www.bloommedia.ro/audit',
       eventId:   eventId || undefined,
       clientIp:  getRequestIP(event, { xForwardedFor: true }),
       userAgent: getRequestHeader(event, 'user-agent'),

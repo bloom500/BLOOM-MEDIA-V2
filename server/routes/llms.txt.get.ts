@@ -26,11 +26,11 @@ export default defineEventHandler((event) => {
 > agenți AI care califică și urmăresc fiecare lead. Lucrăm lunar, fără
 > contracte pe termen lung, cu prețuri publice.
 
-Contact: hello@bloommedia.ro · +40 763 281 168 · https://bloommedia.ro
-Audit gratuit: https://bloommedia.ro/audit
-Servicii și prețuri: https://bloommedia.ro/servicii
-Proces: https://bloommedia.ro/proces
-Despre: https://bloommedia.ro/despre
+Contact: hello@bloommedia.ro · +40 763 281 168 · https://www.bloommedia.ro
+Audit gratuit: https://www.bloommedia.ro/audit
+Servicii și prețuri: https://www.bloommedia.ro/servicii
+Proces: https://www.bloommedia.ro/proces
+Despre: https://www.bloommedia.ro/despre
 
 Notă prețuri: fee-urile de management pornesc de la €${PRICING.marketingFeeFrom}/lună per canal.
 Bugetul de ads (minim recomandat €${PRICING.minAdBudget}/lună) e separat, plătit

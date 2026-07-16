@@ -36,4 +36,4 @@ Allow: /
 User-agent: CCBot
 Allow: /
 
-Sitemap: https://bloommedia.ro/sitemap.xml
+Sitemap: https://www.bloommedia.ro/sitemap.xml

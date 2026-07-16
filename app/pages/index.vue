@@ -11,16 +11,16 @@ useHead({
     },
     // Open Graph
     { property: 'og:type',        content: 'website' },
-    { property: 'og:url',         content: 'https://bloommedia.ro/' },
+    { property: 'og:url',         content: 'https://www.bloommedia.ro/' },
     { property: 'og:title',       content: 'Bloom Media, AI Growth Systems' },
     { property: 'og:description', content: 'Ads, site-uri de conversie și agenți AI pentru business-uri care măsoară în vânzări, nu în like-uri.' },
-    { property: 'og:image',       content: 'https://bloommedia.ro/og-image.jpg' },
+    { property: 'og:image',       content: 'https://www.bloommedia.ro/og-image.jpg' },
     { property: 'og:locale',      content: 'ro_RO' },
     // Twitter / X Cards
     { name: 'twitter:card',        content: 'summary_large_image' },
     { name: 'twitter:title',       content: 'Bloom Media, AI Growth Systems' },
     { name: 'twitter:description', content: 'Ads, site-uri de conversie și agenți AI pentru business-uri care măsoară în vânzări.' },
-    { name: 'twitter:image',       content: 'https://bloommedia.ro/og-image.jpg' },
+    { name: 'twitter:image',       content: 'https://www.bloommedia.ro/og-image.jpg' },
     // Crawl
     { name: 'robots', content: 'index, follow' },
     // Geo targeting (ajută pentru căutări locale Cluj)
@@ -30,7 +30,7 @@ useHead({
     { name: 'ICBM',            content: '46.7712, 23.6236' },
   ],
   link: [
-    { rel: 'canonical', href: 'https://bloommedia.ro/' },
+    { rel: 'canonical', href: 'https://www.bloommedia.ro/' },
   ],
   // JSON-LD: LocalBusiness + FAQPage (rich results în SERP)
   script: [
@@ -41,8 +41,8 @@ useHead({
         '@type': ['Organization', 'LocalBusiness'],
         name: 'Bloom Media',
         legalName: 'Bloom Ventures SRL',
-        url: 'https://bloommedia.ro',
-        logo: 'https://bloommedia.ro/og-image.jpg',
+        url: 'https://www.bloommedia.ro',
+        logo: 'https://www.bloommedia.ro/og-image.jpg',
         description: 'AI Growth Systems din Cluj-Napoca: Meta & Google Ads, site-uri de conversie și agenți AI.',
         // CUI firmă (taxID) și cod TVA intracomunitar (vatID) — ambele valide.
         taxID: '50654818',
