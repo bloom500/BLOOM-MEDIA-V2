@@ -36,8 +36,29 @@ export function getStringTune() {
 const NBSP = '\u00A0'
 let fixTimer: ReturnType<typeof setTimeout> | undefined
 
+/*
+ * StringSplit pune aria-label pe container (span generic) — rol care nu
+ * permite naming (axe: aria-allowed-attr). Mutăm textul într-un copil
+ * vizual ascuns; cuvintele splituite sunt deja aria-hidden. Re-split-urile
+ * refac DOM-ul din original și repun aria-label, deci corecția re-rulează
+ * din aceleași hook-uri ca fix-ul de spații.
+ */
+function fixSplitAria(el: Element) {
+  const label = el.getAttribute('aria-label')
+  if (!label) return
+  el.removeAttribute('aria-label')
+  if (el.querySelector(':scope > .-sr-only')) return
+  const sr = document.createElement('span')
+  sr.className = '-sr-only'
+  sr.textContent = label
+  sr.style.cssText =
+    'position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;'
+  el.prepend(sr)
+}
+
 function fixSplitWordSpacing() {
   document.querySelectorAll('.-splitted').forEach((el) => {
+    fixSplitAria(el)
     const words = el.querySelectorAll('.-s-word')
     words.forEach((w, i) => {
       if (i === words.length - 1) return

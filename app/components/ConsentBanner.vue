@@ -18,7 +18,8 @@ function answer(value: 'yes' | 'no') {
 
 <template>
   <Transition name="consent">
-    <aside v-if="visible" class="consent" role="dialog" aria-label="Preferințe cookie-uri">
+    <!-- aside = role complementary implicit; role="dialog" pica auditul axe (nu e modal, fără focus trap) -->
+    <aside v-if="visible" class="consent" aria-label="Preferințe cookie-uri">
       <p class="consent__text">
         Folosim cookie-uri de măsurare (Meta, Google) doar cu acordul tău,
         ca să știm ce funcționează. Detalii în
