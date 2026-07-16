@@ -6,11 +6,13 @@ import {
   StringTune
 } from '@fiddle-digital/string-tune'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import Lenis from 'lenis'
 import { setupGsap } from '../animations/gsap'
 
 type StringTuneInstance = InstanceType<typeof StringTune>
 
 let instance: StringTuneInstance | null = null
+let lenis: Lenis | null = null
 let started = false
 
 export interface InitStringTuneOptions {
@@ -77,13 +79,12 @@ export function initStringTune(options: InitStringTuneOptions = {}) {
     })
 
     /*
-     * Native scroll EVERYWHERE (2026-07-16): the desktop 'smooth' lerp loop
-     * moved the whole page from JS every frame, competing with the WebGPU
-     * rAF — on Mac touchpads scroll and cursor visibly trailed the input.
-     * StringTune parallax isn't used in any template, so smooth mode's only
-     * output was the inertia itself. Progress/split/curtain already run on
-     * native scroll on mobile; desktop behaves identically.
-     * Revert = scrollDesktopMode 'smooth'.
+     * StringTune rămâne pe scroll NATIV peste tot — smoothing-ul e făcut de
+     * Lenis (mai jos), care animează scrollY-ul real al ferestrei. StringTune
+     * modul lui 'smooth' muta pagina cu transform din JS și pe Mac scroll+cursor
+     * trăgeau vizibil după touchpad; Lenis lasă compositorul să picteze și
+     * doar interpolează poziția de scroll, deci progress/split/curtain/
+     * ScrollTrigger citesc aceeași sursă ca până acum.
      */
     instance.scrollDesktopMode = 'native'
     instance.scrollMobileMode = 'native'
@@ -107,6 +108,17 @@ export function initStringTune(options: InitStringTuneOptions = {}) {
 
     instance.start(60)
     started = true
+
+    /*
+     * Lenis smooth scroll — doar wheel (touch rămâne nativ, default-ul Lenis).
+     * Rulează pe ticker-ul GSAP ca să existe UN singur rAF loop; lagSmoothing
+     * off ca ScrollTrigger să nu „sară" după un frame lung de WebGPU.
+     */
+    const { gsap } = setupGsap()
+    lenis = new Lenis()
+    lenis.on('scroll', () => Trigger.update())
+    gsap.ticker.add((time) => lenis?.raf(time * 1000))
+    gsap.ticker.lagSmoothing(0)
 
     ;(window as unknown as { __stringTune?: StringTuneInstance }).__stringTune = instance
   } else {
@@ -136,6 +148,7 @@ export function resetStringTuneScroll() {
     return
   }
 
+  lenis?.scrollTo(0, { immediate: true })
   instance?.scrollTo({ position: 0, immediate: true })
   window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
   refreshStringTune()
