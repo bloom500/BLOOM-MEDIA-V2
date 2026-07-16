@@ -35,22 +35,7 @@
         </div>
       </div>
 
-      <div class="hero__bottom">
-        <div class="hero__bottom-right">
-          <div class="hero__scroll-circle" aria-hidden="true">
-            <svg viewBox="0 0 40 40">
-              <circle
-                cx="20"
-                cy="20"
-                r="18"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="0.5"
-              />
-            </svg>
-          </div>
-        </div>
-      </div>
+      <div class="hero__bottom" aria-hidden="true" />
     </div>
   </section>
 </template>
@@ -229,22 +214,8 @@ onBeforeUnmount(() => {
 }
 
 .hero__bottom {
-  display: flex;
-  justify-content: flex-end;
-  align-items: flex-end;
+  /* Rând gol — păstrează grid-template-rows: auto 1fr auto din .hero__shell. */
   padding-bottom: 0.5rem;
-}
-
-.hero__scroll-circle {
-  width: 36px;
-  height: 36px;
-  color: var(--color-text-faint);
-}
-
-.hero__scroll-circle svg {
-  display: block;
-  width: 100%;
-  height: 100%;
 }
 
 @media (max-width: 768px) {
