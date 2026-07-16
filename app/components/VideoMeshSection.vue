@@ -16,7 +16,7 @@
         muted
         loop
         playsinline
-        :preload="visible ? 'auto' : 'none'"
+        :preload="warm ? 'auto' : 'none'"
         class="videomesh__video"
         @ended="nextVideo"
       >
@@ -47,6 +47,13 @@ const index = ref(0)
 const player = ref<HTMLVideoElement | null>(null)
 const frame = ref<HTMLElement | null>(null)
 const visible = ref(false)
+/*
+ * warm = fetch+decode pornit cu ~2 viewporturi înainte de intrare. Cu
+ * preload legat de `visible` (threshold 0.1) descărcarea începea abia când
+ * videoul era DEJA pe ecran — hitch-ul de decode se vedea exact în secunda
+ * apariției, în plin scroll.
+ */
+const warm = ref(false)
 
 const currentWebm = computed(() => playlist[index.value]?.webm ?? null)
 const currentMp4 = computed(() => playlist[index.value]?.mp4 ?? '')
@@ -56,6 +63,7 @@ function nextVideo() {
 }
 
 let observer: IntersectionObserver | null = null
+let warmObserver: IntersectionObserver | null = null
 
 function tryPlay(v: HTMLVideoElement | null) {
   if (!v) return
@@ -95,11 +103,25 @@ onMounted(() => {
     { threshold: 0.1 }
   )
   if (frame.value) observer.observe(frame.value)
+
+  warmObserver = new IntersectionObserver(
+    (entries) => {
+      if (entries[0]?.isIntersecting) {
+        warm.value = true
+        warmObserver?.disconnect()
+        warmObserver = null
+      }
+    },
+    { rootMargin: '200% 0px' }
+  )
+  if (frame.value) warmObserver.observe(frame.value)
 })
 
 onUnmounted(() => {
   observer?.disconnect()
   observer = null
+  warmObserver?.disconnect()
+  warmObserver = null
 })
 </script>
 

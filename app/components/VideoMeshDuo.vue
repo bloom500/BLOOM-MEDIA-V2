@@ -9,7 +9,7 @@
           muted
           loop
           playsinline
-          :preload="visible ? 'auto' : 'none'"
+          :preload="warm ? 'auto' : 'none'"
           class="videoduo__video"
           @ended="nextA"
         >
@@ -25,7 +25,7 @@
           muted
           loop
           playsinline
-          :preload="visible ? 'auto' : 'none'"
+          :preload="warm ? 'auto' : 'none'"
           class="videoduo__video"
           @ended="nextB"
         >
@@ -62,6 +62,8 @@ const playerA = ref<HTMLVideoElement | null>(null)
 const playerB = ref<HTMLVideoElement | null>(null)
 const sectionEl = ref<HTMLElement | null>(null)
 const visible = ref(false)
+// warm = preload pornit cu ~2 viewporturi înainte — vezi VideoMeshSection.vue
+const warm = ref(false)
 
 const currentA = computed(() => playlistA[indexA.value] ?? playlistA[0])
 const currentB = computed(() => playlistB[indexB.value] ?? playlistB[0])
@@ -88,6 +90,7 @@ function tryPlay(v: HTMLVideoElement | null) {
 }
 
 let observer: IntersectionObserver | null = null
+let warmObserver: IntersectionObserver | null = null
 
 onMounted(() => {
   if (!import.meta.client) return
@@ -118,11 +121,25 @@ onMounted(() => {
     { threshold: 0.1 }
   )
   if (sectionEl.value) observer.observe(sectionEl.value)
+
+  warmObserver = new IntersectionObserver(
+    (entries) => {
+      if (entries[0]?.isIntersecting) {
+        warm.value = true
+        warmObserver?.disconnect()
+        warmObserver = null
+      }
+    },
+    { rootMargin: '200% 0px' }
+  )
+  if (sectionEl.value) warmObserver.observe(sectionEl.value)
 })
 
 onUnmounted(() => {
   observer?.disconnect()
   observer = null
+  warmObserver?.disconnect()
+  warmObserver = null
 })
 </script>
 

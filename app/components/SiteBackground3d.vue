@@ -6,7 +6,7 @@
   -->
   <Teleport to="body">
     <div class="site-bg-3d" aria-hidden="true">
-      <MorphingReliefBackground v-if="!isHome && !isServicii && !isDespre" />
+      <MorphingReliefBackground v-if="deferDone && !isHome && !isServicii && !isDespre" />
       <!--
         Gate WebGPU: ReliefSlab e scris pe WebGPURenderer + TSL; fallback-ul
         WebGL2 al lui three e inutilizabil de lent pe browserele fără WebGPU
@@ -15,13 +15,13 @@
         --relief-scene-bg din main.css, iar bundle-ul three/webgpu nici nu
         se mai descarcă.
       -->
-      <ReliefSlab v-if="isHome && hasWebGPU" />
+      <ReliefSlab v-if="deferDone && isHome && hasWebGPU" />
     </div>
   </Teleport>
 </template>
 
 <script setup lang="ts">
-import { computed, defineAsyncComponent } from 'vue'
+import { computed, defineAsyncComponent, onMounted, ref } from 'vue'
 
 /*
  * Async-loaded so each route only ships the renderer it actually uses.
@@ -39,6 +39,24 @@ const ReliefSlab = defineAsyncComponent(() =>
 
 // SiteBackground3d e montat sub <ClientOnly>, deci navigator există la setup.
 const hasWebGPU = typeof navigator !== 'undefined' && !!navigator.gpu
+
+/*
+ * Montarea 3D e amânată până după hidratare + un moment de idle. Fetch-ul
+ * chunk-ului three + init-ul renderer-ului (compile pipelines) pe main
+ * thread concurau cu hidratarea Nuxt și cu pornirea Lenis — de aici
+ * „smooth scroll nu e activ instant" și lagul din prima secundă pe Mac.
+ * Fundalul static --relief-scene-bg acoperă intervalul.
+ */
+const deferDone = ref(false)
+onMounted(() => {
+  const go = () => { deferDone.value = true }
+  if ('requestIdleCallback' in window) {
+    window.requestIdleCallback(go, { timeout: 600 })
+  } else {
+    // Safari < 18 nu are requestIdleCallback
+    setTimeout(go, 250)
+  }
+})
 
 const route = useRoute()
 const isHome     = computed(() => route.path === '/' || route.name === 'index')

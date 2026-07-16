@@ -73,8 +73,13 @@ export function initStringTune(options: InitStringTuneOptions = {}) {
       'offset-top': '-8%',
       'offset-bottom': '-8%',
       parallax: 0.18,
-      // Inerție mai mare: scroll mai lent, aliniat cu mișcarea vizuală a conținutului.
-      lerp: 0.42,
+      /*
+       * lerp 1 = StringTune urmează scrollul 1:1, FĂRĂ smoothing propriu.
+       * Smoothing-ul e făcut deja de Lenis pe scrollY-ul real; un al doilea
+       * lerp aici (fostul 0.42) însemna dublă interpolare — la scroll rapid
+       * sus-jos parallax/progress rămâneau în urmă și „explodau" vizual.
+       */
+      lerp: 1,
       repeat: 'true'
     })
 
@@ -98,8 +103,13 @@ export function initStringTune(options: InitStringTuneOptions = {}) {
     instance.use(StringSplit)
     instance.use(StringParallax)
 
-    instance.on('scroll', () => Trigger.update())
-    instance.on('update', () => Trigger.update())
+    /*
+     * ScrollTrigger.update() vine EXCLUSIV din Lenis (mai jos) — Lenis emite
+     * 'scroll' și pentru scrollul nativ (touch), nu doar pentru wheel-ul
+     * smooth. Înainte se apela și din 'scroll'+'update' StringTune = de 3×
+     * pe frame; la scroll rapid costul fura exact frame-urile de care avea
+     * nevoie interpolarea Lenis (senzația de „a comutat pe nativ").
+     */
     instance.on('start', () => {
       requestAnimationFrame(() => Trigger.refresh())
       scheduleSplitSpacingFix()
