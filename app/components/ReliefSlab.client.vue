@@ -17,7 +17,7 @@
  */
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import * as THREE from 'three'
-import { WebGPURenderer, MeshBasicNodeMaterial, NoToneMapping, SRGBColorSpace } from 'three/webgpu'
+import { WebGPURenderer, MeshBasicNodeMaterial, NodeMaterial, QuadMesh, NoToneMapping, SRGBColorSpace } from 'three/webgpu'
 import {
   Fn,
   float,
@@ -25,19 +25,33 @@ import {
   vec3,
   vec4,
   texture,
+  uniform,
   uv,
   mix,
   smoothstep,
+  step,
   max,
+  min,
+  clamp,
+  abs,
+  fract,
+  length,
+  pow,
+  normalize,
+  cross,
+  dot,
+  dFdx,
+  dFdy,
   cameraProjectionMatrix,
   modelViewMatrix,
   positionLocal,
+  positionWorld,
+  cameraPosition,
   sRGBTransferOETF,
   screenUV,
 } from 'three/tsl'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js'
-import { TrailCanvas } from '~/utils/trail.js'
 
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
 
@@ -155,34 +169,47 @@ const RELIEF_SCENE_BG = 0xa8a6a2
 const RELIEF_SCENE_BG_CSS = `#${RELIEF_SCENE_BG.toString(16).padStart(6, '0')}`
 const reliefSlabCssVars = { '--relief-scene-bg': RELIEF_SCENE_BG_CSS }
 
-/**
- * Dimensiune trail canvas — sketch-ul original folosea 2048. Trail-ul e un
- * gradient difuz: la 1024 diferența nu se vede, dar upload-ul CanvasTexture
- * pe frame scade de la 16MB la 4MB. Pe mobil asta a eliminat jank-ul de
- * touch-scroll; pe Mac Retina același upload sătura bandwidth-ul GPU →
- * 1024 peste tot (2026-07-16, user-approved change to locked file).
+/*
+ * ─── FLOWMAP (portat din immersive-g.com, 2026-07-16, user-approved) ─────────
+ * Trail-ul NU mai e canvas 2D + upload CanvasTexture pe frame. E un ping-pong
+ * de RenderTarget-uri pe GPU (stil ogl Flowmap), cu ștampilă de velocitate
+ * modulată de un noise fractal animat — de-aici marginea „de fum” care se
+ * destramă, în loc de blob-ul rotund al gradientului. Canale RT:
+ *   rg = velocitatea pointerului, b = magnitudine velocitate, a = prezență.
+ * Valorile de tuning sunt extrase din bundle-ul lor (config home.relief).
  */
-function trailCanvasSize() {
-  /*
-   * Mobil: 512 — upload-ul CanvasTexture pe frame scade de la 4MB la 1MB.
-   * Trail-ul e un gradient difuz, la 512 nu se vede diferența, dar pe
-   * GPU-urile de telefon upload-ul de 4MB la 30Hz concura cu scroll-pan-ul
-   * modelului = sacadare la swipe (raportat 2026-07-16 seara).
-   */
-  return isMobileLayout ? 512 : 1024
+function flowmapSize() {
+  // ponytail: 256 pe mobil / 512 pe desktop; flowmap-ul e difuz, nu se vede
+  return isMobileLayout ? 256 : 512
 }
+/** IG: flowmap.dissipation .953 — fricțiune, trail-ul dispare în ~1.5s. */
+const FLOW_DISSIPATION = 0.953
+/** IG: flowmap.falloff .38 (rază ștampilă în unități uv). Ghost mai mic, discret. */
+const FLOW_FALLOFF_MOUSE = 0.3
+const FLOW_FALLOFF_GHOST = 0.22
+/** Puls de „velocitate” injectat la tap pe mobil (uv/frame); decade exponențial. */
+const FLOW_TAP_PULSE = 0.02
+const FLOW_TAP_DECAY = 0.85
 
+/** IG home: extrude.gradientStrength .17 — gradient radial de ecran, luminozitate. */
+const GRADIENT_STRENGTH = 0.17
+/** IG home: chromaticMask — fresnel din normale derivate + umbra pe level5. */
+const CHROMATIC_FRESNEL_SHARPNESS = 35
+const CHROMATIC_FRESNEL_OPACITY = 0.98
+const CHROMATIC_SHADOW_RANGE = [0.2, 0.42]
+const CHROMATIC_SHADOW_OPACITY = 0.25
 /**
- * Trail fade: fracțiune din canvas-ul precedent care rămâne la fiecare frame.
- * 0.025 (sketch original) = trail aproape permanent → mesh complet vizibil în repaus.
- * 0.07 ≈ trail-ul dispare în ~1.5s la 60fps; mesh-ul se „retrage” în hârtie când nu miști mouse-ul,
- * ca pe immersive-g.com. Aplicat și pentru pointer real, și pentru ghost.
+ * IG home: fluidEffect — stratul irizat („fumul colorat”) de sub cursor.
+ * Ei îl alimentează dintr-o simulare de fluid separată; noi refolosim
+ * velocitatea din flowmap (fluid.rg≈velocitate, fluid.b≈magnitudine), care
+ * dă ~același look fără încă o simulare. fluidMagnitude crescut față de
+ * configul lor (.15) fiindcă flowmap-ul nostru are magnitudini mai mici
+ * decât simularea lor de fluid.
  */
-const TRAIL_FADE_ALPHA = 0.07
-
-/** Ca `trail.js` implicit: `circleRadius = width * 0.12` — Official sketch. Mouse: redus la jumătate ca reveal-ul să nu acopere ~30% din viewport (gradient × 2.5 → ~15% lățime). Ghost ușor mai mic decât mouse, ca să rămână discret. */
-const TRAIL_CIRCLE_RADIUS_MULT_MOUSE = 0.06
-const TRAIL_CIRCLE_RADIUS_MULT_GHOST = 0.05
+const FLUID_AMPLITUDE = 0.57
+const FLUID_MAGNITUDE = 1.2
+const FLUID_HUE_SHIFT = -0.52
+const FLUID_COLOR_RANGE = 2
 
 /** Ca positionNode: pos.z *= mix(0.03, 1., extrude) */
 const Z_EXTRUDE_MIN = 0.03
@@ -231,14 +258,33 @@ let modelRoot = null
 let raf = null
 let disposed = false
 
-let trailLayer = null
-let trailTexture = null
+// Flowmap GPU state (creat în initScene, după renderer.init)
+let flowRtRead = null
+let flowRtWrite = null
+let flowQuad = null
+let flowNoiseTex = null
+/** TextureNode partajat de toate materialele relief — .value = RT-ul citit. */
+let flowTexNode = null
+/** TextureNode al pass-ului de update — .value = RT-ul precedent. */
+let flowMapNode = null
 
-// Mobile: render at ~30fps to cut GPU pressure during touch-scroll.
-let frameSkip = 0
+// Uniforms TSL pentru pass-ul de flowmap (valorile se setează în tick)
+const uFlowMouse = uniform(new THREE.Vector2(0.5, 0.5))
+const uFlowVelocity = uniform(new THREE.Vector2(0, 0))
+const uFlowMouse2 = uniform(new THREE.Vector2(0.5, 0.5))
+const uFlowVelocity2 = uniform(new THREE.Vector2(0, 0))
+const uFlowAspect = uniform(1)
+const uFlowFalloff = uniform(FLOW_FALLOFF_MOUSE)
+const uFlowAlpha = uniform(0)
+const uFlowDeltaMult = uniform(1)
+const uFlowTime = uniform(0)
 
-/** Coordonate canvas trail (pixeli) — același obiect pasat la `trailLayer.update(mouse2D)` ca în sketch. */
-const mouse2D = { x: 0, y: 0 }
+/** Poziția netezită din frame-ul precedent (px CSS) — pentru velocitate. */
+const prevPaintCss = { x: 0, y: 0 }
+/** Puls de tap activ (decade spre 0). */
+let tapPulse = 0
+/** performance.now() la tick-ul precedent — pentru dt-ul flowmap-ului. */
+let lastTickTime = -1
 
 /** 1×1 gri — dacă un mesh nu are map / emissiveMap. */
 const FALLBACK_MAP = new THREE.DataTexture(
@@ -286,68 +332,145 @@ function refreshScrollMax(vh) {
 /** Timestamp `performance.now()` la prima inițializare; permite GHOST_START_AFTER_MS. */
 let mountTime = 0
 
-// ─── TRAIL ───────────────────────────────────────────────────────────────────
+// ─── FLOWMAP ─────────────────────────────────────────────────────────────────
 
-/** Coordonate CSS (viewport) → pixeli în canvas trail (2048×2048). */
-function cssToTrailBuffer(cssX, cssY) {
-  const vw = Math.max(window.innerWidth, 1)
-  const vh = Math.max(window.innerHeight, 1)
-  const c = trailLayer?.canvas
-  const bw = Math.max(1, c?.width ?? 1)
-  const bh = Math.max(1, c?.height ?? 1)
-  return {
-    x: (cssX / vw) * bw,
-    y: (cssY / vh) * bh,
+/**
+ * Noise fractal 256×256 (value noise, 4 octave, canale RGB decorelate) —
+ * generat o dată la init. IG folosește mask-noise.png; al nostru e
+ * procedural ca să nu depindem de un asset nou.
+ */
+function makeNoiseTexture() {
+  const S = 256
+  const data = new Uint8Array(S * S * 4)
+  const lerp = (a, b, t) => a + (b - a) * t
+  const smooth = (t) => t * t * (3 - 2 * t)
+  // grile de valori aleatoare per octavă/canal
+  const rand = (seed) => {
+    let s = seed
+    return () => {
+      s = (s * 1664525 + 1013904223) >>> 0
+      return s / 4294967296
+    }
   }
-}
-
-function configureTrailThreeTexture(tex) {
-  tex.flipY = false
+  for (let ch = 0; ch < 3; ch++) {
+    const octaves = []
+    for (let o = 0; o < 4; o++) {
+      const size = 4 << o // 4, 8, 16, 32
+      const r = rand(1234 + ch * 999 + o * 77)
+      const grid = new Float32Array(size * size)
+      for (let i = 0; i < grid.length; i++) grid[i] = r()
+      octaves.push({ size, grid, amp: 1 / (1 << o) })
+    }
+    for (let y = 0; y < S; y++) {
+      for (let x = 0; x < S; x++) {
+        let v = 0
+        let ampSum = 0
+        for (const { size, grid, amp } of octaves) {
+          const fx = (x / S) * size
+          const fy = (y / S) * size
+          const x0 = Math.floor(fx) % size
+          const y0 = Math.floor(fy) % size
+          const x1 = (x0 + 1) % size
+          const y1 = (y0 + 1) % size
+          const tx = smooth(fx - Math.floor(fx))
+          const ty = smooth(fy - Math.floor(fy))
+          const a = lerp(grid[y0 * size + x0], grid[y0 * size + x1], tx)
+          const b = lerp(grid[y1 * size + x0], grid[y1 * size + x1], tx)
+          v += lerp(a, b, ty) * amp
+          ampSum += amp
+        }
+        data[(y * S + x) * 4 + ch] = Math.round((v / ampSum) * 255)
+      }
+    }
+  }
+  for (let i = 3; i < data.length; i += 4) data[i] = 255
+  const tex = new THREE.DataTexture(data, S, S, THREE.RGBAFormat)
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping
   tex.minFilter = THREE.LinearFilter
   tex.magFilter = THREE.LinearFilter
-  tex.wrapS = THREE.ClampToEdgeWrapping
-  tex.wrapT = THREE.ClampToEdgeWrapping
-  tex.generateMipmaps = false
   tex.colorSpace = THREE.NoColorSpace
   tex.needsUpdate = true
+  return tex
+}
+
+function makeFlowRenderTarget(size) {
+  return new THREE.RenderTarget(size, size, {
+    depthBuffer: false,
+    type: THREE.HalfFloatType,
+    minFilter: THREE.LinearFilter,
+    magFilter: THREE.LinearFilter,
+    wrapS: THREE.ClampToEdgeWrapping,
+    wrapT: THREE.ClampToEdgeWrapping,
+    generateMipmaps: false,
+  })
 }
 
 /**
- * O singură instanță `CanvasTexture` pentru trail — `texture()` din TSL cere THREE.Texture, nu `uniform()`.
- * La recreate TrailCanvas păstrăm aceeași textură și schimbăm doar `.image`, ca nodurile din materiale să rămână valide.
+ * Pass-ul de update (port 1:1 al shader-ului lor de flowmap):
+ *  - decay cu fricțiune: data *= 1/(1 + dt·friction)
+ *  - ștampila mouse (rg=velocitate·50, b=magnitudine, a=prezență) × falloff
+ *    radial × noise fractal animat → marginea „de fum”
+ *  - a doua ștampilă (tap mobil): doar magnitudine, ×3, noise mai dur
  */
-function ensureTrailLayer() {
-  if (!renderer) return false
-  const bw = trailCanvasSize()
-  const bh = trailCanvasSize()
+function createFlowmap() {
+  const size = flowmapSize()
+  flowRtRead = makeFlowRenderTarget(size)
+  flowRtWrite = makeFlowRenderTarget(size)
+  flowNoiseTex = makeNoiseTexture()
+  pool.textures.add(flowNoiseTex)
 
-  if (trailLayer && trailLayer.canvas.width === bw && trailLayer.canvas.height === bh) {
-    trailLayer.setFadeSpeed(TRAIL_FADE_ALPHA)
-    trailLayer.setCircleRadius(bw * TRAIL_CIRCLE_RADIUS_MULT_MOUSE)
-    return true
+  flowMapNode = texture(flowRtRead.texture)
+  const noiseNode = texture(flowNoiseTex)
+
+  const FLOW_FRICTION = 1 / FLOW_DISSIPATION - 1
+
+  const getStamp = (velNode, mouseNode) => {
+    const cursor = uv().sub(mouseNode).mul(vec2(uFlowAspect, float(1)))
+    const v = velNode.mul(50)
+    const magnitude = float(1).sub(pow(float(1).sub(min(float(1), length(v))), 2))
+    const falloff = smoothstep(uFlowFalloff, float(0), length(cursor)).mul(uFlowAlpha)
+    return vec4(v, magnitude, float(1)).mul(falloff)
   }
 
-  if (trailLayer) {
-    trailLayer = null
-  }
+  const flowFragment = Fn(() => {
+    const uvv = uv()
+    const dissipation = float(1).div(float(1).add(uFlowDeltaMult.mul(FLOW_FRICTION)))
+    const data = flowMapNode.sample(uvv).mul(dissipation)
 
-  trailLayer = new TrailCanvas(bw, bh)
-  trailLayer.setFadeSpeed(TRAIL_FADE_ALPHA)
-  trailLayer.setCircleRadius(bw * TRAIL_CIRCLE_RADIUS_MULT_MOUSE)
-  const canvas = trailLayer.getTexture()
+    const drift = vec2(0.01, 0.01).mul(uFlowTime)
+    const noiseUv = uvv.mul(vec2(uFlowAspect, float(1)))
+    const noise = smoothstep(float(0.4), float(1), noiseNode.sample(noiseUv.mul(0.35).add(drift)).g)
+    const noise2 = float(0.15).add(smoothstep(float(0.4), float(1), noiseNode.sample(noiseUv.mul(0.8).add(drift)).g).mul(0.85))
 
-  if (!trailTexture) {
-    trailTexture = new THREE.CanvasTexture(canvas)
-    configureTrailThreeTexture(trailTexture)
-    pool.textures.add(trailTexture)
-  } else {
-    pool.textures.delete(trailTexture)
-    trailTexture.image = canvas
-    configureTrailThreeTexture(trailTexture)
-    pool.textures.add(trailTexture)
-  }
-  trailTexture.needsUpdate = true
-  return true
+    const stamp1 = getStamp(uFlowVelocity, uFlowMouse).mul(noise2).mul(uFlowDeltaMult)
+    const s2 = getStamp(uFlowVelocity2, uFlowMouse2).mul(3)
+    const stamp2 = vec4(float(0), float(0), s2.b, s2.b).mul(noise).mul(uFlowDeltaMult)
+
+    return clamp(data.add(stamp1).add(stamp2), vec4(-1), vec4(1))
+  })
+
+  const mat = new NodeMaterial()
+  mat.name = 'ReliefFlowmapPass'
+  mat.fragmentNode = flowFragment()
+  mat.depthTest = false
+  mat.depthWrite = false
+  pool.materials.push(mat)
+  flowQuad = new QuadMesh(mat)
+
+  flowTexNode = texture(flowRtRead.texture)
+}
+
+/** Rulează pass-ul de flowmap și face swap-ul ping-pong. */
+function renderFlowmap() {
+  if (!renderer || !flowQuad) return
+  flowMapNode.value = flowRtRead.texture
+  renderer.setRenderTarget(flowRtWrite)
+  flowQuad.render(renderer)
+  renderer.setRenderTarget(null)
+  const tmp = flowRtRead
+  flowRtRead = flowRtWrite
+  flowRtWrite = tmp
+  flowTexNode.value = flowRtRead.texture
 }
 
 /**
@@ -420,31 +543,64 @@ function updateTrailPaintTargetCss() {
   return true
 }
 
-function paintTrail() {
-  if (!ensureTrailLayer()) return
+/**
+ * Setează uniformele pass-ului de flowmap din starea pointer/ghost.
+ * Ștampila e oprită (uFlowAlpha=0) la idle complet → dissipation-ul golește
+ * harta și mesh-ul colapsează în hârtie, ca înainte.
+ */
+function updateFlowmapInputs(deltaMs) {
+  const vw = Math.max(window.innerWidth, 1)
+  const vh = Math.max(window.innerHeight, 1)
 
   const shouldPaint = updateTrailPaintTargetCss()
-  const bw = trailCanvasSize()
-  trailLayer.setCircleRadius(
-    bw * (isTrailUserActiveNow() ? TRAIL_CIRCLE_RADIUS_MULT_MOUSE : TRAIL_CIRCLE_RADIUS_MULT_GHOST),
-  )
 
-  if (shouldPaint) {
-    const p = cssToTrailBuffer(trailPaintCss.x, trailPaintCss.y)
-    mouse2D.x = p.x
-    mouse2D.y = p.y
-    trailLayer.update(mouse2D)
+  uFlowAspect.value = vw / vh
+  uFlowFalloff.value = isTrailUserActiveNow() ? FLOW_FALLOFF_MOUSE : FLOW_FALLOFF_GHOST
+  // dt normalizat la 60fps, cu limite ca tab-switch-ul să nu injecteze un decay uriaș
+  uFlowDeltaMult.value = Math.min(Math.max(deltaMs / 16.666, 0.25), 3)
+  uFlowTime.value = performance.now() / 1000
+
+  uFlowMouse.value.set(trailPaintCss.x / vw, trailPaintCss.y / vh)
+  uFlowVelocity.value.set(
+    (trailPaintCss.x - prevPaintCss.x) / vw,
+    (trailPaintCss.y - prevPaintCss.y) / vh,
+  )
+  prevPaintCss.x = trailPaintCss.x
+  prevPaintCss.y = trailPaintCss.y
+
+  uFlowAlpha.value = shouldPaint ? 1 : 0
+
+  // Tap pe mobil: puls de magnitudine care decade — ștampila 2 (doar b/a)
+  if (tapPulse > 1e-4) {
+    uFlowVelocity2.value.set(tapPulse, tapPulse * 0.6)
+    tapPulse *= FLOW_TAP_DECAY
   } else {
-    /*
-     * Idle complet: lăsăm fade-ul să șteargă canvas-ul fără să adăugăm o pată nouă.
-     * Așa mesh-ul colapsează în hârtie (extrude → 0, level0 = paper) ca pe immersive-g.com.
-     */
-    trailLayer.update(null)
+    uFlowVelocity2.value.set(0, 0)
+    tapPulse = 0
   }
-  trailTexture.needsUpdate = true
 }
 
 // ─── MATERIAL (MeshBasicNodeMaterial + TSL — WebGPURenderer) ─
+
+/** rgb↔hsv, port TSL al funcțiilor din shader-ul IG (standard Sam Hocevar). */
+const rgb2hsv = Fn(([c]) => {
+  const K = vec4(0, -1 / 3, 2 / 3, -1)
+  const p = mix(vec4(c.bg, K.wz), vec4(c.gb, K.xy), step(c.b, c.g))
+  const q = mix(vec4(p.xyw, c.r), vec4(c.r, p.yzx), step(p.x, c.r))
+  const d = q.x.sub(min(q.w, q.y))
+  const e = float(1e-10)
+  return vec3(
+    abs(q.z.add(q.w.sub(q.y).div(d.mul(6).add(e)))),
+    d.div(q.x.add(e)),
+    q.x,
+  )
+})
+
+const hsv2rgb = Fn(([c]) => {
+  const K = vec4(1, 2 / 3, 1 / 3, 3)
+  const p = abs(fract(c.xxx.add(K.xyz)).mul(6).sub(K.www))
+  return c.z.mul(mix(K.xxx, clamp(p.sub(K.xxx), float(0), float(1)), c.y))
+})
 
 function makeReliefMaterial(baseMap, emMap, _skinned, _morphTargets) {
   const texture1 = baseMap ?? FALLBACK_MAP
@@ -475,10 +631,18 @@ function makeReliefMaterial(baseMap, emMap, _skinned, _morphTargets) {
   const oneF = float(1)
   const epsW = float(1e-6)
 
-  const trailTex = trailTexture && trailTexture.isTexture ? trailTexture : FALLBACK_MAP
-  const trailMap = texture(trailTex)
   const map1 = texture(texture1 && texture1.isTexture ? texture1 : FALLBACK_MAP)
   const map2 = texture(texture2 && texture2.isTexture ? texture2 : FALLBACK_MAP)
+
+  /*
+   * Extrude ca la IG: mix(flow.b, flow.a, .5) — b=magnitudinea velocității
+   * (0 la hover static), a=prezența ștampilei. Media lor face ca hover-ul
+   * static să reveleze pe jumătate, iar mișcarea să reveleze complet.
+   */
+  const flowExtrude = (uvScreen) => {
+    const flow = flowTexNode.sample(uvScreen)
+    return mix(flow.b, flow.a, 0.5)
+  }
 
   const positionNode = Fn(() => {
     const clipPre = cameraProjectionMatrix.mul(modelViewMatrix).mul(vec4(positionLocal, 1))
@@ -486,17 +650,18 @@ function makeReliefMaterial(baseMap, emMap, _skinned, _morphTargets) {
     const uvx = clipPre.x.div(w).mul(0.5).add(0.5)
     const uvy = oneF.sub(clipPre.y.div(w).mul(0.5).add(0.5))
     const uvScreen = vec2(uvx, uvy)
-    const ex = trailMap.sample(uvScreen).r
+    const ex = flowExtrude(uvScreen)
     const lat = smoothstep(lat0, latF, uvScreen.x).mul(oneF.sub(smoothstep(lat1m, lat1, uvScreen.x)))
-    const extrude = ex.mul(lat)
+    const extrude = clamp(ex, float(0), float(1)).mul(lat)
     const zScale = mix(zMinF, oneF, extrude)
     return vec3(positionLocal.x, positionLocal.y, positionLocal.z.mul(zScale))
   })()
 
   const colorNode = Fn(() => {
-    /* `screenUV` (TSL / WebGPU) e deja aliniat la viewport ca trail-ul (Y de sus); fără `1-y` ca la gl_FragCoord. */
+    /* `screenUV` (TSL / WebGPU) e deja aliniat la viewport ca flowmap-ul (Y de sus); fără `1-y` ca la gl_FragCoord. */
     const sv = screenUV
-    const exf = trailMap.sample(sv).r
+    const flow = flowTexNode.sample(sv)
+    const exf = clamp(mix(flow.b, flow.a, 0.5), float(0), float(1))
     const latf = smoothstep(lat0, latF, sv.x).mul(oneF.sub(smoothstep(lat1m, lat1, sv.x)))
     const extrude = exf.mul(latf)
     const tt1 = sRGBTransferOETF(map1.sample(uv()).rgb)
@@ -512,7 +677,32 @@ function makeReliefMaterial(baseMap, emMap, _skinned, _morphTargets) {
     const sh3 = mix(sh2, level3, smoothstep(float(0.4), float(0.6), extrude))
     const sh4 = mix(sh3, level4, smoothstep(float(0.6), float(0.8), extrude))
     const shade = mix(sh4, level5, smoothstep(float(0.8), float(1), extrude))
-    return vec3(shade, shade, shade)
+
+    /* Gradient radial de ecran (IG: gradient*0.7*gradientStrength). */
+    const gradient = mix(float(1), float(0.5), length(sv.sub(vec2(0, 0.8))))
+    let color = vec3(shade, shade, shade).add(gradient.mul(0.7 * GRADIENT_STRENGTH))
+
+    /*
+     * Stratul cromatic IG: normala din derivate de ecran → fresnel mask,
+     * plus umbră pe level5; culoarea efectului = normala hue-shift-ată,
+     * mascată de „muchiile” fluidului (magnitudinea velocității din flowmap).
+     */
+    const vEye = positionWorld.sub(cameraPosition)
+    const nrm = normalize(cross(dFdx(vEye), dFdy(vEye)))
+    const fresnelFactor = abs(dot(nrm, vec3(0, 0, 1)))
+    const inverseFresnel = float(1).sub(pow(float(1).sub(fresnelFactor), CHROMATIC_FRESNEL_SHARPNESS))
+    const waveMask = max(
+      smoothstep(float(1), float(0.1), mix(inverseFresnel, float(1), 1 - CHROMATIC_FRESNEL_OPACITY)),
+      smoothstep(float(CHROMATIC_SHADOW_RANGE[1]), float(CHROMATIC_SHADOW_RANGE[0]), level5).mul(CHROMATIC_SHADOW_OPACITY),
+    )
+    const fluidEdges = smoothstep(float(0), float(1), flow.b.mul(FLUID_MAGNITUDE))
+    const nrmRanged = normalize(vec3(nrm.x, nrm.y, nrm.z.mul(FLUID_COLOR_RANGE)))
+    const nrmColor = nrmRanged.add(1).div(2)
+    const hsv = rgb2hsv(nrmColor)
+    const effectColor = hsv2rgb(vec3(fract(hsv.x.add(FLUID_HUE_SHIFT)), hsv.y, hsv.z))
+    color = mix(color, effectColor, waveMask.mul(fluidEdges).mul(FLUID_AMPLITUDE).mul(latf))
+
+    return color
   })()
 
   const mat = new MeshBasicNodeMaterial({
@@ -670,7 +860,7 @@ async function initScene(canvas) {
   camera.position.set(0, 0, CAMERA_Z)
   camera.lookAt(0, 0, 0)
 
-  ensureTrailLayer()
+  createFlowmap()
 
   const draco = new DRACOLoader()
   draco.setDecoderPath(DRACO_DECODER)
@@ -768,6 +958,13 @@ function onPointerDown(e) {
   lastRealMouseTime = performance.now()
   trailPaintCss.x = e.clientX
   trailPaintCss.y = e.clientY
+  prevPaintCss.x = e.clientX
+  prevPaintCss.y = e.clientY
+  // Ștampila 2 (IG: uMouse2/uVelocity2) — tap-ul „sparge fumul” și fără drag
+  const vw = Math.max(window.innerWidth, 1)
+  const vh = Math.max(window.innerHeight, 1)
+  uFlowMouse2.value.set(e.clientX / vw, e.clientY / vh)
+  tapPulse = FLOW_TAP_PULSE
 }
 
 /*
@@ -801,8 +998,6 @@ function onResize() {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, maxPixelRatio()))
   renderer.setSize(w, h, false)
 
-  ensureTrailLayer()
-
   scrollSmoothed = window.scrollY
   trailPaintCss.x = w * 0.5
   trailPaintCss.y = h * 0.5
@@ -835,7 +1030,6 @@ function onOrientation() {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, maxPixelRatio()))
     renderer.setSize(frozenWidth, frozenHeight, false)
 
-    ensureTrailLayer()
     refreshScrollMax(frozenHeight)
     fitModelToViewport()
   }))
@@ -857,19 +1051,17 @@ function tick() {
   if (typeof document !== 'undefined' && document.hidden) return
 
   /*
-   * Pe mobil, doar partea scumpă (paint + upload textură trail) rulează la
-   * 30fps. Poziția legată de scroll și render-ul rulează la fiecare frame —
-   * vechiul skip total îngheța modelul la 30Hz în timp ce pagina scrolla la
-   * 60Hz, exact sacadarea raportată. Frame-urile fără paint sunt ieftine:
-   * textura nu se re-uploadează (needsUpdate rămâne false).
+   * Flowmap-ul rulează pe GPU la fiecare frame (256²/512² half-float e
+   * ieftin) — a dispărut și frame-skip-ul de 30Hz de pe mobil, și upload-ul
+   * CanvasTexture pe frame care sătura bandwidth-ul GPU la touch-scroll.
    */
-  let paintThisFrame = true
-  if (isMobileLayout) {
-    frameSkip = (frameSkip + 1) % 2
-    paintThisFrame = frameSkip === 0
+  const now = performance.now()
+  const deltaMs = lastTickTime > 0 ? now - lastTickTime : 16.666
+  lastTickTime = now
+  if (flowQuad) {
+    updateFlowmapInputs(deltaMs)
+    renderFlowmap()
   }
-
-  if (paintThisFrame) paintTrail()
 
   if (modelRoot && camera) {
     const scrollTarget = window.scrollY
@@ -891,7 +1083,6 @@ function tick() {
   }
 
   if (renderer && scene && camera) {
-    if (trailTexture && paintThisFrame) trailTexture.needsUpdate = true
     renderer.render(scene, camera)
   }
 }
@@ -948,13 +1139,22 @@ onBeforeUnmount(() => {
   pool.textures.clear()
   reliefMaterials.length = 0
 
+  flowRtRead?.dispose()
+  flowRtWrite?.dispose()
+  flowRtRead = null
+  flowRtWrite = null
+  flowQuad = null
+  flowTexNode = null
+  flowMapNode = null
+  flowNoiseTex = null
+  lastTickTime = -1
+  tapPulse = 0
+
   renderer?.dispose()
   renderer = null
   scene = null
   camera = null
   modelRoot = null
-  trailLayer = null
-  trailTexture = null
 })
 </script>
 
