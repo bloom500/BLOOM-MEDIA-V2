@@ -167,13 +167,14 @@ const MODEL_ORIGINAL_OFFSET_Y = 2
 const RELIEF_TOP_EXTRA_LIFT_FRAC = 0.11
 
 /**
- * Tonul IG (user-approved 2026-07-17, în locul preview-ului dark — scos):
- * compresie de contrast ca în shader-ul lor (color*uBrightnessFactor
- * +uBrightnessOffset) — hârtia coboară spre gri-ul lor mat, iar diferența
- * relief↔fundal se aplatizează în „embosaj sub ceață”, nu „spotlight”.
+ * Ton + modelare (user, 2026-07-17): gri mai închis decât IG și — spre
+ * deosebire de compresia lor plată — CONTRAST amplificat în jurul
+ * pivotului, ca umbrele crestăturilor să sape formele reliefului.
+ * Ordinea: contrast → factor/offset (mecanismul uBrightnessFactor/Offset).
  */
-const RELIEF_BRIGHTNESS_FACTOR = 0.42
-const RELIEF_BRIGHTNESS_OFFSET = 0.22
+const RELIEF_CONTRAST = 1.55
+const RELIEF_BRIGHTNESS_FACTOR = 0.40
+const RELIEF_BRIGHTNESS_OFFSET = 0.10
 
 /** Clear + scene.background + CSS wrapper/canvas — același hex ca _l0 vizual. */
 const RELIEF_SCENE_BG = 0xa8a6a2
@@ -775,8 +776,12 @@ function makeReliefMaterial(baseMap, emMap, _skinned, _morphTargets) {
      * gamma-crush care lasă doar vârfurile de lumină; velocitatea flowmap-ului
      * aprinde ușor zonele agitate.
      */
-    /* Tonul IG: compresie de contrast spre gri-ul lor mat. */
-    const shadeFinal = shadeGrained
+    /* Contrast în jurul pivotului (umbre adânci), apoi tonul gri închis. */
+    const shadeContrasted = clamp(
+      shadeGrained.sub(0.5).mul(RELIEF_CONTRAST).add(0.5),
+      float(0), float(1.25),
+    )
+    const shadeFinal = shadeContrasted
       .mul(RELIEF_BRIGHTNESS_FACTOR)
       .add(RELIEF_BRIGHTNESS_OFFSET)
 
