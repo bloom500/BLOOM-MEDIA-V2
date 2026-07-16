@@ -105,7 +105,14 @@ const RELIEF_COMFORT_ZOOM_OUT = 0.77
  * rămână lizibile pe ecran mic. Scroll-pan-ul recalculat din bbox-ul
  * scalat parcurge automat mai mult din model (user-approved, 2026-07-16).
  */
-const RELIEF_MOBILE_CLOSEUP_ZOOM = 1.6
+const RELIEF_MOBILE_CLOSEUP_ZOOM = 2.2
+/**
+ * Mobil, scroll=0: vârful bbox (păsările) puțin peste marginea de sus a
+ * viewport-ului (>1 = rezervă pentru float/parallax, fără muchie vizibilă).
+ * Pe mobil NU se aplică MODEL_ORIGINAL_OFFSET_Y / RELIEF_TOP_EXTRA_LIFT_FRAC —
+ * ele împingeau păsările afară din cadru și porneai de la cerb (user, 2026-07-16).
+ */
+const RELIEF_MOBILE_TOP_FRAC = 1.06
 /**
  * Ținta pe Y pentru vârful bbox (fracție din semi-înălțimea vizibilă, de la centru spre marginea de sus).
  * RELIEF_TOP_BLEND amestecă această țintă cu centrarea verticală: 0 = centrat pe ecran, 1 = aliniere completă sus.
@@ -533,12 +540,17 @@ function fitModelToViewport() {
 
   const fitBox = new THREE.Box3().setFromObject(modelRoot)
   const halfVisibleH = visibleH / 2
-  const topTargetY = halfVisibleH * RELIEF_TOP_FRAC
-  const topDelta = topTargetY - fitBox.max.y
-  modelRoot.position.y += topDelta * RELIEF_TOP_BLEND
+  if (isMobileLayout) {
+    const topTargetY = halfVisibleH * RELIEF_MOBILE_TOP_FRAC
+    modelRoot.position.y += topTargetY - fitBox.max.y
+  } else {
+    const topTargetY = halfVisibleH * RELIEF_TOP_FRAC
+    const topDelta = topTargetY - fitBox.max.y
+    modelRoot.position.y += topDelta * RELIEF_TOP_BLEND
 
-  modelRoot.position.y += MODEL_ORIGINAL_OFFSET_Y
-  modelRoot.position.y += visibleH * RELIEF_TOP_EXTRA_LIFT_FRAC
+    modelRoot.position.y += MODEL_ORIGINAL_OFFSET_Y
+    modelRoot.position.y += visibleH * RELIEF_TOP_EXTRA_LIFT_FRAC
+  }
 
   modelRoot.updateMatrixWorld(true)
   modelBaseY = modelRoot.position.y
