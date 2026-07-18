@@ -69,6 +69,23 @@ function nextVideo() {
 
 let observer: IntersectionObserver | null = null
 let warmObserver: IntersectionObserver | null = null
+
+/*
+ * Ancora secțiunii în spațiul documentului (top + înălțime). Setată din
+ * boundingClientRect-ul livrat de IntersectionObserver (fără reflow) și
+ * dintr-o citire unică la resize (eveniment rar). Infinity = necunoscută încă.
+ */
+let anchorTop = Infinity
+let anchorHeight = 0
+
+function reanchor(rect: DOMRect) {
+  anchorTop = rect.top + window.scrollY
+  anchorHeight = rect.height
+}
+
+function onSwooshResize() {
+  if (frame.value) reanchor(frame.value.getBoundingClientRect())
+}
 let swooshRaf = 0
 let swooshP = 0
 
@@ -83,11 +100,18 @@ let swooshP = 0
 function swooshTick() {
   swooshRaf = requestAnimationFrame(swooshTick)
   const el = frame.value
-  if (!el) return
-  const r = el.getBoundingClientRect()
+  if (!el || anchorTop === Infinity) return
+  /*
+   * NICIODATĂ getBoundingClientRect aici: transformul scris mai jos lasă
+   * layout-ul murdar, deci fiecare citire era un reflow forțat pe FIECARE
+   * rAF — main thread-ul blocat = modelul 3D sacada la swipe pe mobil.
+   * Poziția vine din ancora de document (setată de IntersectionObserver,
+   * gratis) minus scrollY, care nu atinge layout-ul.
+   */
+  const top = anchorTop - window.scrollY
   const vh = window.innerHeight || 1
-  if (r.top > vh * 1.3 || r.bottom < -150) return
-  let target = (vh - r.top) / (vh * 0.85)
+  if (top > vh * 1.3 || top + anchorHeight < -150) return
+  let target = (vh - top) / (vh * 0.85)
   target = Math.min(Math.max(target, 0), 1)
   target = target * target * (3 - 2 * target)
 
@@ -129,6 +153,7 @@ onMounted(() => {
     (entries) => {
       const entry = entries[0]
       if (!entry) return
+      reanchor(entry.boundingClientRect)
       if (entry.isIntersecting) {
         visible.value = true
         tryPlay(player.value)
@@ -155,6 +180,7 @@ onMounted(() => {
   if (frame.value) warmObserver.observe(frame.value)
 
   if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    window.addEventListener('resize', onSwooshResize, { passive: true })
     swooshRaf = requestAnimationFrame(swooshTick)
   }
 })
@@ -165,6 +191,7 @@ onUnmounted(() => {
   warmObserver?.disconnect()
   warmObserver = null
   if (swooshRaf) cancelAnimationFrame(swooshRaf)
+  window.removeEventListener('resize', onSwooshResize)
 })
 </script>
 

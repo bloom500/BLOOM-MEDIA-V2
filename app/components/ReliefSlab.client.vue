@@ -1195,8 +1195,16 @@ function tick() {
     const vh = isMobileLayout
       ? Math.max(frozenHeight, 1)
       : Math.max(typeof window !== 'undefined' ? window.innerHeight : 1, 1)
+    /*
+     * refreshScrollMax citește scrollHeight = reflow forțat (layout-ul e
+     * mereu murdar sub StringTune). Chiar și 1×/secundă însemna un hitch
+     * vizibil în timpul fling-ului pe mobil — așa că rulează DOAR când
+     * scrollul e așezat (țintă ≈ smoothed); acordeoanele FAQ se deschid
+     * oricum doar cu scrollul oprit.
+     */
     scrollMaxFrameCounter = (scrollMaxFrameCounter + 1) % 60
-    if (scrollMaxFrameCounter === 0 || scrollMaxCached <= 1) refreshScrollMax(vh)
+    const scrollIdle = Math.abs(scrollTarget - scrollSmoothed) < 1
+    if ((scrollMaxFrameCounter === 0 && scrollIdle) || scrollMaxCached <= 1) refreshScrollMax(vh)
     const t = Math.min(Math.max(scrollSmoothed / scrollMaxCached, 0), 1)
     modelRoot.position.y = modelBaseY + t * modelScrollPanRange
   }
