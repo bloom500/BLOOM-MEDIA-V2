@@ -7,7 +7,6 @@
     id="footer-reveal"
     ref="footerEl"
     class="footer-reveal"
-    aria-label="Site footer"
   >
     <div v-if="!isDesktop" class="footer-static">
       <!-- Top-right socials -->
@@ -52,8 +51,8 @@
           <span>Unele lucruri</span>
           <span>merită făcute bine.</span>
         </p>
-        <a href="mailto:hello@bloommedia.ro" class="footer-static__email">
-          hello@bloommedia.ro
+        <a href="mailto:contact@bloommedia.ro" class="footer-static__email">
+          contact@bloommedia.ro
         </a>
       </div>
 
@@ -123,10 +122,10 @@
         </p>
         <a
           ref="emailEl"
-          href="mailto:hello@bloommedia.ro"
+          href="mailto:contact@bloommedia.ro"
           class="footer-stage__email"
         >
-          hello@bloommedia.ro
+          contact@bloommedia.ro
         </a>
       </div>
 

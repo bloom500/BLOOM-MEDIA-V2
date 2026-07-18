@@ -54,6 +54,7 @@
       class="mobile-drawer"
       :class="{ 'is-open': isMenuOpen }"
       :aria-hidden="String(!isMenuOpen)"
+      :inert="!isMenuOpen"
     >
       <nav class="mobile-drawer__nav" aria-label="Mobile">
         <NuxtLink
@@ -79,7 +80,7 @@
       </nav>
 
       <footer class="mobile-drawer__foot">
-        <a href="mailto:hello@bloommedia.ro">hello@bloommedia.ro</a>
+        <a href="mailto:contact@bloommedia.ro">contact@bloommedia.ro</a>
         <span>Cluj-Napoca, RO</span>
       </footer>
     </div>

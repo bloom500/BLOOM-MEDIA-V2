@@ -136,7 +136,7 @@
           <div v-if="submitted" class="cfg-success">
             <span class="cfg-success__mark" aria-hidden="true">✓</span>
             <h2 class="cfg-success__title">Am primit brieful.</h2>
-            <p class="cfg-success__body">Te contactăm în maxim 24h cu o propunere personalizată.<br>Până atunci, <a href="mailto:hello@bloommedia.ro">hello@bloommedia.ro</a></p>
+            <p class="cfg-success__body">Te contactăm în maxim 24h cu o propunere personalizată.<br>Până atunci, <a href="mailto:contact@bloommedia.ro">contact@bloommedia.ro</a></p>
           </div>
 
           <form v-else class="cfg-form" @submit.prevent="handleSubmit" novalidate>
@@ -401,7 +401,7 @@ async function handleSubmit() {
     submitted.value = true
     trackLead(eventId)
   } catch {
-    submitError.value = 'Nu am putut trimite cererea. Încearcă din nou sau scrie la hello@bloommedia.ro.'
+    submitError.value = 'Nu am putut trimite cererea. Încearcă din nou sau scrie la contact@bloommedia.ro.'
   } finally {
     isSubmitting.value = false
   }

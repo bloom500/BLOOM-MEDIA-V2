@@ -32,7 +32,7 @@ function goHome() {
         <NuxtLink class="err__link" to="/audit" @click="goHome">Audit gratuit →</NuxtLink>
       </div>
       <p class="err__contact">
-        Sau scrie la <a href="mailto:hello@bloommedia.ro">hello@bloommedia.ro</a>
+        Sau scrie la <a href="mailto:contact@bloommedia.ro">contact@bloommedia.ro</a>
       </p>
     </div>
   </main>

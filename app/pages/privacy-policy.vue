@@ -31,7 +31,7 @@ useHead({
           </p>
           <p>
             Contact privind datele personale:<br>
-            Email: <a href="mailto:hello@bloommedia.ro">hello@bloommedia.ro</a><br>
+            Email: <a href="mailto:contact@bloommedia.ro">contact@bloommedia.ro</a><br>
             Telefon: <a href="tel:+40763281168">0763 281 168</a>
           </p>
         </section>
@@ -173,7 +173,7 @@ useHead({
           </ul>
           <p>
             Pentru exercitarea oricăruia dintre aceste drepturi, scrie-ne la
-            <a href="mailto:hello@bloommedia.ro">hello@bloommedia.ro</a>. Răspundem în
+            <a href="mailto:contact@bloommedia.ro">contact@bloommedia.ro</a>. Răspundem în
             maximum 30 de zile.
           </p>
           <p>

@@ -62,7 +62,7 @@ useHead({
             availableLanguage: 'Romanian',
           },
         ],
-        email: 'hello@bloommedia.ro',
+        email: 'contact@bloommedia.ro',
         sameAs: [
           'https://www.facebook.com/profile.php?id=61587068890787',
           'https://www.instagram.com/bloom_media_marketing/',

@@ -75,7 +75,7 @@ export default defineEventHandler(async (event) => {
     message: message || null,
   })
   if (persisted === 'failed') {
-    throw createError({ statusCode: 500, message: 'Nu am putut înregistra cererea. Încearcă din nou sau scrie la hello@bloommedia.ro.' })
+    throw createError({ statusCode: 500, message: 'Nu am putut înregistra cererea. Încearcă din nou sau scrie la contact@bloommedia.ro.' })
   }
 
   await Promise.allSettled([
@@ -150,7 +150,7 @@ function buildClientEmail(name: string) {
   return `<div style="font-family:sans-serif;max-width:520px">
     <h2 style="color:#1A1814">Salut, ${firstName}!</h2>
     <p style="color:#1A1814;line-height:1.7">Am primit cererea ta de audit și o să te contactăm în maxim <strong>24 de ore</strong> cu o analiză inițială.</p>
-    <p style="color:#1A1814;line-height:1.7">Până atunci, dacă ai orice întrebare ne poți scrie la <a href="mailto:hello@bloommedia.ro" style="color:#1A1814">hello@bloommedia.ro</a> sau suna la <a href="tel:+40763281168" style="color:#1A1814">0763 281 168</a>.</p>
+    <p style="color:#1A1814;line-height:1.7">Până atunci, dacă ai orice întrebare ne poți scrie la <a href="mailto:contact@bloommedia.ro" style="color:#1A1814">contact@bloommedia.ro</a> sau suna la <a href="tel:+40763281168" style="color:#1A1814">0763 281 168</a>.</p>
     <p style="color:#9A9590;font-size:12px;margin-top:32px">Bloom Media · Cluj-Napoca · bloommedia.ro</p>
   </div>`
 }

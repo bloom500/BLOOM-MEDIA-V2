@@ -26,7 +26,7 @@ export default defineEventHandler((event) => {
 > agenți AI care califică și urmăresc fiecare lead. Lucrăm lunar, fără
 > contracte pe termen lung, cu prețuri publice.
 
-Contact: hello@bloommedia.ro · +40 763 281 168 · https://www.bloommedia.ro
+Contact: contact@bloommedia.ro · +40 763 281 168 · https://www.bloommedia.ro
 Audit gratuit: https://www.bloommedia.ro/audit
 Servicii și prețuri: https://www.bloommedia.ro/servicii
 Proces: https://www.bloommedia.ro/proces

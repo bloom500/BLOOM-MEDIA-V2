@@ -46,7 +46,7 @@ const MAX_QUEUE        = 10           // joburi în așteptare peste cele active
 const PER_KEY_WINDOW   = 24 * 3600e3  // fereastra limitelor per email/domeniu
 const MAX_PER_EMAIL    = 3            // audituri / email / 24h
 const MAX_PER_DOMAIN   = 3            // audituri / domeniu / 24h
-const JOB_TIMEOUT_MS   = 5 * 60e3     // cap dur pe un audit (FERAL inclus)
+const JOB_TIMEOUT_MS   = 10 * 60e3    // cap dur pe un audit (FERAL inclus); 5min pica pe site-uri mari (vezi jobul ycombinator)
 const MAX_REPORT_CHARS = 20_000       // cap pe output înainte de email/artefact
 
 // Supabase (opțional): PATCH pe status-ul lead-ului + recovery poll pentru
@@ -353,8 +353,12 @@ async function runAudit(lead) {
 // ── HTTP ─────────────────────────────────────────────────────────────────────
 const server = http.createServer((req, res) => {
   if (req.method === 'GET' && req.url === '/health') {
-    const d = stats.durationsMs
     res.writeHead(200, { 'Content-Type': 'application/json' })
+    // Fără secret: doar liveness — lastJob/lastError conțin date de lead.
+    if (!secretOk(req.headers['x-audit-secret'])) {
+      return res.end(JSON.stringify({ ok: true }))
+    }
+    const d = stats.durationsMs
     return res.end(JSON.stringify({
       ok: true,
       ...stats,

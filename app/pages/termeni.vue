@@ -31,7 +31,7 @@ useHead({
             continuare <em>„Bloom Media"</em> sau <em>„noi"</em>.
           </p>
           <p>
-            Contact: <a href="mailto:hello@bloommedia.ro">hello@bloommedia.ro</a> ·
+            Contact: <a href="mailto:contact@bloommedia.ro">contact@bloommedia.ro</a> ·
             <a href="tel:+40763281168">0763 281 168</a>
           </p>
         </section>
@@ -252,7 +252,7 @@ useHead({
           <h2>13. Contact</h2>
           <p>
             Pentru orice întrebări legate de acești termeni, ne poți contacta la:<br>
-            <a href="mailto:hello@bloommedia.ro">hello@bloommedia.ro</a> ·
+            <a href="mailto:contact@bloommedia.ro">contact@bloommedia.ro</a> ·
             <a href="tel:+40763281168">0763 281 168</a>
           </p>
         </section>

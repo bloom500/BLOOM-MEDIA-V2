@@ -21,12 +21,12 @@
       <div class="contact__right">
         <div class="contact__channels">
           <a
-            href="mailto:hello@bloommedia.ro"
+            href="mailto:contact@bloommedia.ro"
             class="contact__channel"
           >
             <span class="contact__channel-label">Email</span>
             <span class="contact__channel-value">
-              hello@bloommedia.ro
+              contact@bloommedia.ro
             </span>
           </a>
 

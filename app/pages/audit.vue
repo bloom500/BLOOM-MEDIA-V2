@@ -93,7 +93,7 @@ async function handleSubmit() {
     submitted.value = true
     trackLead(eventId)
   } catch {
-    error.value = 'Nu am putut trimite cererea. Încearcă din nou sau scrie la hello@bloommedia.ro.'
+    error.value = 'Nu am putut trimite cererea. Încearcă din nou sau scrie la contact@bloommedia.ro.'
   } finally {
     isSubmitting.value = false
   }
@@ -142,7 +142,7 @@ async function handleSubmit() {
           </ul>
           <p class="audit__success-body">
             Grabă? Sună direct: <a href="tel:+40734270188">0734 270 188</a> sau
-            scrie la <a href="mailto:hello@bloommedia.ro">hello@bloommedia.ro</a>
+            scrie la <a href="mailto:contact@bloommedia.ro">contact@bloommedia.ro</a>
           </p>
         </div>
       </Transition>

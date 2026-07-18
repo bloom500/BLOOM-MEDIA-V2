@@ -8,7 +8,6 @@
     type="button"
     class="x3d-toggle"
     :aria-pressed="enabled"
-    :aria-label="enabled ? 'Oprește fundalul 3D' : 'Pornește fundalul 3D'"
     @click="toggle"
   >
     3D <span class="x3d-toggle__state">{{ enabled ? 'On' : 'Off' }}</span>
