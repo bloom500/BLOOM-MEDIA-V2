@@ -2,8 +2,6 @@
   <section
     class="process"
     aria-labelledby="process-heading"
-    string="progress"
-    string-enter-vp="top"
   >
     <div class="process__inner">
       <h2 id="process-heading" class="process__title">Cum lucrăm</h2>

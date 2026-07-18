@@ -2,8 +2,6 @@
   <section
     class="about"
     aria-labelledby="about-heading"
-    string="progress"
-    string-enter-vp="top"
   >
     <div class="about__grain" aria-hidden="true" />
 

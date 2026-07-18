@@ -2,8 +2,6 @@
   <section
     class="why"
     aria-labelledby="why-heading"
-    string="progress"
-    string-enter-vp="top"
   >
     <div class="why__grain" aria-hidden="true" />
 

@@ -2,8 +2,6 @@
   <section
     class="services"
     aria-labelledby="services-heading"
-    string="progress"
-    string-enter-vp="top"
   >
     <div class="services__inner">
       <h2 id="services-heading" class="services__title">Sistemul</h2>

@@ -215,8 +215,6 @@ onBeforeUnmount(() => {
     <section
       class="manifest"
       aria-label="Manifest"
-      string="progress"
-      string-enter-vp="top"
     >
       <div class="manifest__inner">
         <p class="manifest-text">
