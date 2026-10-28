@@ -2,6 +2,7 @@
   <footer
     id="footer-reveal"
     class="footer"
+    :class="{ 'footer--plain': plain }"
     aria-label="Site footer"
     string="progress"
     string-exit-vp="bottom"
@@ -58,7 +59,7 @@
 
       <div class="footer__bottom">
         <span class="footer__copy">
-          © 2026 Bloom Media, BLOOM VENTURES S.R.L.
+          © {{ year }} Bloom Media, BLOOM VENTURES S.R.L.
         </span>
         <span class="footer__vat">
           CUI: 50654818 · TVA: RO54500579
@@ -70,6 +71,16 @@
     </div>
   </footer>
 </template>
+
+<script setup lang="ts">
+/*
+ * plain = fără reveal-ul StringTune (translate + voal). Reveal-ul cere ca
+ * pagina de deasupra să fie .site-main opac cu z-index 20 (vezi despre.vue);
+ * paginile care nu au structura asta primesc footerul static.
+ */
+defineProps<{ plain?: boolean }>()
+const year = new Date().getFullYear()
+</script>
 
 <style scoped>
 /*
@@ -159,6 +170,15 @@
   .footer::after {
     opacity: 0;
   }
+}
+
+.footer--plain .footer__inner {
+  transform: none;
+  min-height: 0;
+}
+
+.footer--plain::after {
+  opacity: 0;
 }
 
 .footer__top {
