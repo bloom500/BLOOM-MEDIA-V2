@@ -174,7 +174,10 @@ onMounted(async () => {
     const lines = statementEl.value!.querySelectorAll('.footer-stage__line')
 
     gsap.set(curtainEl.value, { opacity: 0 })
-    gsap.set([lines, emailEl.value, metaEl.value, socialsEl.value], { opacity: 0, y: 24 })
+    // autoAlpha, nu opacity: la 0 pune și visibility:hidden. Cu opacity
+    // singur, linkurile (pointer-events:auto, z 9998) rămâneau invizibile
+    // dar clickabile și focusabile peste toată pagina, de la încărcare.
+    gsap.set([lines, emailEl.value, metaEl.value, socialsEl.value], { autoAlpha: 0, y: 24 })
 
     // cursorDark is owned by the homepage curtain transition (index.vue) —
     // it goes white at the FAQ→Contact crossover and stays white through
@@ -204,10 +207,10 @@ onMounted(async () => {
         scrub: 0.9,
       },
     })
-      .to(socialsEl.value, { opacity: 1, y: 0, duration: 0.3, ease: 'power2.out' })
-      .to(lines, { opacity: 1, y: 0, duration: 0.5, stagger: 0.14, ease: 'power2.out' }, '>-0.1')
-      .to(emailEl.value, { opacity: 1, y: 0, duration: 0.4, ease: 'power2.out' }, '>+0.06')
-      .to(metaEl.value, { opacity: 1, y: 0, duration: 0.35, ease: 'power2.out' }, '>+0.06')
+      .to(socialsEl.value, { autoAlpha: 1, y: 0, duration: 0.3, ease: 'power2.out' })
+      .to(lines, { autoAlpha: 1, y: 0, duration: 0.5, stagger: 0.14, ease: 'power2.out' }, '>-0.1')
+      .to(emailEl.value, { autoAlpha: 1, y: 0, duration: 0.4, ease: 'power2.out' }, '>+0.06')
+      .to(metaEl.value, { autoAlpha: 1, y: 0, duration: 0.35, ease: 'power2.out' }, '>+0.06')
   })
 })
 

@@ -14,6 +14,12 @@
   <div class="site-content">
     <TheNavbar />
     <NuxtPage />
+    <!--
+      Footer pe toate paginile: CUI + linkuri legale accesibile permanent
+      (Legea 365/2002 art. 5). Home are FooterReveal, /despre are reveal-ul
+      propriu; restul primesc varianta statică.
+    -->
+    <TheFooter v-if="!hasOwnFooter" plain />
   </div>
 
   <FixedServicesCta />
@@ -29,7 +35,7 @@
 </template>
 
 <script setup>
-import { onMounted, nextTick, watch } from 'vue'
+import { computed, onMounted, nextTick, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import CustomCursor from '~/components/CustomCursor.vue'
 import Experience3dToggle from '~/components/Experience3dToggle.vue'
@@ -44,6 +50,7 @@ import { initStringTune, refreshStringTune, resetStringTuneScroll } from '~/lib/
 useHead({ htmlAttrs: { lang: 'ro' } })
 
 const route = useRoute()
+const hasOwnFooter = computed(() => route.path === '/' || route.path === '/despre')
 
 /*
  * Re-scan StringTune on every client-side navigation so that new pages'

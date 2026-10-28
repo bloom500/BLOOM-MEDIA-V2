@@ -5,7 +5,7 @@
     :style="reliefSlabCssVars"
     aria-hidden="true"
   >
-    <canvas ref="canvasRef" class="relief-slab__canvas" />
+    <canvas ref="canvasRef" class="relief-slab__canvas" :class="{ 'is-ready': ready }" />
   </div>
 </template>
 
@@ -284,6 +284,10 @@ const SCROLL_PAN_CONTENT_FRAC = 0.96
 
 const containerRef = ref(null)
 const canvasRef = ref(null)
+/** Setat de cortina din index.vue: true = relieful e complet acoperit de negru. */
+const reliefHidden = useState('reliefHidden', () => false)
+/** Model încărcat + fitted — canvas-ul intră cu fade (poate apărea după loading screen). */
+const ready = ref(false)
 
 let renderer = null
 let scene = null
@@ -1046,7 +1050,14 @@ async function initScene(canvas) {
 
     child.castShadow = false
     child.receiveShadow = false
-    child.frustumCulled = false
+    /*
+     * Culling activ: positionNode doar turtește Z spre 0 (×0.03..1), iar Z-ul
+     * mesh-urilor e în [-0.08, 1.22], deci geometria extrudată rămâne în
+     * bounding-ul original. Panourile stau în grilă pe Y (pas ~20), camera
+     * vede 1-2 rânduri — restul de ~939k triunghiuri nu mai trec prin vertex
+     * shader. Ceața (flowmap + strat cromatic) e per-pixel, neafectată.
+     */
+    child.frustumCulled = true
   })
 
   if (meshCount === 0) {
@@ -1061,6 +1072,8 @@ async function initScene(canvas) {
   // Loading screen-ul (LoadingScreen.vue) așteaptă semnalul ăsta pe home:
   // modelul e încărcat + fitted, prima pictură urmează în frame-ul următor.
   window.dispatchEvent(new CustomEvent('bloom:relief-ready'))
+  // Un frame de render înainte de fade, ca să nu apară canvas-ul gol.
+  requestAnimationFrame(() => requestAnimationFrame(() => { ready.value = true }))
 }
 
 // ─── EVENTS ──────────────────────────────────────────────────────────────────
@@ -1168,6 +1181,18 @@ function tick() {
    * (rAF starts firing at 60Hz again).
    */
   if (typeof document !== 'undefined' && document.hidden) return
+
+  /*
+   * Cortina neagră (Contact → footer) acoperă complet relieful: randa 60fps
+   * sub negru opac (măsurat 2026-10-28). Sărim flowmap + render; ținem doar
+   * scroll-ul la zi, ca la redeschiderea cortinei boil-ul să nu vadă un salt.
+   */
+  if (reliefHidden.value) {
+    scrollSmoothed = window.scrollY
+    prevFlowScroll = scrollSmoothed
+    lastTickTime = performance.now()
+    return
+  }
 
   /*
    * Flowmap-ul rulează pe GPU la fiecare frame (256²/512² half-float e
@@ -1314,5 +1339,11 @@ onBeforeUnmount(() => {
   height: 100%;
   vertical-align: top;
   background: var(--relief-scene-bg);
+  opacity: 0;
+  transition: opacity 0.9s ease;
+}
+
+.relief-slab__canvas.is-ready {
+  opacity: 1;
 }
 </style>

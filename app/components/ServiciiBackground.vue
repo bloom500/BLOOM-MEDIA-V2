@@ -134,7 +134,8 @@ onMounted(() => {
 
   // ── Load GLB ──────────────────────────────────────────────────
   const draco = new DRACOLoader()
-  draco.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.7/')
+  // Self-hosted, ca la ReliefSlab: gstatic e blocat de Brave/Firefox strict/Zen.
+  draco.setDecoderPath('/draco/')
 
   const loader = new GLTFLoader()
   loader.setDRACOLoader(draco)
