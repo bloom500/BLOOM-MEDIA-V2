@@ -96,6 +96,8 @@ useHead({
 const faqEndAnchor = ref<HTMLElement | null>(null)
 const curtainEl = ref<HTMLElement | null>(null)
 const cursorDark = useState('cursorDark', () => false)
+// true cât cortina e complet trasă — ReliefSlab nu mai randează dedesubt.
+const reliefHidden = useState('reliefHidden', () => false)
 const tailEl = ref<HTMLElement | null>(null)
 let curtainCtx: { revert: () => void } | null = null
 
@@ -141,6 +143,7 @@ onMounted(async () => {
       if (grainEl) grainEl.style.opacity = String(0.06 * (1 - p))
       // Flip cursor/navbar to white once the curtain is mostly drawn.
       cursorDark.value = p > 0.5
+      reliefHidden.value = p >= 0.999
     }
 
     if (isMobile) {
@@ -199,6 +202,7 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   curtainCtx?.revert()
   cursorDark.value = false
+  reliefHidden.value = false
 })
 </script>
 

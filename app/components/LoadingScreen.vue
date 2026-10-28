@@ -28,6 +28,13 @@ const progress = ref(0.15)
  */
 const HARD_TIMEOUT_MS = 6000
 const MIN_SHOW_MS = 500
+/*
+ * Modelul 3D are 5,7 MB: pe 4G doar descărcarea lui trece de 4s, deci
+ * vizitatorii din reclame (telefon) stăteau mereu până la HARD_TIMEOUT.
+ * După 2,5s lăsăm site-ul să apară; relieful intră singur cu fade
+ * (ReliefSlab .is-ready) peste fundalul static de aceeași culoare.
+ */
+const RELIEF_WAIT_MS = 2500
 
 onMounted(() => {
   const t0 = performance.now()
@@ -63,6 +70,7 @@ onMounted(() => {
   document.fonts.ready.then(() => { fontsDone = true; update() })
   if (waitRelief) {
     window.addEventListener('bloom:relief-ready', () => { reliefDone = true; update() }, { once: true })
+    setTimeout(() => { reliefDone = true; update() }, RELIEF_WAIT_MS)
   }
   setTimeout(() => { fontsDone = true; reliefDone = true; update() }, HARD_TIMEOUT_MS)
   update()
