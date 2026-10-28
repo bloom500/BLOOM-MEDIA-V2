@@ -40,7 +40,7 @@ digital marketing agency based in Cluj-Napoca.
 - @nuxt/image (installed)
 
 ## Typography
-**Live (fără watermark):** **Outfit** + **Instrument Serif** prin [Fonts Bunny](https://fonts.bunny.net) în `nuxt.config.ts`; variabilele în `main.css` (`--font-ui`, `--font-display`, `--font-editorial`). Fișierele trial/demo (Mont DEMO, Gwen din surse trial) nu pot fi „reparate” cu CSS — watermark-ul e în font; `@font-face` pentru ele e **comentat** în `fonts.css`.
+**Live (oct 2026):** **Gloock** (display/editorial) + **Geist** (body) + **Outfit** (UI), toate self-hosted în `public/fonts/self` (fără CDN, GDPR); variabilele în `main.css`. Restul secțiunii (Bunny, Instrument Serif) e istoric. Fișierele trial/demo (Mont DEMO, Gwen din surse trial) nu pot fi „reparate” cu CSS — watermark-ul e în font; `@font-face` pentru ele e **comentat** în `fonts.css`.
 
 **După licență:** Mont / Gwen full în `public/fonts/`, decomentează blocurile din `fonts.css` și pune din nou `Mont` / `Gwen Display` / `Gwen Text` în stack în `main.css`. Verifică comercial: [Mont](https://www.dafont.com/mont.font), [Gwen](https://www.allfreefonts.co/gwen-font/).
 - **Instrument Serif** — poți self-hosta WOFF2 din [Google Fonts](https://fonts.google.com/specimen/Instrument+Serif) dacă vrei zero CDN.
@@ -92,7 +92,6 @@ app/pages/
 
 ## Rules
 - Never use Tailwind
-- Never use Lenis
-- StringTune handles smooth scroll natively
+- Lenis face smooth scroll-ul (wheel); StringTune rulează pe scroll nativ și citește poziția Lenis (vezi `app/lib/stringtune/client.ts`)
 - One section at a time, validated before next
 - Always mobile-first
