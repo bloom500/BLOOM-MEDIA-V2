@@ -6,7 +6,7 @@
           <video
             :key="`a-${indexA}`"
             ref="playerA"
-            autoplay
+            :autoplay="warm"
             muted
             playsinline
             :preload="warm ? 'auto' : 'none'"
@@ -23,7 +23,7 @@
           <video
             :key="`b-${indexB}`"
             ref="playerB"
-            autoplay
+            :autoplay="warm"
             muted
             playsinline
             :preload="warm ? 'auto' : 'none'"
@@ -98,11 +98,11 @@ let warmObserver: IntersectionObserver | null = null
 onMounted(() => {
   if (!import.meta.client) return
 
-  tryPlay(playerA.value)
-  tryPlay(playerB.value)
+  // Fără play() la mount, autoplay doar după `warm` — vezi VideoMeshSection.vue.
 
   // iOS unlock — same pattern as VideoMeshSection
   document.addEventListener('touchstart', () => {
+    if (!warm.value) return
     tryPlay(playerA.value)
     tryPlay(playerB.value)
   }, { once: true, passive: true })

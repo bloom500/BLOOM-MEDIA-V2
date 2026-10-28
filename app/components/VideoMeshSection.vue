@@ -15,7 +15,7 @@
         <video
           :key="index"
           ref="player"
-          autoplay
+          :autoplay="warm"
           muted
           playsinline
           :preload="warm ? 'auto' : 'none'"
@@ -142,12 +142,16 @@ function tryPlay(v: HTMLVideoElement | null) {
 onMounted(() => {
   if (!import.meta.client) return
 
-  tryPlay(player.value)
+  /*
+   * Fără play() la mount și autoplay doar după `warm`: atributul autoplay
+   * prezent de la început bătea preload="none", deci toate videourile se
+   * descărcau la secunda 0, în paralel cu modelul 3D (măsurat 2026-10-28).
+   */
 
   // iOS Chrome/Safari: even muted autoplay requires a WebKit "user gesture
   // context". touchstart fires on the first scroll tap — invisible to the
   // user but enough to unlock autoplay for muted elements.
-  document.addEventListener('touchstart', () => tryPlay(player.value), { once: true, passive: true })
+  document.addEventListener('touchstart', () => { if (warm.value) tryPlay(player.value) }, { once: true, passive: true })
 
   observer = new IntersectionObserver(
     (entries) => {
